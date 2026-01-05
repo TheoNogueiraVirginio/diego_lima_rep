@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="/styles/cadastro.css">
-    <link rel="shortcut icon" href="/imagens/logo_diego.png">
+    <link rel="shortcut icon" href="/favicon.ico">
 
     <script src="https://sdk.mercadopago.com/js/v2"></script>
 </head>
@@ -24,7 +24,9 @@
 
                 <form class="checkout-form">
 
-                    <a href="/" class="back-arrow">← Voltar</a>
+                    <label     class="back-arrow"     onclick="history.length > 1 ? history.back() : window.location.href='/'">
+                        ← Voltar
+                    </label>
 
                     <div class="form-group">
                         <label for="nome">Nome Completo</label>
@@ -300,13 +302,25 @@
                     <div class="qr-placeholder">
                         <p>O QR Code aparecerá aqui após gerar o pagamento.</p>
                     </div>
-                </div>
+
+                    <div class="coupon-container">
+                        <label for="input-cupom" class="coupon-label">Possui um cupom?</label>
+                        <div class="coupon-wrapper">
+                            <input type="text" id="input-cupom" placeholder="Digite seu cupom" autocomplete="off">
+                            <div id="coupon-feedback"></div>
+                        </div>
+                        <small style="color: #aaa; font-size: 0.8rem; margin-top: 5px; display:block;">
+                            (O desconto será aplicado ao gerar o pagamento)
+                        </small>
+                    </div>
+                    </div>
 
             </div>
         </div>
     </section>
 
-    <script src="/scripts/cadastro.js" defer></script>
+    <script src="scripts/cadastro.js" defer></script>
 </body>
 
 </html>
+

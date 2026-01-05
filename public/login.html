@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Curso de Matemática</title>
+    <link rel="shortcut icon" href="logo_diego.png">
+
+    <link rel="stylesheet" href="/styles/login.css">
+    <link rel="stylesheet" href="/global.css">
+</head>
+
+<body>
+
+    <div class="container">
+        <img src="images/logo_diego.png" alt="Logo" class="logo">
+
+
+        <h2 style="color:white; font-size: 30px;">Área de Acesso</h2>
+
+
+        <form class="form_login">
+
+            <label class="labels" for="email" style="color: white;">E-mail</label>
+            <input type="email" id="email" placeholder="Digite seu e-mail" style="margin-bottom: 10px;">
+
+
+            <label class="labels" for="password" style="color: white">Senha</label>
+
+            <div class="password-box">
+                <input type="password" id="password" placeholder="Digite sua senha">
+                <span class="show-pass" style="color: white; align-self: center;">👁</span>
+            </div>
+            
+            <button class="btn" style="margin-top: 50px;">Entrar</button>
+
+            <div style="display: flex; justify-content: space-around; margin-top: 7px;">
+                <a href="/cadastro" class="cadastro-link">Cadastrar-se</a>
+                
+                <a href="/" class="cadastro-link">Quem Somos?</a>
+            </div>
+        </form>
+
+    </div>
+
+</body>
+
+<script> 
+// MOSTRAR E ESCONDER SENHA
+    document.querySelector(".show-pass").addEventListener("click", () => {
+    const i = document.querySelector("#password")
+    i.type = i.type === "password" ? "text" : "password"
+});
+</script>
+
+<script src="/scripts/login.js"></script>
+
+</html>
