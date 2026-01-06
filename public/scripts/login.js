@@ -22,6 +22,6 @@ document.querySelector('form').addEventListener('submit', async (e) => {
         }
 
     } catch (error) {
-        alert("Erro de conexão com o servidor.");
+        alert("Erro de conexão com o servidor. abuuuuuuuuu");
     }
 });
