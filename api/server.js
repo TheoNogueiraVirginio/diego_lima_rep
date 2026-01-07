@@ -16,6 +16,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Servir arquivos estáticos da pasta public
+app.use(express.static(path.join(__dirname, '../public')));
 
 //ROTA DA API - CADASTRO
 app.use("/api/enrollment", enrollmentRoutes);
@@ -47,6 +49,7 @@ app.get('/simulados', (req, res) => {
 app.get('/informes', (req, res) => {
     res.redirect('/informes.html');
 });
+
 
 // --- ROTAS PRIVADAS / 404 ---
 app.get('*', (req, res) => {

@@ -456,19 +456,19 @@ export const getExistingEnrollment = async (req, res) => {
 
 //Verificação de Login
 
-import bd from "../db.js";
-
 export const verifyLogin = async (req, res) => {
     try {
         console.log("vou pegar os emails")
         const { email, pass } = req.body;
         console.log("peguei os emails")
-        const user = await bd.enrollment.findUnique({ where: { email: email }});
+        const user = await prisma.enrollment.findUnique({ where: { email: email }});
         if (!user) {
             return res.status(404).json({ error: "E-mail não encontrado." })
         };
 
-        if (user.cpf !== pass) {
+        // Remove formatação do CPF antes de comparar
+        const passLimpo = pass.replace(/\D/g, '');
+        if (user.cpf !== passLimpo) {
             return res.status(401).json({ error: "Senha incorreta." });
         };
                 
