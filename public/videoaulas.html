@@ -33,7 +33,7 @@
         
         <div class="status-container">
             <h1 style="color: white;">Olá, <span id="nome-aluno">Aluno</span>!</h1>
-            <p class="welcome-sub" style="color: white;">Continue de onde parou. Seu progresso geral: <span class="destaque-verde">35%</span></p>
+            <p class="welcome-sub" style="color: white;">Continue de onde parou. Seu progresso geral: <span class="destaque-verde">X%</span></p>
             
             <div class="barra-total">
                 <div class="barra-verde"></div>
@@ -66,7 +66,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         const nomeSalvo = localStorage.getItem('nomeAluno');
         
-        // 2. Busca o elemento HTML onde vamos escrever
+        // 2. Busca o elemento HTML onde vou escrever
         const elementoNome = document.getElementById('nome-aluno');
 
         if (nomeSalvo && elementoNome) {

@@ -116,6 +116,9 @@
 }
 
 
+/* ------------- COMEÇO DA ESTILIZAÇÃO DOS MÓDULOS -------------- */
+
+
 .modulos {
     display: flex;
     width: 70%;
@@ -126,16 +129,15 @@
 
 
 .modulo {
-    background: #1c1c1c;
-    border: 1px solid #333;
-    border-radius: 5px;
+    background: black;
+    border-radius: 15px;
 
     width: 20%;
     height: 350px;
     
     font-family: Arial, sans-serif;
 
-    border: 2px solid var(--color-purple-neon); 
+    border: 2.5px solid var(--color-purple-neon); 
     box-shadow: 0 0 15px rgba(157, 78, 221, 0.15);
 }
 
@@ -147,15 +149,18 @@
 }
 
 .header-mod {
-    background: #222;
+    background: black;
     height: 40px;
     user-select: none;
 
-    color:white; font-size: 25px;
+    color:white; font-size: 25px; font-weight: 550;
 
     display: flex;
-    justify-content: left;
+    justify-content: center;
     align-items: center;
-    padding-left: 15px;
+    padding-top: 5px;
+
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
 
 }
