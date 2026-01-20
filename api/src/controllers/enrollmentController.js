@@ -90,9 +90,15 @@ export const createEnrollment = async (req, res) => {
         let valorCobrado = await calcularPreco(modality);
         
         // --- LÓGICA DE CUPOM ---
-        if (coupon && String(coupon).trim().toUpperCase() === 'MARIANALIMA') {
-            console.log("🎟️ [createEnrollment] Cupom aplicado: MARIANALIMA (15% OFF)");
-            valorCobrado = valorCobrado * 0.85; // Aplica 15% de desconto
+        if (coupon) {
+            const cup = String(coupon).trim().toUpperCase();
+            if (cup === 'MARIALUISA') {
+                console.log("🎟️ [createEnrollment] Cupom aplicado: MariaLuisa (preço fixo R$799.00)");
+                valorCobrado = 799.00; // Valor final fixo para ambas as modalidades
+            } else if (cup === 'MARIANALIMA') {
+                console.log("🎟️ [createEnrollment] Cupom aplicado: MARIANALIMA (15% OFF)");
+                valorCobrado = valorCobrado * 0.85; // Aplica 15% de desconto
+            }
         }
         
         // Garante duas casas decimais
