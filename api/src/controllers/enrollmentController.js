@@ -20,20 +20,9 @@ async function calcularPreco(modalidade) {
     const totalAlunosPagos = await prisma.enrollment.count({ where: { status: 'PAID' } });
     const agora = new Date();
 
-    let valorFinal = 0;
-    
-    // 1. Prioridade: Primeiros 20 alunos PAGOS
-    if (totalAlunosPagos < 20) {
-        valorFinal = (modalidade === 'COM_MATERIAL') ? PRECOS.TIER_1.COM : PRECOS.TIER_1.SEM;
-    } 
-    // 2. Promoção por tempo (Até 17/12)
-    else if (agora <= DATA_FIM_PROMOCAO) {
-        valorFinal = (modalidade === 'COM_MATERIAL') ? PRECOS.TIER_2.COM : PRECOS.TIER_2.SEM;
-    } 
-    // 3. Preço Normal
-    else {
-        valorFinal = (modalidade === 'COM_MATERIAL') ? PRECOS.TIER_3.COM : PRECOS.TIER_3.SEM;
-    }
+    // A partir de agora sempre retornar o preço da TIER_3 como padrão.
+    // Mantemos as outras regras/valores no código para histórico/futuro uso.
+    const valorFinal = (modalidade === 'COM_MATERIAL') ? PRECOS.TIER_3.COM : PRECOS.TIER_3.SEM;
     return valorFinal;
 }
 
@@ -102,8 +91,8 @@ export const createEnrollment = async (req, res) => {
         
         // --- LÓGICA DE CUPOM ---
         if (coupon && String(coupon).trim().toUpperCase() === 'MARIANALIMA') {
-            console.log("🎟️ [createEnrollment] Cupom aplicado: MARIANALIMA (10% OFF)");
-            valorCobrado = valorCobrado * 0.90; // Aplica 10% de desconto
+            console.log("🎟️ [createEnrollment] Cupom aplicado: MARIANALIMA (15% OFF)");
+            valorCobrado = valorCobrado * 0.85; // Aplica 15% de desconto
         }
         
         // Garante duas casas decimais
@@ -360,12 +349,16 @@ export const checkPaymentStatus = async (req, res) => {
         }
 
         if (existingPayment) {
-            // 4. ATUALIZA O STATUS PARA PAID
+            // 4. ATUALIZA O STATUS PARA PAID (garantir paymentId também)
             console.log("✅ Confirmando pagamento para aluno:", existingPayment.email);
-            await prisma.enrollment.update({
-                where: { id: existingPayment.id },
-                data: { status: 'PAID' }
-            });
+            try {
+                await prisma.enrollment.update({
+                    where: { id: existingPayment.id },
+                    data: { status: 'PAID', paymentId: id }
+                });
+            } catch (err) {
+                console.error('❌ [checkPaymentStatus] Erro ao marcar PAID no DB:', err.message);
+            }
             // Enviar e-mail de confirmação
             try {
                 await sendEnrollmentEmail(existingPayment.email, existingPayment.name, existingPayment.modality, existingPayment.amount);

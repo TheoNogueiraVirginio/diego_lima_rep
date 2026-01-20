@@ -9,25 +9,6 @@
     <link rel="shortcut icon" href="/images/logo_diego.png">
 </head>
 <body>
-
-    <nav class="navbar">
-        <div class="diego">
-            <img src="images/logo_diego.png" class="logo" alt="">
-            <h3 style="color: white; margin-left: 20px; font-weight: 700; font-size: 24px;">Diego Lima Matemática</h3>
-        </div>
-        
-        <div class="pgs">
-            <a href="/videoaulas.html" class="active">Videoaulas</a>
-            <a href="/simulados.html">Simulados</a>
-            <a href="/informes.html">Informes</a>
-        </div>
-
-        <div class="user">
-            <img src="images/white_user.png" alt="" class="logo" style="margin-right: 20px;">
-        </div>
-    </nav>
-
-<!-- FIM DA NAVBAR -->
     
     <div class="corpo">
         
@@ -43,41 +24,26 @@
         <h2 class="titulo-modulos">Meus Módulos</h2>
 
         <div class="modulos">
-            <div class="modulo" style="margin-top: 20px";>
+    <div class="modulo" id="modulo1" style="margin-top: 20px";>
                 <div class="header-mod">Módulo 1</div>
             </div>
 
-            <div class="modulo" style="margin-top: 20px" ;>
+            <div class="modulo" id="modulo2" style="margin-top: 20px" ;>
                 <div class="header-mod">Módulo 2</div>
             </div>
 
-            <div class="modulo" style="margin-top: 20px" ;>
+            <div class="modulo" id="modulo3" style="margin-top: 20px" ;>
                 <div class="header-mod">Módulo 3</div>
             </div>
 
-            <div class="modulo" style="margin-top: 20px" ;>
+            <div class="modulo" id="modulo4" style="margin-top: 20px" ;>
                 <div class="header-mod">Módulo 4</div>
             </div>
         </div>
     </div>
-</body>
+</body>>
 
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const nomeSalvo = localStorage.getItem('nomeAluno');
-        
-        // 2. Busca o elemento HTML onde vou escrever
-        const elementoNome = document.getElementById('nome-aluno');
-
-        if (nomeSalvo && elementoNome) {
-            const primeiroNome = nomeSalvo.split(' ')[0].toLowerCase();
-            const primeiroNomeOrganizado = primeiroNome.charAt(0).toUpperCase() + primeiroNome.slice(1);
-            
-            elementoNome.textContent = primeiroNomeOrganizado;
-
-            //FAZER TROÇO DO NOME COMPOSTO DEPOIS
-        }
-    });
-</script>
+<script src></script>
+<script src="/componentes/navbar.js"></script>
 </html>
 

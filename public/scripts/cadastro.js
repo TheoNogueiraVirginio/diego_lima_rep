@@ -355,8 +355,9 @@ function mostrarPix(resultado) {
     const qrBox = document.querySelector('.qr-placeholder');
     // Mostrar nota de resume somente se a modalidade anterior for igual à selecionada (ou não informada)
     const currentModality = document.getElementById('modalidade') ? document.getElementById('modalidade').value : null;
+    // Removida mensagem amarela de aviso sobre pagamento anterior
     const showResume = resultado.resume && (!resultado.modalidadeAnterior || resultado.modalidadeAnterior === currentModality);
-    const resumeNote = showResume ? '<p style="color:#ffd700; font-weight:700;">Você já iniciou um pagamento. Retome o pagamento abaixo.</p>' : '';
+    const resumeNote = '';
 
     qrBox.innerHTML = `
         <div style="text-align: center; gap: 15px; display: flex; flex-direction: column; align-items: center;">
