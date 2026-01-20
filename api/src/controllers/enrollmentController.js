@@ -92,8 +92,8 @@ export const createEnrollment = async (req, res) => {
         // --- LÓGICA DE CUPOM ---
         if (coupon) {
             const cup = String(coupon).trim().toUpperCase();
-            if (cup === 'MARIALUISA') {
-                console.log("🎟️ [createEnrollment] Cupom aplicado: MariaLuisa (preço fixo R$799.00)");
+            if (cup === 'MARIALUIZA') {
+                console.log("🎟️ [createEnrollment] Cupom aplicado: MariaLuiza (preço fixo R$799.00)");
                 valorCobrado = 799.00; // Valor final fixo para ambas as modalidades
             } else if (cup === 'MARIANALIMA') {
                 console.log("🎟️ [createEnrollment] Cupom aplicado: MARIANALIMA (15% OFF)");
