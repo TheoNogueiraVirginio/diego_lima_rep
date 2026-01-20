@@ -91,7 +91,15 @@ export const createEnrollment = async (req, res) => {
         
         // --- LÓGICA DE CUPOM ---
         if (coupon) {
-            const cup = String(coupon).trim().toUpperCase();
+            // normalize: remove diacritics, spaces and non-alphanumeric, then uppercase
+            const cup = String(coupon || '')
+                .normalize('NFD')
+                .replace(/\p{Diacritic}/gu, '')
+                .replace(/\s+/g, '')
+                .replace(/[^A-Za-z0-9]/g, '')
+                .toUpperCase();
+
+            // aceitar somente "MARIALUIZA" (sem variante com Z)
             if (cup === 'MARIALUIZA') {
                 console.log("🎟️ [createEnrollment] Cupom aplicado: MariaLuiza (preço fixo R$799.00)");
                 valorCobrado = 799.00; // Valor final fixo para ambas as modalidades
