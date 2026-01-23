@@ -223,7 +223,7 @@ document.querySelector('.checkout-form').addEventListener('submit', async (event
 
     // --- VALIDAÇÃO DO CUPOM ---
     const cupomDigitado = (dadosBasicos.coupon || '').trim().toUpperCase();
-    const validCoupons = ['MARIANALIMA', 'MARIALUIZA']; 
+    const validCoupons = ['MARIANALIMA', 'MARIALUIZA', 'ABUUU']; 
     if (cupomDigitado && !validCoupons.includes(cupomDigitado)) {
         alert("❌ Cupom inválido! Verifique-o e tente novamente.");
         return;

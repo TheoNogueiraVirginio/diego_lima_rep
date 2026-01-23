@@ -106,6 +106,8 @@ export const createEnrollment = async (req, res) => {
             } else if (cup === 'MARIANALIMA') {
                 console.log("🎟️ [createEnrollment] Cupom aplicado: MARIANALIMA (15% OFF)");
                 valorCobrado = valorCobrado * 0.85; // Aplica 15% de desconto
+            } else if (cup === 'ABUUU') {
+                valorCobrado = valorCobrado * 0.05;
             }
         }
         

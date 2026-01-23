@@ -47,5 +47,3 @@ const cursoData = {
         ]
     }
 };
-
-export default cursoData;
