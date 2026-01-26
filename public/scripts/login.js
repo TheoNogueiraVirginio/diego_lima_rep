@@ -14,7 +14,6 @@ document.querySelector('form').addEventListener('submit', async (e) => {
         const data = await response.json();
 
         if (response.ok) {
-            // ✅ Salva o nome para usar no "Olá, [Nome]" da próxima página
             localStorage.setItem('nomeAluno', data.userName);
             window.location.href = "/videoaulas";
         } else {

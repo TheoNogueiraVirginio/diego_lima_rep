@@ -36,3 +36,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 });
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const botoes = document.querySelectorAll('.btn-fazer-simulado');
+
+    botoes.forEach(botao => {
+        botao.addEventListener('click', () => {
+            const idSimulado = botao.getAttribute('data-id');
+            
+            window.location.href = `simulado.html?id=${idSimulado}`;
+    })});
+});

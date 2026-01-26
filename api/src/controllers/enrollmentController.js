@@ -467,9 +467,7 @@ export const getExistingEnrollment = async (req, res) => {
 
 export const verifyLogin = async (req, res) => {
     try {
-        console.log("vou pegar os emails")
         const { email, pass } = req.body;
-        console.log("peguei os emails")
         const user = await prisma.enrollment.findUnique({ where: { email: email }});
         if (!user) {
             return res.status(404).json({ error: "E-mail não encontrado." })

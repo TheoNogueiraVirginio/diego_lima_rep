@@ -37,8 +37,6 @@ body {
     --color-lime-green: rgb(195, 254, 2); /* Verde Lima */
 }
 
-
-
 .diego {
     display: flex;
     align-items: center;
@@ -84,4 +82,21 @@ body {
     display: flex;
     width: 350px;
     justify-content: space-between;
+}
+
+
+
+.titulo-secao {
+    color: var(--color-purple-neon);
+    font-size: 1.8rem;    
+    margin-left: 15%;
+    margin-right: 15%;
+    text-align: left;
+
+    font-size: 33px;
+
+    /* 2. O BRILHO: Camadas de sombra da mesma cor roxa */
+    text-shadow: 
+        0 0 5px #9d4edd,   /* Camada 1: Brilho colado na letra */
+        0 0 40px rgba(157, 78, 221, 0.8); /* Camada 3: Aura difusa */
 }

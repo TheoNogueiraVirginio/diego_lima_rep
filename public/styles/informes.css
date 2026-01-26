@@ -1,29 +1,88 @@
-.diego {
-    display: flex;
-    align-items: center;
+.titulo-secao {
+    margin-top: 30px;
+}
+
+
+.subtitle {
+    color: #c0c0c0;
+    margin-bottom: 20px;
+    margin-top: 5px;
+    margin-left: 15%;
+}
+
+.informes-container {
+    width: 70%;
     height: 100%;
-    width: 280px;
 
-    margin-left: 25px;
-}
-
-a {
-    color: white;
-    width: min-content;
-    font-size: 20px;
-}
-
-.pgs {
     display: flex;
-    width: 350px;
+    flex-direction: column;
+    justify-self:center;
+
+    gap: 20px;
+}
+
+.informes-header {
+    display: flex;
+    justify-content: center;
+    
+}
+
+.filter-btn {
+    background: transparent;
+    border: 2px solid var(--color-purple-neon);
+    color: #e0e0e0;
+    margin: 0 5px;
+
+    padding: 8px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+
+
+.informes-body {    
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.card {
+    background: rgb(75, 75, 75);
+
+
+    border: 3px solid var(--color-purple-neon);
+    border-radius: 7px;
+
+    display: flex;
+    flex-direction: row;
+
+    align-items: center;
     justify-content: space-between;
 }
 
-/*FIM DA ESTILIZAÇÃO DA NAVBAR*/
+.card-content {
+    margin-left: 10px;
+}
 
+.card-title {
+    
+}
 
-.corpo {
-    width: 70%;
-    margin: 0 auto;
-    text-align: center;
+.card-desc {color: white;}
+
+.btn-read-more {
+    background: transparent;
+    border: 1px solid var(--color-purple-neon);
+    color: #e0e0e0;
+    margin-right: 10px;
+
+    padding: 8px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-read-more:hover {
+    background: var(--color-purple-neon);
 }
