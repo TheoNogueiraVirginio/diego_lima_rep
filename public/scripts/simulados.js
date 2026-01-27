@@ -45,6 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
         botao.addEventListener('click', () => {
             const idSimulado = botao.getAttribute('data-id');
             
-            window.location.href = `simulado.html?id=${idSimulado}`;
+            window.location.href = `questoes.html?id=${idSimulado}`;
     })});
 });

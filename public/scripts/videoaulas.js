@@ -21,12 +21,11 @@ modulos.forEach(modulo => {
     modulo.addEventListener('click', (e) => {
         e.preventDefault();
 
-        // 1. Pega o valor do atributo 'data-id' (1, 2, 3 ou 4)
+        // Pega o valor do atributo 'data-id' (1, 2, 3 ou 4)
         const moduloId = modulo.getAttribute('data-id');
 
         console.log(`Redirecionando para o Módulo ${moduloId}...`);
-            
-        // 3. Redireciona para a página do player passando o parâmetro na URL
-         // Resultado: assistir.html?modulo=1
-        window.location.href = `assistir.html?modulo=${moduloId}`;
+        
+        // Redirecionar para o primeiro assunto do módulo (x.1)
+        window.location.href = `assistir.html?id=${moduloId}.1`;
 })});

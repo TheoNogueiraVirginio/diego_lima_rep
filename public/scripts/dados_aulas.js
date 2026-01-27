@@ -23,7 +23,7 @@ const cursoData = {
         ]
     },
     "3": { // ID do Módulo 3
-        tituloModulo: "Módulo 3: Geometria",
+        tituloModulo: "Módulo 3: Álgebra e Trigonometria",
         aulas: [
             {titulo: "Trigonometria", vimeoId: "99887766" },
             {titulo: "Funções Trigonométricas", vimeoId: "99887766" },
@@ -35,7 +35,7 @@ const cursoData = {
 },
 
     "4": {
-        tituloModulo: "Módulo 4: ",
+        tituloModulo: "Módulo 4: Geometria Plana e Espacial",
         aulas: [
             {titulo: "Triângulos", vimeoId: "00000001" },
             {titulo: "Polígonos e Quadriláteros", vimeoId: "00000002" },
@@ -47,3 +47,7 @@ const cursoData = {
         ]
     }
 };
+
+
+
+window.cursoData = cursoData;

@@ -46,7 +46,8 @@ body {
 }
 
 .sidebar {
-    background: gray;
+
+    border: 2.5px solid var(--color-purple-neon);
     border-radius: 5px;
 
     width: 300px;
@@ -64,6 +65,13 @@ body {
     align-items: center;
     justify-content: center;
 
+    color: var(--color-purple-neon);
+
+    border: 2.5px solid var(--color-purple-neon);
+    border-radius: 5px;
+    margin-bottom: 10px;
+
+    
 
 }
 
@@ -71,8 +79,9 @@ body {
 #upcoming-classes {
 
     max-height: 480px; /*altura da sidebar -(menos) a altura do h2        520 - 40*/
-
-    gap: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 
     overflow-y: auto; 
     overflow-x: hidden;
@@ -88,7 +97,15 @@ body {
     height: 40px;
     width: 100%;
 
-    color: var(--color-lime-green);
+    color: var(--color-purple-neon);
+    padding-left: 8px;
+
+    display: flex;
+    align-items: center;
+}
+
+.lesson-card:hover {
+    cursor: pointer;
 }
 
 
@@ -131,6 +148,23 @@ body {
     
 }
 
+.video-ended {
+    display: flex;
+    flex-direction: column;
+    
+    justify-content: right;
+
+    gap: 10px;
+}
+
+.finished-video-button {
+    background: gray;
+
+    height: 35px;
+    width: 150px;
+
+    border-radius: 2px;
+}
 
 .practice-button {
     background: gray;
