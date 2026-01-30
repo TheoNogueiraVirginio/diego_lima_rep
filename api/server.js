@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import enrollmentRoutes from "./src/routes/enrollmentRoutes.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import progressRoutes from "./src/routes/progressRoutes.js";
+import noticeRoutes from "./src/routes/noticeRoutes.js";
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -30,6 +31,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use("/api/enrollment", enrollmentRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/progress", progressRoutes);
+app.use("/api/avisos", noticeRoutes);
 
 
 // --- ROTAS DE PÁGINAS ---

@@ -37,6 +37,7 @@ model Enrollment {
   examAttempts   ExamAttempt[]
   moduleProgress ModuleProgress[]
   refreshTokens RefreshToken[]
+  notices Notice[]
 }
 
 enum LessonStatus {
@@ -101,6 +102,23 @@ model RefreshToken {
 
   @@index([enrollmentId])
   @@index([tokenHash])
+}
+
+
+
+
+model Notice {
+  id String @id @default(uuid())
+  title String
+  content String
+  category String?
+  date DateTime @default(now())
+  createdBy Enrollment? @relation(fields: [createdById], references: [id])
+  createdById String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdById])
 }
 
 
