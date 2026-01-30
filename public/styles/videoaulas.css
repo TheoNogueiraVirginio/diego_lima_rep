@@ -32,7 +32,15 @@
     background-color: var(--color-lime-green);
     border-radius: 10px;
 
-    width: 35%; /* Progresso fiquitissiu*/
+    /* estado inicial: 0% até o JS atualizar dinamicamente */
+    width: 0%;
+}
+
+.barra-verde-mod {
+    height: 100%;
+    background-color: var(--color-lime-green);
+    border-radius: 10px;
+    width: 0%;
 }
 
 

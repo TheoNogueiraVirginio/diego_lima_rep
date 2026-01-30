@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import nodemailer from 'nodemailer';
+import { signAccess, signRefresh, ACCESS_EXPIRES, REFRESH_EXPIRES } from '../utils/jwt.js';
 
 const prisma = new PrismaClient();
 
@@ -482,6 +483,27 @@ export const verifyLogin = async (req, res) => {
         if (user.status !== 'PAID') {
              return res.status(403).json({ error: "Seu pagamento ainda não foi confirmado." });
         }
+
+        // Gerar tokens e setar cookies para compatibilidade com novo fluxo
+        const accessToken = signAccess(user.id);
+        const refreshToken = signRefresh(user.id);
+        const secure = process.env.NODE_ENV === 'production';
+
+        res.cookie('accessToken', accessToken, {
+            httpOnly: true,
+            secure,
+            sameSite: 'lax',
+            maxAge: ACCESS_EXPIRES * 1000,
+            path: '/'
+        });
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure,
+            sameSite: 'lax',
+            maxAge: REFRESH_EXPIRES * 1000,
+            path: '/'
+        });
 
         return res.status(200).json({ 
             success: true, 

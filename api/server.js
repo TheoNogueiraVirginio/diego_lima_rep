@@ -1,9 +1,12 @@
 import 'dotenv/config';
 import express from "express";
 import cors from "cors";
+import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import enrollmentRoutes from "./src/routes/enrollmentRoutes.js";
+import authRoutes from "./src/routes/authRoutes.js";
+import progressRoutes from "./src/routes/progressRoutes.js";
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -13,14 +16,20 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-app.use(cors());
+// Permitir credenciais (cookies) e refletir a origem da requisição.
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+
+// Parser para cookies (HttpOnly)
+app.use(cookieParser());
 
 // Servir arquivos estáticos da pasta public
 app.use(express.static(path.join(__dirname, '../public')));
 
 //ROTA DA API - CADASTRO
 app.use("/api/enrollment", enrollmentRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/progress", progressRoutes);
 
 
 // --- ROTAS DE PÁGINAS ---

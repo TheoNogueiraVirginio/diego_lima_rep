@@ -29,6 +29,79 @@ model Enrollment {
 
   status String @default("PENDING")
   paymentId String?
+  passwordHash String?
 
   createdAt DateTime @default(now())
+
+  lessonProgress LessonProgress[] // Histórico de aulas assistidas
+  examAttempts   ExamAttempt[]
+  moduleProgress ModuleProgress[]
+  refreshTokens RefreshToken[]
 }
+
+enum LessonStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+model LessonProgress {
+  id String @id @default(uuid())
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
+  enrollmentId String
+  lessonId String
+  watchedSeconds Int @default(0)
+  status LessonStatus @default(IN_PROGRESS)
+  watchedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([enrollmentId])
+  @@index([lessonId])
+}
+
+model ExamAttempt {
+  id String @id @default(uuid())
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
+  enrollmentId String
+  examId String
+  moduleId String?
+  score Float
+  maxScore Float
+  takenAt DateTime @default(now())
+
+  @@index([enrollmentId])
+  @@index([examId])
+  @@index([moduleId])
+}
+
+model ModuleProgress {
+  id String @id @default(uuid())
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
+  enrollmentId String
+  moduleId String
+  averageScore Float @default(0)
+  examsTakenCount Int @default(0)
+  lastUpdated DateTime @updatedAt
+
+  @@unique([enrollmentId, moduleId])
+  @@index([enrollmentId])
+}
+
+model RefreshToken {
+  id String @id @default(uuid())
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
+  enrollmentId String
+  tokenHash String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  revoked Boolean @default(false)
+  replacedById String?
+  replacedBy RefreshToken? @relation("RefreshTokenReplacement", fields: [replacedById], references: [id])
+  replaced RefreshToken[] @relation("RefreshTokenReplacement")
+
+  @@index([enrollmentId])
+  @@index([tokenHash])
+}
+
+
+
