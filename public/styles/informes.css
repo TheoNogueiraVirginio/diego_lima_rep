@@ -1,13 +1,16 @@
 .titulo-secao {
     margin-top: 30px;
+    font-size: 36px;
+    color: var(--color-purple-neon);
 }
 
 
 .subtitle {
-    color: #c0c0c0;
+    color: #d0c6d8;
     margin-bottom: 20px;
-    margin-top: 5px;
+    margin-top: 8px;
     margin-left: 15%;
+    font-size: 18px;
 }
 
 .informes-container {
@@ -39,6 +42,11 @@
     transition: all 0.3s;
 }
 
+.filter-btn.active {
+    background: linear-gradient(90deg, rgba(157,78,221,0.16), rgba(120,60,200,0.06));
+    box-shadow: 0 4px 12px rgba(120,50,180,0.12) inset;
+}
+
 
 
 .informes-body {    
@@ -48,15 +56,13 @@
 }
 
 .card {
-    background: rgb(75, 75, 75);
-
-
-    border: 3px solid var(--color-purple-neon);
-    border-radius: 7px;
-
+    /* softer purple background (less contrast) */
+    background: linear-gradient(180deg, rgba(60,20,90,0.88), rgba(34,12,50,0.82));
+    border: 2.5px solid rgba(157,78,221,0.95);
+    border-radius: 8px;
+    padding: 6px 10px; /* slightly more compact */
     display: flex;
     flex-direction: row;
-
     align-items: center;
     justify-content: space-between;
 }
@@ -69,20 +75,27 @@
     
 }
 
-.card-desc {color: white;}
+.card-desc {color: #0b0b0b; margin-top: 6px;}
+
+.card-date { color: #0b0b0b; font-weight: 600; margin-top: 4px; }
+
+.card-title { color: #0b0b0b; font-weight: 700; margin: 0; }
+
+.card-header { display: flex; align-items: center; gap: 8px; }
+.color-text { font-size: 18px; }
 
 .btn-read-more {
     background: transparent;
-    border: 1px solid var(--color-purple-neon);
+    border: 1px solid rgba(157,78,221,0.9);
     color: #e0e0e0;
     margin-right: 10px;
 
-    padding: 8px 20px;
-    border-radius: 20px;
+    padding: 8px 16px;
+    border-radius: 14px;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.18s;
 }
 
 .btn-read-more:hover {
-    background: var(--color-purple-neon);
+    background: rgba(157,78,221,0.14);
 }

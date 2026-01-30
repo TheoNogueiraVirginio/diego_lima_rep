@@ -7,7 +7,7 @@ const cursoData = {
             {titulo: "Divisibilidade, MDC e MMC", vimeoId: "987654321"},
             {titulo: "Estatística", vimeoId: "987654321"},
             {titulo: "Conjuntos", vimeoId: "987654321"},
-            {titulo: "Ponto e Introdução de Funções", vimeoId: "987654321"},
+            {titulo: "Ponto e Introdução de Funções", vimeoId: "123141414"},
             {titulo: "Reta, Função Afim e Proporcionalidade", vimeoId: "987654321"},
         ]
     },

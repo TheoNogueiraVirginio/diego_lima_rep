@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,17 +17,17 @@
     <div class="informes-container">
         <div class="informes-header">
             <div class="filters">
-            <button class="filter-btn active">Todos</button>
-            <button class="filter-btn">Avisos Importantes</button>
-            <button class="filter-btn">Novidades</button>
-            <button class="filter-btn">Eventos</button>
-            <button class="filter-btn">Dicas</button>
+            <button class="filter-btn active" data-filter="todos">Todos</button>
+            <button class="filter-btn" data-filter="avisos-importantes">Avisos Importantes</button>
+            <button class="filter-btn" data-filter="novidades">Novidades</button>
+            <button class="filter-btn" data-filter="eventos">Eventos</button>
+            <button class="filter-btn" data-filter="dicas">Dicas</button>
         </div>
         </div>
 
         <div class="informes-body">
 
-            <article class="card">
+            <article class="card" data-category="avisos-importantes">
                 <div class="card-content">
                     <div class="card-header">
                         <span class="color-text">⚠️</span>
@@ -42,7 +42,7 @@
             </article>
 
 
-            <article class="card">
+            <article class="card" data-category="avisos-importantes">
                 <div class="card-content">
                     <div class="card-header">
                         <span class="color-text">⚠️</span>
@@ -58,7 +58,7 @@
 
 
 
-            <article class="card">
+            <article class="card" data-category="avisos-importantes">
                 <div class="card-content">
                     <div class="card-header">
                         <span class="color-text">⚠️</span>
@@ -74,7 +74,7 @@
 
 
 
-            <article class="card">
+            <article class="card" data-category="avisos-importantes">
                 <div class="card-content">
                     <div class="card-header">
                         <span class="color-text">⚠️</span>
@@ -91,7 +91,7 @@
 
 
 
-            <article class="card">
+            <article class="card" data-category="avisos-importantes">
                 <div class="card-content">
                     <div class="card-header">
                         <span class="color-text">⚠️</span>
@@ -107,9 +107,49 @@
 
         </div>
         
-    </div>
+        </div>
 
 
-    <script src="componentes/navbar.js"></script>
+        <script>
+        // Filter buttons functionality using data-filter / data-category (robust)
+        (function(){
+            document.addEventListener('DOMContentLoaded', () => {
+                const buttons = Array.from(document.querySelectorAll('.filter-btn'));
+                const cards = Array.from(document.querySelectorAll('.card'));
+
+                function setActive(btn){
+                    buttons.forEach(b => b.classList.toggle('active', b === btn));
+                }
+
+                function filterBy(filter){
+                    const key = (filter || '').trim().toLowerCase();
+                    cards.forEach(card => {
+                        const cat = (card.dataset.category || '').trim().toLowerCase();
+                        if (!key || key === 'todos') {
+                            card.style.display = '';
+                        } else if (cat === key) {
+                            card.style.display = '';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                }
+
+                buttons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const filter = btn.dataset.filter || (btn.textContent || '').trim().toLowerCase();
+                        setActive(btn);
+                        filterBy(filter);
+                    });
+                });
+
+                // initialize
+                const active = buttons.find(b => b.classList.contains('active')) || buttons[0];
+                if (active) { setActive(active); filterBy(active.dataset.filter || (active.textContent || '').trim().toLowerCase()); }
+            });
+        })();
+        </script>
+
+        <script src="componentes/navbar.js"></script>
 </body>
 </html>
