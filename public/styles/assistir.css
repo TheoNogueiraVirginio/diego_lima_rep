@@ -209,3 +209,33 @@ body {
     border: 1px solid rgba(31, 182, 166, 0.6);
     color: var(--color-text);
 }
+
+/* RESPONSIVIDADE: ajustar layout para telas menores */
+@media (max-width: 1200px) {
+    .player-container { width: 92%; margin-top: 60px; }
+    .video-container { max-width: 100%; width: 100%; height: auto; aspect-ratio: 16/9; }
+    .sidebar { width: 280px; }
+    .comments_practice { width: 100%; gap: 12px; }
+    .comments-section { width: calc(100% - 320px); }
+}
+
+@media (max-width: 900px) {
+    .player-container { width: 96%; margin-top: 40px; }
+    .player-body { flex-direction: column; gap: 16px; align-items: stretch; }
+    .video-container { width: 100%; height: auto; aspect-ratio: 16/9; }
+    .sidebar { width: 100%; padding: 10px; }
+    .comments_practice { flex-direction: column; }
+    .comments-section { width: 100%; height: auto; }
+    #upcoming-classes { max-height: 260px; }
+}
+
+@media (max-width: 600px) {
+    .player-container { margin-top: 24px; padding-inline: 4%; }
+    .video-container { border-radius: 8px; }
+    .sidebar { padding: 8px; border-radius: 8px; }
+    .lesson-card { height: auto; padding: 8px; font-size: 14px; }
+    .comments-section { width: 100%; padding: 8px; }
+    #comment-input { height: 40px; }
+    #submit-comment { width: 100%; }
+    .finished-video-button, .practice-button, .finished-video-button.done { width: 100%; }
+}

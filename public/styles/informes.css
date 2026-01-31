@@ -162,3 +162,29 @@
     .informes-container { width: 92%; }
     .notice-form-card { padding: 12px; }
 }
+
+@media (max-width: 768px) {
+    .titulo-secao { font-size: 28px; }
+    .subtitle { margin-left: 4%; font-size: 16px; }
+    .informes-container { width: 96%; gap: 12px; }
+    .informes-header { flex-wrap: wrap; gap: 8px; }
+    .filter-btn { padding: 8px 12px; }
+    .card { flex-direction: column; align-items: flex-start; gap: 8px; padding: 10px; }
+    .card-content { margin-left: 0; }
+    .card-title { font-size: 18px; }
+    .card-desc, .card-date { font-size: 14px; }
+    .btn-read-more { margin-right: 0; align-self: flex-end; }
+    .notice-form-card { padding: 10px; }
+}
+
+@media (max-width: 480px) {
+    .titulo-secao { font-size: 22px; margin-top: 18px; }
+    .subtitle { margin-left: 4%; font-size: 14px; }
+    .informes-container { width: 96%; padding-inline: 4%; }
+    .card { padding: 8px; gap: 6px; }
+    .card-header { gap: 6px; }
+    .color-text { font-size: 16px; }
+    .btn-read-more { padding: 6px 10px; border-radius: 10px; }
+    .notice-form-actions { justify-content: stretch; flex-direction: column-reverse; gap: 8px; }
+    .btn-primary, .btn-secondary { width: 100%; }
+}
