@@ -98,3 +98,67 @@
 .btn-read-more:hover {
     background: rgba(45, 108, 223, 0.14);
 }
+
+/* Styles for notice creation form */
+.notice-form-card {
+    background: linear-gradient(180deg, rgba(24,32,51,0.98), rgba(17,24,39,0.98));
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+
+    width: 100%;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    margin-top: 12px;
+
+    box-sizing: border-box;
+    padding: 12px;
+
+    margin-bottom: 50px;
+}
+.notice-form-card h3 { margin: 0 0 8px 0; color: var(--color-text); }
+.notice-form-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.notice-form-row label { color: var(--color-muted); font-weight:600; }
+.notice-form-row input[type="text"],
+.notice-form-row textarea { 
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(100,100,110,0.12);
+    background: rgba(255,255,255,0.02);
+    color: var(--color-text);
+    font-size: 15px;
+    outline: none;
+}
+.notice-form-row select {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(100,100,110,0.12);
+    background: rgba(255,255,255,0.02);
+    color: #9aa0a6; /* cinza escuro para o texto do select */
+    font-size: 15px;
+    outline: none;
+}
+.notice-form-row input[type="text"]:focus,
+.notice-form-row select:focus,
+.notice-form-row textarea:focus { box-shadow: 0 4px 12px rgba(45,108,223,0.12); border-color: rgba(45,108,223,0.42); }
+.notice-form-actions { display:flex; gap:10px; align-items:center; justify-content:flex-end; margin-top:8px; }
+.btn-primary {
+    background: linear-gradient(90deg,#2d6cdf,#1fb6a6);
+    border: 0;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 700;
+}
+.btn-secondary {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.06);
+    color: var(--color-text);
+    padding: 8px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+@media (max-width: 900px) {
+    .informes-container { width: 92%; }
+    .notice-form-card { padding: 12px; }
+}

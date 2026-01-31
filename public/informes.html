@@ -6,7 +6,7 @@
     <title>Informes</title>
     <link rel="stylesheet" href="/global.css">
     <link rel="stylesheet" href="/styles/informes.css">
-    <link rel="shortcut icon" href="/images/logo_diego.png">
+    <link rel="shortcut icon" href="/images/logo_diego_redonda.png">
 </head>
 <body>
 
@@ -25,20 +25,36 @@
         </div>
         </div>
 
-        <div class="informes-body">
-            <article class="card" data-category="avisos-importantes">
-                <div class="card-content">
-                    <div class="card-header">
-                        <span class="color-text">⚠️</span>
-                        <h3 class="card-title text-red">Aviso de Exemplo</h3>
-                    </div>
-                    <div class="card-date">
-                        📅 30/01/2026
-                    </div>
-                    <p class="card-desc">Este é um aviso de exemplo — apenas para demonstração da seção de informes.</p>
+        <div class="informes-body" id="informes-body">
+            <div class="no-informes" id="no-informes">Carregando informes...</div>
+        </div>
+
+        <!-- Formulário de criação (visível apenas para admin) -->
+        <div id="notice-form-container" class="notice-form-card" style="display:none;">
+            <h3>Criar novo aviso</h3>
+            <form id="notice-form">
+                <div class="notice-form-row">
+                    <label for="notice-title">Título</label>
+                    <input type="text" id="notice-title" required placeholder="Título do aviso">
                 </div>
-                <button class="btn-read-more">Ler mais</button>
-            </article>
+                <div class="notice-form-row">
+                    <label for="notice-category">Categoria</label>
+                    <select id="notice-category">
+                        <option value="avisos-importantes">Avisos Importantes</option>
+                        <option value="novidades">Novidades</option>
+                        <option value="eventos">Eventos</option>
+                        <option value="dicas">Dicas</option>
+                    </select>
+                </div>
+                <div class="notice-form-row">
+                    <label for="notice-content">Conteúdo</label>
+                    <textarea id="notice-content" rows="4" required placeholder="Escreva o conteúdo do aviso..."></textarea>
+                </div>
+                <div class="notice-form-actions">
+                    <button type="button" class="btn-secondary" id="notice-cancel">Cancelar</button>
+                    <button type="submit" class="btn-primary">Publicar aviso</button>
+                </div>
+            </form>
         </div>
         
         </div>
@@ -49,14 +65,124 @@
         (function(){
             document.addEventListener('DOMContentLoaded', () => {
                 const buttons = Array.from(document.querySelectorAll('.filter-btn'));
-                const cards = Array.from(document.querySelectorAll('.card'));
 
                 function setActive(btn){
                     buttons.forEach(b => b.classList.toggle('active', b === btn));
+                    filterBy(btn.dataset.filter || (btn.textContent || '').trim().toLowerCase());
                 }
 
+                async function loadNotices(){
+                    try {
+                        const res = await fetch('/api/avisos');
+                        const data = await res.json();
+                        renderNotices(data || []);
+                    } catch (err) {
+                        console.error('Erro ao carregar avisos', err);
+                        document.getElementById('no-informes').textContent = 'Erro ao carregar informes.';
+                    }
+                }
+
+                function renderNotices(notices){
+                    const container = document.getElementById('informes-body');
+                    container.innerHTML = '';
+                    if (!notices.length) {
+                        container.innerHTML = '<div class="no-informes">Nenhum informe disponível.</div>';
+                        return;
+                    }
+
+                    notices.forEach(n => {
+                        const art = document.createElement('article');
+                        art.className = 'card';
+                        art.dataset.category = (n.category || '').toString().toLowerCase();
+
+                        const html = `
+                        <div class="card-content">
+                            <div class="card-header">
+                                <span class="color-text">⚠️</span>
+                                <h3 class="card-title">${escapeHtml(n.title)}</h3>
+                            </div>
+                            <div class="card-date">📅 ${new Date(n.date).toLocaleDateString('pt-BR')}</div>
+                            <p class="card-desc">${escapeHtml(n.content)}</p>
+                        </div>
+                        <button class="btn-read-more">Ler mais</button>
+                        `;
+                        art.innerHTML = html;
+                        container.appendChild(art);
+                    });
+                }
+
+                function escapeHtml(str){
+                    if (!str) return '';
+                    return String(str)
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#039;');
+                }
+
+                // Check current user to show create form only for allowed email
+                async function checkAuthAndBind(){
+                    try {
+                        const me = await fetch('/api/auth/me', { credentials: 'include' });
+                        if (!me.ok) {
+                            // Mostrar banner de sessão expirou quando receber 401
+                            if (me.status === 401 && window.showLoginBanner) window.showLoginBanner();
+                            return; // not logged
+                        }
+                        const user = await me.json();
+                        if (user?.email && user.email.toLowerCase() === 'theonogueira1956@gmail.com'){
+                            document.getElementById('notice-form-container').style.display = '';
+                            bindForm();
+                        }
+                    } catch (err) {
+                        console.warn('Auth check falhou', err);
+                    }
+                }
+
+                function bindForm(){
+                    const form = document.getElementById('notice-form');
+                    form.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        const title = document.getElementById('notice-title').value.trim();
+                        const category = document.getElementById('notice-category').value; // select, value already normalized
+                        const content = document.getElementById('notice-content').value.trim();
+                        if (!title || !content) return alert('Título e conteúdo são obrigatórios');
+
+                        try {
+                            const res = await fetch('/api/avisos', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                credentials: 'include',
+                                body: JSON.stringify({ title, category, content })
+                            });
+                            if (!res.ok) {
+                                const err = await res.json().catch(()=>({error:'unknown'}));
+                                return alert('Erro ao criar aviso: ' + (err.error || res.status));
+                            }
+                            // limpa e recarrega
+                            form.reset();
+                                        await loadNotices();
+                                        // feedback sutil
+                                        const btn = document.querySelector('.btn-primary');
+                                        const prev = btn.textContent;
+                                        btn.textContent = 'Publicado ✓';
+                                        setTimeout(()=> btn.textContent = prev, 1400);
+                                        alert('Aviso criado com sucesso');
+                        } catch (err) {
+                            console.error('Erro ao criar aviso', err);
+                            alert('Erro ao criar aviso');
+                        }
+                    });
+                                // cancelar
+                                const cancel = document.getElementById('notice-cancel');
+                                cancel?.addEventListener('click', ()=> document.getElementById('notice-form').reset());
+                }
+
+                // filter
                 function filterBy(filter){
                     const key = (filter || '').trim().toLowerCase();
+                    const cards = Array.from(document.querySelectorAll('.card'));
                     cards.forEach(card => {
                         const cat = (card.dataset.category || '').trim().toLowerCase();
                         if (!key || key === 'todos') {
@@ -70,20 +196,20 @@
                 }
 
                 buttons.forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const filter = btn.dataset.filter || (btn.textContent || '').trim().toLowerCase();
-                        setActive(btn);
-                        filterBy(filter);
-                    });
+                    btn.addEventListener('click', () => setActive(btn));
                 });
 
                 // initialize
-                const active = buttons.find(b => b.classList.contains('active')) || buttons[0];
-                if (active) { setActive(active); filterBy(active.dataset.filter || (active.textContent || '').trim().toLowerCase()); }
+                loadNotices().then(()=>{
+                    const active = buttons.find(b => b.classList.contains('active')) || buttons[0];
+                    if (active) setActive(active);
+                });
+                checkAuthAndBind();
             });
         })();
         </script>
 
         <script src="componentes/navbar.js"></script>
+        <script src="/scripts/authBanner.js"></script>
 </body>
 </html>
