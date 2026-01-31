@@ -2,13 +2,33 @@
 
 .status-container {
     background: linear-gradient(180deg, rgba(45, 108, 223, 0.18) 0%, rgba(11, 16, 32, 0) 100%);
-    padding: 30px 20px;
+    padding-top: 28px;
+    padding-bottom: 28px;
     margin-bottom: 40px;
     border-bottom: 1px solid var(--color-border);
 
     text-align: left;
-    padding-left: 15%;
-    padding-right: 15%;
+    box-sizing: border-box;
+    width: 100%;
+    padding-inline: 0;
+}
+
+/* wrapper interno centralizado */
+.status-container > * {
+    box-sizing: border-box;
+    max-width: 1360px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* alinhar título e subtítulo com o primeiro container de módulos */
+.status-container h1,
+.status-container .welcome-sub {
+    box-sizing: border-box;
+    max-width: 1360px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-inline: 4%;
 }
 
 .destaque-verde {
@@ -18,14 +38,16 @@
     text-shadow: 0 0 10px rgba(245, 158, 11, 0.35);
 }
 
-.barra-total {
-    width: 100%;
-    height: 14px;
-    margin-top: 20px;
-
+.status-container .barra-total {
+    width: calc(100% - 8%);
+    max-width: 1360px;
+    height: 12px;
+    margin: 18px auto 0;
     background-color: var(--color-surface-2);
     border-radius: 10px;
     overflow: hidden;
+    box-sizing: border-box;
+    padding-inline: 4%;
 }
 
 .barra-verde {
@@ -46,6 +68,16 @@
     text-align: center;
 }
 
+/* Título da seção alinhado com o container de módulos */
+.titulo-secao {
+    color: var(--color-primary);
+    font-size: clamp(1.4rem, 2.5vw, 33px);
+    max-width: 1360px;
+    margin: 0 auto 18px;
+    padding-inline: 4%;
+    text-align: left;
+}
+
 
 
 /* ------------- COMEÇO DA ESTILIZAÇÃO DOS MÓDULOS -------------- */
@@ -54,48 +86,50 @@
 .modulos-container {
     display: flex;
     flex-wrap: wrap;
-    width: 70%;
-
-    justify-content: center; 
-    
-    gap: 20px;
-    
-    justify-self: center;
+    width: 100%;
+    max-width: 1360px;
+    gap: 28px; /* mais espaço entre os containers */
+    margin: 0 auto;
+    justify-content: flex-start;
     align-items: flex-start;
+    padding-inline: 4%;
 }
 
 
 .modulo-card {
     background: var(--color-surface);
     border-radius: 15px;
+    box-sizing: border-box;
 
-    width: 300px;
-    
+    flex: 1 1 300px;
+    max-width: 320px; /* ligeiramente menor para forçar quebra de texto */
+    min-width: 240px;
+
     font-family: Arial, sans-serif;
 
     border: 1px solid var(--color-border);
     box-shadow: 0 0 18px rgba(16, 32, 64, 0.25);
 
     transition: all 0.3s ease;
-    overflow: hidden;
+    overflow: hidden; /* garantir que o conteúdo não transborde visualmente */
 }
 
 .header-mod {
     height: 80px;
-    width: 80%;
+    width: 90%;
     user-select: none;
 
     display: flex;
     flex-direction: column;
 
-    justify-content: center;
-    align-items: center;
     justify-self: center;
+    align-items: flex-start;
 
     border-top-left-radius: 15px;
     border-top-right-radius: 15px;
 
     margin-bottom: 10px;
+    margin-top: 10px;
 }
 
 /*ESTILIZAÇAO DOS ASSUNTOS DE CADA MÓDULOS*/
@@ -104,8 +138,7 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-
-    width: 80%;
+    width: 90%;
     justify-self: center;
 }
 
@@ -125,23 +158,65 @@
 }
 */
 .subject-mod.ativo .subject-body {
-    max-height: 250px;
+    max-height: 1000px; /* suficiente para exibir todo o conteúdo sem cortar */
     opacity: 1;
-
     margin-bottom:10px;
 }
 
 
 .subject-header {
     background-color: var(--color-surface-2);
-    padding: 10px 12px;
+    padding: 8px 10px; /* reduzir padding para compactar */
     border-radius: 10px;
 
-
-    color: var(--color-text); font-size: 16px; user-select:none;
+    color: var(--color-text); font-size: 15px; user-select:none; /* diminuir fonte levemente */
 
     display: flex;
     justify-content: space-between;
+    align-items: center;
+}
+
+/* permitir que os títulos quebrem em duas linhas quando necessário */
+.subject-header > span:first-child {
+    display: inline-block;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.subject-header .seta {
+    flex: 0 0 24px;
+    text-align: right;
+    margin-left: 8px;
+}
+
+/* garantir que elementos internos respeitem a largura do container */
+.subject-header,
+.subject-body,
+.simulado-box {
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.simulado-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.simulado-info {
+    display: flex;
+    justify-content: flex-end;
+    flex: 0 0 auto;
+    min-width: 40px;
+}
+
+/* botão e layout interno responsivo dentro do box */
+.simulado-box .btn-fazer-simulado {
+    width: auto; /* não forçar 100% - permite coexistir com .simulado-info */
+    flex: 1 1 auto;
+    min-width: 0; /* permite encolher dentro do flex */
 }
 
 .seta:hover {
@@ -155,7 +230,7 @@
     opacity: 0;
     overflow: hidden;
 
-    padding: 0 15px;
+    padding: 0 10px; /* reduzir padding para evitar overflow */
 
     border: 0 solid transparent;
     border-radius: 0 0 12px 12px;
@@ -227,10 +302,10 @@
     width: 100%;
     height: 8px;
     margin-top: 5px;
-
     background-color: var(--color-surface-2);
     border-radius: 10px;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 .barra-verde-mod {
@@ -248,10 +323,42 @@
 /* Quando a tela for menor que 768px (Tablets e Celulares) */
 @media (max-width: 768px) {
     .modulos-container {
-        width: 95%; /* Aumenta a área útil */
+        width: 100%;
+        padding-inline: 4%;
+        gap: 12px;
     }
     
     .modulo-card {
-        width: 100%; /* O card ocupa toda a largura disponível no celular */
+        flex: 1 1 100%;
+        max-width: none;
+        min-width: 0;
+    }
+    .header-mod {
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 1024px) {
+    .modulo-card {
+        flex: 1 1 calc(50% - 20px);
+        max-width: none;
+    }
+}
+
+/* telas muito pequenas: 1 card por linha, semelhante a videoaulas.html */
+@media (max-width: 600px) {
+    .modulos-container {
+        justify-content: center;
+        padding-inline: 4%;
+        gap: 12px;
+    }
+    .modulo-card {
+        /* cards mais estreitos e centralizados no celular */
+        flex: 0 0 auto;
+        width: 100%;
+        max-width: 360px;
+        margin-left: auto;
+        margin-right: auto;
+        min-width: 0;
     }
 }

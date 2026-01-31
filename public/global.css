@@ -96,6 +96,52 @@ body {
     justify-content: space-between;
 }
 
+/* Navbar responsive toggle (global) */
+.nav-toggle {
+    display: none;
+    background: transparent;
+    border: 2px solid transparent;
+    color: var(--color-text);
+    font-size: 22px;
+    padding: 6px 10px;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+@media (max-width: 800px) {
+    .nav-toggle {
+        display: block;
+    }
+    .navbar {
+        position: relative;
+        padding-inline: 12px;
+    }
+    .navbar .pgs {
+        display: none;
+        position: absolute;
+        top: 80px;
+        left: 0;
+        right: 0;
+        background: var(--color-surface-2);
+        padding: 12px;
+        gap: 10px;
+        flex-direction: column;
+        align-items: stretch;
+        z-index: 30;
+        box-shadow: 0 8px 30px rgba(16, 32, 64, 0.6);
+    }
+    .navbar.open .pgs {
+        display: flex;
+    }
+    .navbar .pgs a {
+        padding: 10px 12px;
+        border-radius: 6px;
+    }
+    .navbar .user {
+        display: none; /* ocultar user no menu pequeno para não sobrecarregar */
+    }
+}
+
 
 
 .titulo-secao {
