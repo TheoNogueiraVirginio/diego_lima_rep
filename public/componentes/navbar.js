@@ -7,6 +7,8 @@ function carregarNavbar() {
             <h3 style="color: white; margin-left: 20px; font-weight: 700; font-size: 24px;">Diego Lima Matemática</h3>
         </div>
         
+        <button class="nav-toggle" aria-label="Abrir menu">☰</button>
+
         <div class="pgs">
             <a href="/videoaulas.html">Videoaulas</a>
             <a href="/simulados.html">Simulados</a>
@@ -20,6 +22,24 @@ function carregarNavbar() {
 
     document.body.insertAdjacentHTML('afterbegin', navbarHTML);
     destacarPaginaAtual();
+
+    // Toggle do menu para telas pequenas
+    const nav = document.querySelector('.navbar');
+    const toggleBtn = document.querySelector('.nav-toggle');
+    const pgs = document.querySelector('.pgs');
+
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            nav.classList.toggle('open');
+        });
+    }
+
+    // Fecha menu quando redimensiona para telas maiores
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 800 && nav.classList.contains('open')) {
+            nav.classList.remove('open');
+        }
+    });
 }
 
 
