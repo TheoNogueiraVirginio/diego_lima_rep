@@ -15,7 +15,7 @@ document.querySelector('form').addEventListener('submit', async (e) => {
 
         if (response.ok) {
             localStorage.setItem('nomeAluno', data.userName);
-            window.location.href = "/videoaulas";
+            window.location.href = "/modulos";
         } else {
             alert(data.error);
         }

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Materiais do Módulo</title>
+    <link rel="stylesheet" href="/global.css">
+    <link rel="stylesheet" href="/styles/materiais.css">
+    <link rel="shortcut icon" href="/images/logo_diego_redonda.png">
+</head>
+<body>
+
+    <div class="modulo-page">        
+        <!-- Status / barra verde (visual consistente com modulos/simulados) -->
+        <div class="status-container">
+            <h1 style="color: white;">Olá, <span id="nome-aluno">Aluno</span>!</h1>
+            <p class="welcome-sub" style="color: white;">Progresso do módulo: <span class="destaque-verde">0%</span></p>
+            <div class="barra-total">
+                <div class="barra-verde"></div>
+            </div>
+        </div>
+        <header class="modulo-header">
+            <h1 class="titulo-secao" id="modulo-title">Carregando módulo...</h1>
+            <p class="subtitle" id="modulo-desc"></p>
+        </header>
+        <div class="modulo-container">
+            <div class="modulo-controls">
+                <!-- espaço para filtros no futuro -->
+            </div>
+            <div class="modulo-body" id="assuntos-container">
+                <!-- Assuntos serão injetados aqui como cards similares aos informes -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/scripts/dados_aulas.js"></script>
+    <script src="/scripts/authBanner.js"></script>
+    <script src="/scripts/materiais.js"></script>
+    <script src="/componentes/navbar.js"></script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+/* Estilos da página de Materiais (integrado de modulo.css) */
+
+/* Barra de status semelhante a videoaulas/simulados */
+.status-container {
+	background: linear-gradient(180deg, rgba(45, 108, 223, 0.18) 0%, rgba(11, 16, 32, 0) 100%);
+	padding-top: 24px;
+	padding-bottom: 24px;
+	margin-bottom: 20px;
+	border-bottom: 1px solid var(--color-border);
+	text-align: left;
+	box-sizing: border-box;
+	width: 100%;
+}
+.status-container > * { box-sizing: border-box; max-width: 1360px; margin-left: auto; margin-right: auto; }
+.status-container h1, .status-container .welcome-sub { box-sizing: border-box; max-width: 1360px; margin-left: auto; margin-right: auto; padding-inline: 4%; }
+.status-container .barra-total { display: block; width: calc(100% - 8%); max-width: 1360px; height: 12px; margin: 18px auto 0; background-color: var(--color-surface-2); border-radius: 10px; overflow: hidden; box-sizing: border-box; }
+.barra-verde { height:100%; background: linear-gradient(90deg,#2d6cdf,#1fb6a6); border-radius:10px; width:0%; }
+
+.modulo-header{
+	padding: 12px 16px;
+}
+.modulo-header .subtitle{ margin-top: 6px; color: var(--color-muted); }
+
+
+.assuntos-section{ padding: 12px 0; }
+
+.assuntos-container{
+	display: flex;
+	gap: 12px;
+	overflow-x: auto;
+	padding-bottom: 8px;
+}
+
+/* Container principal do módulo (substitui uso de classes de 'informes') */
+.modulo-container{
+	width: 70%;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	justify-self: center;
+	margin: 0 auto;
+}
+
+.modulo-controls{ display:flex; justify-content:center; }
+
+/* corpo que contém os assuntos - centralizar os cards */
+.modulo-body#assuntos-container{
+	display: flex;
+	gap: 20px;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+.assunto-card{
+	background: linear-gradient(180deg, rgba(24,32,51,0.95), rgba(17,24,39,0.95));
+	border: 1px solid var(--color-border);
+	border-radius: 8px;
+	width: 100%;
+	max-width: 100%;
+	box-shadow: 0 8px 22px rgba(0,0,0,0.28);
+	color: var(--color-text);
+}
+
+.assunto-header{
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	background: var(--color-surface-2);
+	border: none;
+	padding: 14px 12px 14px 0;
+	font-size: 16px;
+	cursor: pointer;
+	color: var(--color-text);
+	border-radius: 8px; /* mantém cantos arredondados quando fechado */
+}
+.assunto-title{ font-weight: 700; }
+.assunto-toggle{ opacity: 0.9; }
+
+.assunto-content{
+	padding: 12px 16px;
+	background: linear-gradient(180deg, rgba(17,24,39,0.02), rgba(17,24,39,0.06));
+	border-top: none;
+	overflow: hidden;
+	max-height: 0;
+	transition: max-height 300ms ease, padding 200ms ease;
+}
+
+/* Quando fechado: esconder totalmente sem mostrar bordas internas */
+.assunto-card:not(.ativo) .assunto-content{
+	padding-top: 0;
+	padding-bottom: 0;
+	max-height: 0 !important;
+}
+
+/* Quando aberto: expandir conteúdo */
+.assunto-card.ativo .assunto-content{
+	padding: 12px 16px;
+	max-height: 800px; /* valor suficiente para conteúdo */
+}
+
+/* Ajustar cantos ao expandir para evitar 'bordinha' entre header e conteúdo */
+.assunto-card.ativo .assunto-header{
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
+}
+.assunto-card.ativo{ border-radius: 8px; }
+.assunto-card.ativo .assunto-content{ border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; }
+.assunto-content ul{ list-style: none; padding: 0; margin: 0; }
+.assunto-content li{ margin: 8px 0; }
+.assunto-content a{ color: var(--link-color, #2d6cdf); text-decoration: none; }
+.assunto-content a.link-player{ font-weight: 700; color: #2d6cdf; }
+
+/* Layout interno do accordion: grid com 2 colunas e caixas compactas */
+.assunto-content ul{
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+.assunto-content li{ margin: 0; }
+.assunto-content a{
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 12px;
+	border-radius: 10px;
+	background: var(--color-surface-2);
+	border: 1px solid rgba(255,255,255,0.03);
+	box-shadow: none; /* garantir que não haja sombra nas caixas internas */
+	font-size: 14px;
+	color: var(--color-text);
+}
+
+/* Thumbnail + legend layout inside each accordion item */
+.assunto-content a .item-thumb{
+	width: 48px;
+	height: 48px;
+	border-radius: 8px;
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	flex: 0 0 48px;
+	box-shadow: inset 0 0 0 1px rgba(0,0,0,0.12);
+}
+.assunto-content a .item-info{
+	display:flex;
+	flex-direction:column;
+	align-items:flex-start;
+}
+.assunto-content a .item-title{ font-weight:700; }
+.assunto-content a .item-sub{ font-size:12px; color: var(--color-muted); margin-top:2px; }
+
+/* Player ocupa toda a largura do grid (primeiro item) */
+.assunto-content li:first-child a{
+	grid-column: 1 / -1;
+	padding: 12px 14px;
+	font-weight: 800;
+}
+
+/* Tornar as caixas um pouco mais compactas que na imagem de referência */
+
+.assunto-header{ padding: 10px 12px; }
+.assunto-content{ padding: 8px 12px; }
+
+/* small responsive tweaks */
+@media (max-width: 640px){
+	.assunto-card{ min-width: 260px; }
+}
+
+/* miniatura específica para materiais */
+.assunto-left{ display:flex; align-items:center; gap:12px; }
+.assunto-thumb{ max-width: 60px; height: auto; border-radius: 6px; }
+

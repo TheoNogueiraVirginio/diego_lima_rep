@@ -49,8 +49,8 @@ app.get('/login', (req, res) => {
     res.redirect('/login.html');
 });
 
-app.get('/videoaulas', (req, res) => {
-    res.redirect('/videoaulas.html');
+app.get('/modulos', (req, res) => {
+    res.redirect('/modulos.html');
 });
 
 app.get('/simulados', (req, res) => {

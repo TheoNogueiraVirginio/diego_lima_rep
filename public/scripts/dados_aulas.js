@@ -1,6 +1,6 @@
 const cursoData = {
     "1": { // ID do Módulo 1
-        tituloModulo: "Módulo 1: Matemática Básica",
+        tituloModulo: "Módulo 1",
         aulas: [
             {titulo: "Identidades Importantes", vimeoId: "76979871"},
             {titulo: "Equações do 1º e 2º Grau", vimeoId: "123456789"},
@@ -12,7 +12,7 @@ const cursoData = {
         ]
     },
     "2": { // ID do Módulo 2
-        tituloModulo: "Módulo 2: Funções",
+        tituloModulo: "Módulo 2",
         aulas: [
             {titulo: "Parábola e Função Quadrática", vimeoId: "11223344" },
             {titulo: "Módulo e Função Modular", vimeoId: "55667788" },
@@ -23,7 +23,7 @@ const cursoData = {
         ]
     },
     "3": { // ID do Módulo 3
-        tituloModulo: "Módulo 3: Álgebra e Trigonometria",
+        tituloModulo: "Módulo 3",
         aulas: [
             {titulo: "Trigonometria", vimeoId: "99887766" },
             {titulo: "Funções Trigonométricas", vimeoId: "99887766" },
@@ -35,7 +35,7 @@ const cursoData = {
 },
 
     "4": {
-        tituloModulo: "Módulo 4: Geometria Plana e Espacial",
+        tituloModulo: "Módulo 4",
         aulas: [
             {titulo: "Triângulos", vimeoId: "00000001" },
             {titulo: "Polígonos e Quadriláteros", vimeoId: "00000002" },

@@ -1,3 +1,5 @@
+/* Copiado de videoaulas.css para suportar renomeação para 'modulos' */
+
 /* ---------- COMEÇO DA ESTILIZAÇÃO DA BARRA DE PROGRESSO ---------- */
 
 .status-container {
@@ -48,12 +50,11 @@
     border-radius: 10px;
     overflow: hidden;
     box-sizing: border-box;
-    padding-inline: 4%;
 }
 
 .barra-verde {
     height: 100%;
-    background-color: var(--color-accent);
+    background: linear-gradient(90deg,#2d6cdf,#1fb6a6);
     border-radius: 10px;
 
     /* estado inicial: 0% até o JS atualizar dinamicamente */
