@@ -42,11 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <ul>
                     <li>
                         <a class="link-player" href="assistir.html?id=${moduloId}.${assuntoIndex}">
-                            ${isEquacoes ? `
-                                <div class="item-thumb" style="background-image:url('/images/images_assuntos/image_funcaoFx.png')"></div>
-                            ` : `
-                                <div class="item-thumb" data-src=""></div>
-                            `}
+                            <div class="item-thumb" data-src="/images/images_modulos/image_video.png"></div>
                             <div class="item-info">
                                 <span class="item-title">Player de videoaulas</span>
                                 <span class="item-sub">Assistir Aula (15min)</span>
@@ -55,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </li>
                     <li>
                         <a href="#">
-                            <div class="item-thumb" data-src=""></div>
+                            <div class="item-thumb" data-src="/images/images_modulos/image_pdf.png"></div>
                             <div class="item-info">
                                 <span class="item-title">Material Teórico</span>
                                 <span class="item-sub">Ler Resumo</span>
@@ -64,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </li>
                     <li>
                         <a href="#">
-                            <div class="item-thumb" data-src=""></div>
+                            <div class="item-thumb" data-src="/images/images_modulos/image_listaExercicios.png"></div>
                             <div class="item-info">
                                 <span class="item-title">Lista de Exercícios</span>
                                 <span class="item-sub">Praticar</span>
@@ -73,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </li>
                     <li>
                         <a href="#">
-                            <div class="item-thumb" data-src=""></div>
+                            <div class="item-thumb" data-src="/images/images_modulos/image_gabarito.png"></div>
                             <div class="item-info">
                                 <span class="item-title">Gabarito</span>
                                 <span class="item-sub">Conferir Respostas</span>
@@ -110,6 +106,44 @@ document.addEventListener('DOMContentLoaded', () => {
         content.style.maxHeight = null;
 
         container.appendChild(card);
+    });
+
+    // após criar todos os cards, tentar carregar as miniaturas dinamicamente
+    function tryLoadThumb(el, candidates, i = 0){
+        if (!el || i >= candidates.length) return;
+        const url = candidates[i];
+        if (!url) return tryLoadThumb(el, candidates, i+1);
+        const img = new Image();
+        img.onload = () => {
+            el.style.backgroundImage = `url('${url}')`;
+        };
+        img.onerror = () => tryLoadThumb(el, candidates, i+1);
+        img.src = url;
+    }
+
+    // criar thumbs para cada card
+    document.querySelectorAll('.assunto-card').forEach((card, cardIndex) => {
+        const aula = (mod && mod.aulas && mod.aulas[cardIndex]) || {};
+        const thumbs = card.querySelectorAll('.item-thumb');
+        thumbs.forEach((thumbEl, i) => {
+            // priorizar campo aula.thumb, senão tentar por título slug, senão fallback
+            const nameSlug = (aula.titulo || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g,'');
+            const candidates = [];
+            if (aula.thumb) candidates.push(aula.thumb);
+            // tentar em images_assuntos
+            if (nameSlug) candidates.push(`/images/images_assuntos/${nameSlug}.png`);
+            // tentar padrão por vimeoId
+            if (aula.vimeoId) candidates.push(`/images/images_assuntos/${aula.vimeoId}.png`);
+            // imagens conhecidas
+            candidates.push('/images/images_assuntos/image_funcaoFx.png');
+            candidates.push('/images/teste.png');
+
+            // se elemento já tem data-src explícito, tentar primeiro
+            const dataSrc = thumbEl.getAttribute('data-src');
+            if (dataSrc) candidates.unshift(dataSrc);
+
+            tryLoadThumb(thumbEl, candidates);
+        });
     });
 
     try{

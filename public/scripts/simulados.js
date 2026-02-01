@@ -17,24 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 document.addEventListener('DOMContentLoaded', () => {
-
-    const setas = document.querySelectorAll('.seta');
-
-    setas.forEach(seta => {
-        seta.addEventListener('click', (e) => {
-            e.preventDefault();
-            
-            // Impede que o clique "vaze" para elementos pai (se houver)
-            e.stopPropagation(); 
-
-            const subjectClicado = e.target.closest('.subject-mod');
-
-            if (subjectClicado) {
-                subjectClicado.classList.toggle('ativo');
-            }
-        });
-    });
-
+});
+    // Accordion removed: subjects should display without toggling.
 });
 
 

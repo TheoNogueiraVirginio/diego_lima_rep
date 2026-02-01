@@ -106,6 +106,13 @@ h4 {
     background-position: center bottom;
 }
 
+/* Versão branca do papel rasgado (mesma curva, preenchida em branco) */
+.torn-divider--white {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M0,0V46.29c47,0,115,38.13,193.67,58.34s159.69,15.34,210.82,9.75,108.46-27.93,163.86-40.5S688.69,56,721.81,56s68.2,23.74,144.66,40.51,165.09-15.35,205.48-40.51C1131.28,23,1170.62,0,1200,0Z' fill='%23ffffff'/%3E%3C/svg%3E");
+    background-size: 150% 100%;
+    background-position: center bottom;
+}
+
 .torn-bottom {
     transform: scaleY(-1);
     top: 1px;
@@ -489,5 +496,26 @@ footer {
     .highlight-info {
         text-align: left;
         margin-left: 30px;
+    }
+}
+
+/* --- CARD PROMOCIONAL --- */
+.promo-card-wrapper {
+    display: flex;
+    justify-content: center;
+}
+
+.promo-image {
+    max-width: 560px;
+    width: 100%;
+    height: auto;
+    border-radius: 18px;
+    box-shadow: 0 12px 36px rgba(0,0,0,0.45);
+    display: inline-block;
+}
+
+@media (min-width: 1200px) {
+    .promo-image {
+        max-width: 720px;
     }
 }
