@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Monitoramento de Desempenho</title>
+
+  <link rel="shortcut icon" href="/images/logo_diego_redonda.png">
+  <link rel="stylesheet" href="/styles/monitoramento.css" />
+  <link rel="stylesheet" href="/global.css" />
+</head>
+<body>
+  <header>
+    <script src="componentes/navbar.js"></script>
+  </header>
+
+  <main class="container">
+    <h1 class="page-title">Monitoramento de Desempenho</h1>
+
+    <section class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-title">Alunos Ativos</div>
+        <div class="metric-value"><span id="activeStudentsCount"></span> <span class="metric-sub"><span id="activeStudentsPercent"></span></span></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">Conclusão Média (Aulas)</div>
+        <div class="metric-value"> <span id="averageLessonsPercent">—</span> <span class="metric-sub">média</span></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">Média Geral (Simulados)</div>
+        <div class="metric-value">7.5/10</div>
+      </div>
+      <div class="metric-card warn">
+        <div class="metric-title">Alunos em Risco</div>
+        <div class="metric-value">120 <span class="metric-sub">(9.6%)</span></div>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div class="left-panel">
+        <div class="panel">
+          <div class="panel-header">Progresso por Aluno</div>
+          <div class="filters">
+            <input id="studentSearch" placeholder="Pesquisar por nome/ID" />
+            <div id="courseFilter" class="custom-select" tabindex="0" data-value="">
+              <span class="cs-label">Modalidade</span>
+
+              <ul class="cs-options" aria-hidden="true">
+                <li data-value="">Todas</li>
+                <li data-value="COM_MATERIAL">Com material</li>
+                <li data-value="SEM_MATERIAL">Sem material</li>
+              </ul>
+            </div>
+            <select><option>Status</option></select>
+          </div>
+
+          <table class="students-table">
+            <thead>
+              <tr>
+                <th>Nome do Aluno</th>
+                <th>Último Acesso</th>
+                <th>Módulo Atual</th>
+                <th>Aulas Assistidas</th>
+                <th>Simulados Concluídos</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="studentsBody">
+              <!-- Rows serão populadas via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <aside class="right-panel">
+        <div class="panel small">
+          <div class="panel-header">Métricas de Simulados</div>
+          <canvas id="lineChart" height="140"></canvas>
+        </div>
+        <div class="panel small">
+          <div class="panel-header">Distribuição de Notas</div>
+          <canvas id="barChart" height="140"></canvas>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script src="/scripts/monitoramento.js"></script>
+</body>
+</html>

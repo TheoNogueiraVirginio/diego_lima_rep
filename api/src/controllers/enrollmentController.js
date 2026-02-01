@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import nodemailer from 'nodemailer';
+import { readFile } from 'fs/promises';
+import path from 'path';
 import { signAccess, signRefresh, ACCESS_EXPIRES, REFRESH_EXPIRES } from '../utils/jwt.js';
 
 const prisma = new PrismaClient();
@@ -18,7 +20,7 @@ const PRECOS = {
 };
 
 async function calcularPreco(modalidade) {
-    const totalAlunosPagos = await prisma.enrollment.count({ where: { status: 'PAID' } });
+    const totalAlunosPagos = await prisma.enrollment.count({ where: { status: { in: ['PAID','ADMIN'] } } });
     const agora = new Date();
 
     // A partir de agora sempre retornar o preço da TIER_3 como padrão.
@@ -155,7 +157,7 @@ export const createEnrollment = async (req, res) => {
             }
             
             // 1) Impedir sobrescrição de um PAID
-            if (alunoExistente.status === 'PAID') {
+            if (['PAID','ADMIN'].includes(alunoExistente.status)) {
                 console.warn('⚠️ [createEnrollment] Tentativa de criação/atualização para usuário já PAID.');
                 return res.status(409).json({ error: 'Usuário já possui inscrição paga.' });
             }
@@ -299,7 +301,7 @@ export const createEnrollment = async (req, res) => {
         }
 
         // Se o pagamento foi aprovado imediatamente (cartão), marca PAID e envia e-mail
-        if (mpResponse.status === 'approved') {
+                if (mpResponse.status === 'approved') {
             try {
                 await prisma.enrollment.update({ where: { id: alunoId }, data: { status: 'PAID' } });
             } catch (err) {
@@ -361,7 +363,7 @@ export const checkPaymentStatus = async (req, res) => {
             where: { paymentId: id }
         });
 
-        if (existingPayment && existingPayment.status === 'PAID') {
+        if (existingPayment && ['PAID','ADMIN'].includes(existingPayment.status)) {
             return res.json({ status: status, message: "Pagamento já processado." }); 
         }
 
@@ -480,9 +482,9 @@ export const verifyLogin = async (req, res) => {
             return res.status(401).json({ error: "Senha incorreta." });
         };
                 
-        if (user.status !== 'PAID') {
-             return res.status(403).json({ error: "Seu pagamento ainda não foi confirmado." });
-        }
+           if (!['PAID','ADMIN'].includes(user.status)) {
+               return res.status(403).json({ error: "Seu pagamento ainda não foi confirmado." });
+           }
 
         // Gerar tokens e setar cookies para compatibilidade com novo fluxo
         const accessToken = signAccess(user.id);
@@ -516,4 +518,155 @@ export const verifyLogin = async (req, res) => {
         console.error('❌ [verifyLogin] Erro:', err.message);
         res.status(500).json({ error: 'Erro ao verificar login' });
         };
+};
+
+// Lista alunos com status PAID (para uso no painel administrativo)
+export const listPaidEnrollments = async (req, res) => {
+    try {
+        const q = req.query.q ? String(req.query.q).trim() : '';
+        const modality = req.query.modality ? String(req.query.modality).trim() : '';
+
+        let whereClause;
+        if (!q) {
+            whereClause = { status: { in: ['PAID','ADMIN'] } };
+        } else {
+            // Buscar nomes que começam com 'q' ou que contenham ' q' (após espaço)
+            // Ex: q = 'T' -> matches 'Tiago' (startsWith) and 'Ana Tavares' (contains ' T')
+            whereClause = {
+                status: { in: ['PAID','ADMIN'] },
+                OR: [
+                    { name: { startsWith: q } },
+                    { name: { contains: ' ' + q } }
+                ]
+            };
+        }
+
+        // Se modalidade fornecida, adicionar filtro (AND)
+        if (modality) {
+            whereClause = Object.assign({}, whereClause, { modality });
+        }
+
+        const students = await prisma.enrollment.findMany({
+            where: whereClause,
+            orderBy: { name: 'asc' },
+            take: 200,
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                cpf: true,
+                phone: true,
+                modality: true,
+                amount: true,
+                createdAt: true
+            }
+        });
+
+        // Compute real lessons-watched percentage per student
+        const ids = students.map(s => s.id);
+
+        // Determine total lessons from env or course_meta.json fallback
+        let totalLessons = Number(process.env.TOTAL_LESSONS || 0);
+        if (!totalLessons || totalLessons <= 0) {
+            try {
+                const metaPath = path.resolve(process.cwd(), 'data', 'course_meta.json');
+                const raw = await readFile(metaPath, 'utf8');
+                const meta = JSON.parse(raw);
+                if (meta && Number(meta.totalLessons)) totalLessons = Number(meta.totalLessons);
+            } catch (e) {
+                // fallback default
+                totalLessons = 26;
+            }
+        }
+
+        let completedMap = {};
+        if (ids.length > 0) {
+            try {
+                const grouped = await prisma.lessonProgress.groupBy({
+                    by: ['enrollmentId'],
+                    where: { enrollmentId: { in: ids }, status: 'COMPLETED' },
+                    _count: { _all: true }
+                });
+                grouped.forEach(g => { completedMap[String(g.enrollmentId)] = g._count._all || 0; });
+            } catch (e) {
+                // If groupBy isn't supported or fails, silently continue with zeros
+                console.warn('[listPaidEnrollments] groupBy failed, skipping progress counts', e.message || e);
+            }
+        }
+
+        const studentsWithProgress = students.map(s => {
+            const completed = completedMap[String(s.id)] || 0;
+            const lessonsPercent = totalLessons > 0 ? Math.round((completed / totalLessons) * 100) : 0;
+            return Object.assign({}, s, { lessonsCompleted: completed, lessonsPercent });
+        });
+
+        return res.json(studentsWithProgress);
+    } catch (err) {
+        console.error('❌ [listPaidEnrollments] Erro:', err);
+        console.error(err.stack);
+        // Em ambiente de desenvolvimento, devolver detalhes; em produção, manter mensagem genérica
+        const isDev = process.env.NODE_ENV !== 'production';
+        return res.status(500).json({ error: 'Erro ao buscar alunos pagos', details: isDev ? (err.message || String(err)) : undefined });
+    }
+};
+
+// Resumo: total de inscritos e quantos estão PAID
+export const enrollmentSummary = async (req, res) => {
+    try {
+        const paidCount = await prisma.enrollment.count({ where: { status: { in: ['PAID','ADMIN'] } } });
+        const totalCount = await prisma.enrollment.count();
+        const percent = totalCount ? Math.round((paidCount / totalCount) * 100) : 0;
+        // Calculate average lessons completion percent for PAID students
+        let averageLessonsPercent = 0;
+        try {
+            if (paidCount > 0) {
+                const paidStudents = await prisma.enrollment.findMany({ where: { status: { in: ['PAID','ADMIN'] } }, select: { id: true } });
+                const ids = paidStudents.map(s => s.id);
+
+                // Determine totalLessons
+                let totalLessons = Number(process.env.TOTAL_LESSONS || 0);
+                if (!totalLessons || totalLessons <= 0) {
+                    try {
+                        const metaPath = path.resolve(process.cwd(), 'data', 'course_meta.json');
+                        const raw = await readFile(metaPath, 'utf8');
+                        const meta = JSON.parse(raw);
+                        if (meta && Number(meta.totalLessons)) totalLessons = Number(meta.totalLessons);
+                    } catch (e) {
+                        totalLessons = 26;
+                    }
+                }
+
+                let completedMap = {};
+                if (ids.length > 0) {
+                    try {
+                        const grouped = await prisma.lessonProgress.groupBy({
+                            by: ['enrollmentId'],
+                            where: { enrollmentId: { in: ids }, status: 'COMPLETED' },
+                            _count: { _all: true }
+                        });
+                        grouped.forEach(g => { completedMap[String(g.enrollmentId)] = g._count._all || 0; });
+                    } catch (e) {
+                        console.warn('[enrollmentSummary] groupBy failed, skipping progress counts', e.message || e);
+                    }
+                }
+
+                // Compute per-student percent and average
+                const percents = ids.map(id => {
+                    const completed = completedMap[String(id)] || 0;
+                    return totalLessons > 0 ? Math.round((completed / totalLessons) * 100) : 0;
+                });
+
+                const sum = percents.reduce((a, b) => a + b, 0);
+                averageLessonsPercent = percents.length ? Math.round(sum / percents.length) : 0;
+            }
+        } catch (e) {
+            console.warn('[enrollmentSummary] erro ao calcular média de conclusão:', e.message || e);
+            averageLessonsPercent = 0;
+        }
+
+        return res.json({ paidCount, totalCount, percent, averageLessonsPercent });
+    } catch (err) {
+        console.error('❌ [enrollmentSummary] Erro:', err);
+        return res.status(500).json({ error: 'Erro ao calcular resumo de inscrições', details: process.env.NODE_ENV !== 'production' ? String(err) : undefined });
+    }
 };

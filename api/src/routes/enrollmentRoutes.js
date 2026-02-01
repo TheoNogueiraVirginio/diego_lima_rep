@@ -1,5 +1,5 @@
 import express from "express";
-import { createEnrollment, checkPaymentStatus, getExistingEnrollment, verifyLogin } from "../controllers/enrollmentController.js";
+import { createEnrollment, checkPaymentStatus, getExistingEnrollment, verifyLogin, listPaidEnrollments, enrollmentSummary } from "../controllers/enrollmentController.js";
 
 import prisma from "../db.js";
 
@@ -9,6 +9,8 @@ const router = express.Router();
 router.post("/register", createEnrollment);
 
 router.get("/existing", getExistingEnrollment);
+router.get("/paid", listPaidEnrollments);
+router.get("/summary", enrollmentSummary);
 router.get("/status/:id", checkPaymentStatus)
 
 

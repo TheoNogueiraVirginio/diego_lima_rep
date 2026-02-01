@@ -21,7 +21,7 @@
             <button class="filter-btn" data-filter="avisos-importantes">Avisos Importantes</button>
             <button class="filter-btn" data-filter="novidades">Novidades</button>
             <button class="filter-btn" data-filter="eventos">Eventos</button>
-            <button class="filter-btn" data-filter="dicas">Dicas</button>
+            <!--<button class="filter-btn" data-filter="dicas">Dicas</button>-->
         </div>
         </div>
 
@@ -43,7 +43,7 @@
                         <option value="avisos-importantes">Avisos Importantes</option>
                         <option value="novidades">Novidades</option>
                         <option value="eventos">Eventos</option>
-                        <option value="dicas">Dicas</option>
+                        <!-- option 'Dicas' removida -->
                     </select>
                 </div>
                 <div class="notice-form-row">
@@ -81,7 +81,6 @@
                         document.getElementById('no-informes').textContent = 'Erro ao carregar informes.';
                     }
                 }
-
                 function renderNotices(notices){
                     const container = document.getElementById('informes-body');
                     container.innerHTML = '';
@@ -93,6 +92,7 @@
                     notices.forEach(n => {
                         const art = document.createElement('article');
                         art.className = 'card';
+                        art.style.position = 'relative';
                         art.dataset.category = (n.category || '').toString().toLowerCase();
 
                         const html = `
@@ -107,6 +107,45 @@
                         <button class="btn-read-more">Ler mais</button>
                         `;
                         art.innerHTML = html;
+
+                        // If current user is admin, add delete button
+                        try {
+                            if (window.__isAdmin) {
+                                const del = document.createElement('button');
+                                del.className = 'notice-delete';
+                                del.setAttribute('data-id', n.id);
+                                del.title = 'Excluir aviso';
+                                del.style.position = 'absolute';
+                                del.style.top = '8px';
+                                del.style.right = '8px';
+                                del.style.background = 'transparent';
+                                del.style.border = 'none';
+                                del.style.color = '#ff8080';
+                                del.style.fontSize = '18px';
+                                del.style.cursor = 'pointer';
+                                del.textContent = '✕';
+                                del.addEventListener('click', async (e) => {
+                                    e.stopPropagation();
+                                    if (!confirm('Excluir este aviso?')) return;
+                                    try {
+                                        const id = del.getAttribute('data-id');
+                                        const res = await fetch('/api/avisos/' + encodeURIComponent(id), { method: 'DELETE', credentials: 'include' });
+                                        if (!res.ok) {
+                                            const err = await res.json().catch(()=>({error:'unknown'}));
+                                            return alert('Erro ao excluir: ' + (err.error || res.status));
+                                        }
+                                        art.remove();
+                                    } catch (err) {
+                                        console.error('Erro ao excluir aviso', err);
+                                        alert('Erro ao excluir aviso');
+                                    }
+                                });
+                                art.appendChild(del);
+                            }
+                        } catch (e) {
+                            // ignore
+                        }
+
                         container.appendChild(art);
                     });
                 }
@@ -126,17 +165,23 @@
                     try {
                         const me = await fetch('/api/auth/me', { credentials: 'include' });
                         if (!me.ok) {
-                            // Mostrar banner de sessão expirou quando receber 401
                             if (me.status === 401 && window.showLoginBanner) window.showLoginBanner();
+                            window.__isAdmin = false;
                             return; // not logged
                         }
                         const user = await me.json();
-                        if (user?.email && user.email.toLowerCase() === 'theonogueira1956@gmail.com'){
+                        const statusNorm = String(user?.status || '').toUpperCase().trim();
+                        const isAdmin = statusNorm === 'ADMIN';
+                        window.__isAdmin = isAdmin;
+                        if (isAdmin){
                             document.getElementById('notice-form-container').style.display = '';
                             bindForm();
+                            // reload notices so admin controls appear
+                            await loadNotices();
                         }
                     } catch (err) {
                         console.warn('Auth check falhou', err);
+                        window.__isAdmin = false;
                     }
                 }
 

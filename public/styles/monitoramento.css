@@ -1,0 +1,70 @@
+:root{
+  --bg:#0f1221; --panel:#151725; --muted:#9aa0b4; --accent:#6ee7b7; --danger:#ff6b6b;
+}
+*{box-sizing:border-box;font-family:Inter,Roboto,Arial, sans-serif}
+body{margin:0;background:linear-gradient(180deg,#0c0e18 0%, #0f1221 100%);color:#e6eef8}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;background:rgba(255,255,255,0.02);backdrop-filter:blur(6px)}
+.brand{font-weight:700}
+.tabs a{color:var(--muted);margin-left:18px;text-decoration:none}
+.container{max-width:1200px;margin:28px auto;padding:0 20px}
+.page-title{font-size:22px;margin:8px 0 20px}
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+.metric-card{background:var(--panel);padding:18px;border-radius:10px}
+.metric-title{font-size:13px;color:var(--muted);margin-bottom:8px}
+.metric-value{font-size:26px;font-weight:700}
+.metric-sub{color:var(--muted);font-weight:600;font-size:13px;margin-left:8px}
+.metric-card.warn{border-left:4px solid #ff7a7a}
+.content-grid{display:grid;grid-template-columns:1fr 360px;gap:18px}
+.panel{background:var(--panel);padding:14px;border-radius:10px}
+.panel.small{margin-bottom:14px}
+.panel-header{font-weight:700;margin-bottom:12px}
+.filters{display:flex;gap:8px;margin-bottom:12px}
+.filters input{flex:1;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.03);background:rgba(255,255,255,0.01);color:inherit}
+.filters select{padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.03);background:rgba(255,255,255,0.01);color:inherit}
+
+/* Estilo específico para o seletor de curso: mesmo fundo do input de busca */
+#courseFilter{
+  background: rgba(255,255,255,0.01);
+  color: inherit;
+  border: 1px solid rgba(255,255,255,0.03);
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 28px; /* espaço para ícone */
+}
+/* opções dentro do select */
+#courseFilter option{background: rgba(255,255,255,0.01); color: inherit}
+
+/* remover seta nativa no IE/Edge e garantir que o dropdown herde estilos */
+#courseFilter::-ms-expand{display:none}
+
+/* Seta customizada (visual apenas) */
+#courseFilter{background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 14px) calc(50% - 2px), calc(100% - 8px) calc(50% - 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+/* Custom select replacement styles (options background same cinza translúcido) */
+.custom-select{position:relative;display:inline-flex;align-items:center;gap:8px;padding:8px;border-radius:6px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.03);color:inherit;cursor:pointer;min-width:160px}
+.custom-select:focus{outline:2px solid rgba(143,183,255,0.06)}
+.custom-select .cs-label{flex:1}
+.custom-select .cs-arrow{color:var(--muted);font-size:12px}
+.custom-select .cs-options{position:absolute;left:0;right:0;top:calc(100% + 6px);list-style:none;margin:0;padding:6px 0;border-radius:8px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.03);box-shadow:0 6px 18px rgba(2,6,23,0.6);z-index:60;display:none;max-height:220px;overflow:auto}
+.custom-select .cs-options li{padding:8px 12px;cursor:pointer;color:inherit}
+.custom-select .cs-options li:hover{background:rgba(255,255,255,0.02)}
+.custom-select.open .cs-options{display:block}
+
+.students-table{width:100%;border-collapse:collapse;font-size:13px}
+.students-table thead th{text-align:left;color:var(--muted);padding:10px 8px}
+.students-table tbody td{padding:10px 8px;border-top:1px solid rgba(255,255,255,0.02)}
+.progress{width:120px;height:8px;background:rgba(255,255,255,0.03);border-radius:999px;display:inline-block;margin-right:6px}
+.progress>div{height:100%;background:linear-gradient(90deg,var(--accent),#3ad9ff);border-radius:999px}
+.status{padding:6px 8px;border-radius:6px;font-weight:600;font-size:12px}
+.status.active{background:rgba(110,231,183,0.06);color:var(--accent)}
+.status.caution{background:rgba(255,210,96,0.06);color:#ffd166}
+.status.risk{background:rgba(255,107,107,0.06);color:var(--danger)}
+.link{color:#8fb7ff;cursor:pointer;text-decoration:none}
+.right-panel{display:flex;flex-direction:column}
+canvas{width:100%!important}
+
+@media(max-width:980px){.content-grid{grid-template-columns:1fr}.metrics-grid{grid-template-columns:repeat(2,1fr)}.right-panel{order:2}}

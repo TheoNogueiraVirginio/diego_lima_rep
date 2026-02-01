@@ -106,6 +106,21 @@ document.addEventListener('DOMContentLoaded', () => {
         content.style.maxHeight = null;
 
         container.appendChild(card);
+
+        // inserir placeholder de miniatura no header quando não for equações
+        // isso permite carregar imagens como `image_conjuntos.png`
+        try {
+            const aulaTitle = aula.titulo || '';
+            const nameSlug = aulaTitle.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g,'');
+            const headerLeft = card.querySelector('.assunto-left');
+            if (headerLeft && !headerLeft.querySelector('.assunto-thumb') && nameSlug) {
+                const img = document.createElement('img');
+                img.className = 'assunto-thumb';
+                img.alt = 'miniatura';
+                img.setAttribute('data-src', `/images/images_assuntos/image_${nameSlug}.png`);
+                headerLeft.insertBefore(img, headerLeft.firstChild);
+            }
+        } catch(e) {}
     });
 
     // após criar todos os cards, tentar carregar as miniaturas dinamicamente
@@ -115,7 +130,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!url) return tryLoadThumb(el, candidates, i+1);
         const img = new Image();
         img.onload = () => {
-            el.style.backgroundImage = `url('${url}')`;
+                if (el.tagName && el.tagName.toUpperCase() === 'IMG') {
+                    el.src = url;
+                } else {
+                    el.style.backgroundImage = `url('${url}')`;
+                }
         };
         img.onerror = () => tryLoadThumb(el, candidates, i+1);
         img.src = url;
@@ -132,6 +151,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (aula.thumb) candidates.push(aula.thumb);
             // tentar em images_assuntos
             if (nameSlug) candidates.push(`/images/images_assuntos/${nameSlug}.png`);
+            // também tentar arquivos com prefixo `image_`
+            if (nameSlug) candidates.push(`/images/images_assuntos/image_${nameSlug}.png`);
             // tentar padrão por vimeoId
             if (aula.vimeoId) candidates.push(`/images/images_assuntos/${aula.vimeoId}.png`);
             // imagens conhecidas
@@ -144,6 +165,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             tryLoadThumb(thumbEl, candidates);
         });
+
+        // carregar miniatura do header (assunto) se existir placeholder ou imagem já colocada
+        const headerThumb = card.querySelector('.assunto-thumb');
+        if (headerThumb) {
+            const nameSlug = (aula.titulo || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g,'');
+            const headerCandidates = [];
+            if (aula.thumb) headerCandidates.push(aula.thumb);
+            if (nameSlug) headerCandidates.push(`/images/images_assuntos/image_${nameSlug}.png`);
+            if (nameSlug) headerCandidates.push(`/images/images_assuntos/${nameSlug}.png`);
+            if (aula.vimeoId) headerCandidates.push(`/images/images_assuntos/${aula.vimeoId}.png`);
+            headerCandidates.push('/images/images_assuntos/image_funcaoFx.png');
+            tryLoadThumb(headerThumb, headerCandidates);
+        }
     });
 
     try{

@@ -33,7 +33,8 @@ function isAllowed(userEmail) {
 export const createNotice = async (req, res) => {
   try {
     const user = req.enrollment;
-    if (!isAllowed(user?.email)) return res.status(403).json({ error: 'Acesso negado' });
+    const isAdmin = String(user?.status || '').toUpperCase().trim() === 'ADMIN';
+    if (!(isAdmin || isAllowed(user?.email))) return res.status(403).json({ error: 'Acesso negado' });
 
     const { title, content, category, date } = req.body;
     if (!title || !content) return res.status(400).json({ error: 'title and content required' });
@@ -56,7 +57,8 @@ export const createNotice = async (req, res) => {
 export const updateNotice = async (req, res) => {
   try {
     const user = req.enrollment;
-    if (!isAllowed(user?.email)) return res.status(403).json({ error: 'Acesso negado' });
+    const isAdmin = String(user?.status || '').toUpperCase().trim() === 'ADMIN';
+    if (!(isAdmin || isAllowed(user?.email))) return res.status(403).json({ error: 'Acesso negado' });
 
     const { id } = req.params;
     const { title, content, category, date } = req.body;
@@ -81,7 +83,8 @@ export const updateNotice = async (req, res) => {
 export const deleteNotice = async (req, res) => {
   try {
     const user = req.enrollment;
-    if (!isAllowed(user?.email)) return res.status(403).json({ error: 'Acesso negado' });
+    const isAdmin = String(user?.status || '').toUpperCase().trim() === 'ADMIN';
+    if (!(isAdmin || isAllowed(user?.email))) return res.status(403).json({ error: 'Acesso negado' });
 
     const { id } = req.params;
     const existing = await prisma.notice.findUnique({ where: { id } });

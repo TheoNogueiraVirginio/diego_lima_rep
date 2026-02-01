@@ -44,7 +44,8 @@ export const login = async (req, res) => {
 
     if (!ok) return res.status(401).json({ error: 'Senha incorreta.' });
 
-    if (user.status !== 'PAID') return res.status(403).json({ error: 'Seu pagamento ainda não foi confirmado.' });
+    // Allow ADMIN users to login as equivalent to PAID
+    if (!['PAID','ADMIN'].includes(user.status)) return res.status(403).json({ error: 'Seu pagamento ainda não foi confirmado.' });
 
     const accessToken = signAccess(user.id);
     const refreshToken = signRefresh(user.id);
@@ -109,7 +110,7 @@ export const logout = async (req, res) => {
 export const me = async (req, res) => {
   try {
     const user = req.enrollment;
-    return res.json({ id: user.id, name: user.name, email: user.email });
+    return res.json({ id: user.id, name: user.name, email: user.email, status: user.status });
   } catch (err) {
     console.error('me error', err.message);
     return res.status(500).json({ error: 'Internal error' });

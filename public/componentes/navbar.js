@@ -1,4 +1,65 @@
 function carregarNavbar() {
+    // Intercept fetch to handle 401 globally: show blocking overlay and redirect to login after 5s
+    (function installFetchInterceptor(){
+        if (!window._fetchInterceptorInstalled) {
+            const _origFetch = window.fetch.bind(window);
+            window.fetch = async function(...args){
+                try {
+                    const res = await _origFetch(...args);
+                    if (res && res.status === 401) {
+                        handleUnauthorized();
+                    }
+                    return res;
+                } catch (e) {
+                    throw e;
+                }
+            };
+            window._fetchInterceptorInstalled = true;
+        }
+    })();
+
+    // Handle unauthorized: show overlay, block UI and redirect to login after 5s
+    function handleUnauthorized(){
+        try {
+            if (document.getElementById('auth-block-overlay')) return; // already shown
+            const allowed = ['/', '/index.html', '/login.html', '/cadastro.html'];
+            const path = window.location.pathname || '/';
+
+            // If current path is allowed, do nothing (user can stay on public pages)
+            const isAllowed = allowed.includes(path);
+
+            // Create overlay to block UI if not allowed
+            if (!isAllowed) {
+                const overlay = document.createElement('div');
+                overlay.id = 'auth-block-overlay';
+                overlay.style.position = 'fixed';
+                overlay.style.left = '0';
+                overlay.style.top = '0';
+                overlay.style.width = '100%';
+                overlay.style.height = '100%';
+                overlay.style.background = 'rgba(0,0,0,0.7)';
+                overlay.style.color = 'white';
+                overlay.style.display = 'flex';
+                overlay.style.alignItems = 'center';
+                overlay.style.justifyContent = 'center';
+                overlay.style.zIndex = '99999';
+                overlay.style.flexDirection = 'column';
+                overlay.innerHTML = `<div style="max-width:90%;text-align:center;"><h2>Sessão expirada</h2><p>Você será redirecionado para o login em <span id="auth-redirect-count">5</span> segundos.</p></div>`;
+                document.body.appendChild(overlay);
+
+                let t = 5;
+                const counter = document.getElementById('auth-redirect-count');
+                const iv = setInterval(()=>{
+                    t--; if (counter) counter.textContent = String(t);
+                    if (t <= 0) { clearInterval(iv); window.location.href = '/login.html'; }
+                }, 1000);
+            }
+        } catch (e) {
+            console.error('handleUnauthorized error', e);
+            try { window.location.href = '/login.html'; } catch(e){}
+        }
+    }
+
     // 1. O HTML da sua Navbar (Copiado do seu código)
     const navbarHTML = `
     <nav class="navbar">
@@ -20,7 +81,7 @@ function carregarNavbar() {
             <div class="profile-menu" aria-hidden="true">
                     <div class="profile-name">Carregando...</div>
                     <div class="profile-sep"></div>
-                    <a href="/alunos.html" class="menu-item admin-item" style="display:none;">Alunos</a>
+                    <a href="/monitoramento.html" class="menu-item admin-item" style="display:none;">Alunos</a>
                     <button class="menu-item btn-logout">Sair</button>
                     
             </div>
@@ -85,10 +146,10 @@ function carregarNavbar() {
                     nameEl.textContent = nomeSalvo || 'Usuário';
                 }
 
-                // mostrar item "Alunos" apenas para o admin conhecido
+                // mostrar item "Alunos" apenas para usuários com status ADMIN
                 const adminItem = profileMenu.querySelector('.admin-item');
-                const adminEmail = 'theonogueira1956@gmail.com';
-                if (user && user.email && user.email.toLowerCase() === adminEmail) {
+                const statusNorm = String(user?.status || '').toUpperCase().trim();
+                if (user && statusNorm === 'ADMIN') {
                     adminItem.style.display = '';
                 }
 
