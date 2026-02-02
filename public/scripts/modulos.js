@@ -8,6 +8,64 @@ document.addEventListener('DOMContentLoaded', () => {
         elementoNome.textContent = primeiroNomeOrganizado;
     }
 
+    // se veio de simulados bloqueado, mostrar modal central e remover flag
+    try {
+        const msg = localStorage.getItem('blockedSimuladosMessage');
+        if (msg) {
+            // criar overlay modal similar ao que existia em simulados.html
+            const overlay = document.createElement('div');
+            overlay.id = 'simulados-block-overlay';
+            overlay.style.position = 'fixed';
+            overlay.style.inset = '0';
+            overlay.style.background = 'linear-gradient(180deg, rgba(2,6,90,0.6), rgba(2,6,90,0.85))';
+            overlay.style.display = 'flex';
+            overlay.style.alignItems = 'center';
+            overlay.style.justifyContent = 'center';
+            overlay.style.zIndex = '9999';
+
+            const box = document.createElement('div');
+            box.style.maxWidth = '680px';
+            box.style.margin = '24px';
+            box.style.background = 'linear-gradient(180deg, rgba(17,24,39,0.98), rgba(24,32,51,0.98))';
+            box.style.border = '1px solid rgba(255,255,255,0.06)';
+            box.style.padding = '28px';
+            box.style.borderRadius = '12px';
+            box.style.textAlign = 'center';
+            box.style.color = 'white';
+
+            const title = document.createElement('h2');
+            title.textContent = 'Atenção';
+            title.style.marginTop = '0';
+
+            const p = document.createElement('p');
+            p.textContent = msg;
+            p.style.margin = '12px 0 20px 0';
+
+            const btn = document.createElement('button');
+            btn.textContent = 'Ir para Meus Módulos';
+            btn.style.padding = '10px 16px';
+            btn.style.borderRadius = '8px';
+            btn.style.border = 'none';
+            btn.style.background = 'linear-gradient(90deg,#2d6cdf,#1fb6a6)';
+            btn.style.color = 'white';
+            btn.style.cursor = 'pointer';
+            btn.addEventListener('click', () => {
+                overlay.remove();
+            });
+
+            box.appendChild(title);
+            box.appendChild(p);
+            box.appendChild(btn);
+            overlay.appendChild(box);
+
+            document.body.appendChild(overlay);
+
+            localStorage.removeItem('blockedSimuladosMessage');
+        }
+    } catch (e) {
+        // ignore
+    }
+
     const modulos = document.querySelectorAll('.modulo');
 
     modulos.forEach(modulo => {

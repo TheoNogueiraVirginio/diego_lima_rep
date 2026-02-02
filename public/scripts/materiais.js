@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <a href="#">
                             <div class="item-thumb" data-src="/images/images_modulos/image_listaExercicios.png"></div>
                             <div class="item-info">
-                                <span class="item-title">Lista de Exercícios</span>
+                                <span class="item-title">Praticando ENEM</span>
                                 <span class="item-sub">Praticar</span>
                             </div>
                         </a>

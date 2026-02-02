@@ -336,5 +336,8 @@
     color: var(--color-primary);
 }
 
+/* Banner mostrado quando simulados estão bloqueados */
+/* Removed banner styles — using modal overlay instead */
+
 /* -------------------------------------------------------------------- */
 /* botão removido conforme solicitado */
