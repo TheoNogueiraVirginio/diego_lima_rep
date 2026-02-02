@@ -11,6 +11,73 @@ const API_BASE_URL = '';
 let paymentMethodId = '';
 let intervaloVerificacao = null;
 
+// --- PREÇOS LOCAIS (mesmas regras do backend) ---
+const FRONT_PRECOS = {
+    TIER_3: { COM: 1920.00, SEM: 1520.00 }
+};
+
+function calcularPrecoFrontend(modality) {
+    return (modality === 'COM_MATERIAL') ? FRONT_PRECOS.TIER_3.COM : FRONT_PRECOS.TIER_3.SEM;
+}
+
+function normalizeCoupon(code) {
+    if (!code) return '';
+    const cup = String(code || '')
+        .normalize('NFD')
+        .replace(/\p{Diacritic}/gu, '')
+        .replace(/\s+/g, '')
+        .replace(/[^A-Za-z0-9]/g, '')
+        .toUpperCase();
+    return cup;
+}
+
+function applyCouponFrontend(amount, couponRaw) {
+    const cup = normalizeCoupon(couponRaw);
+    if (!cup) return amount;
+    if (cup === 'MARIALUIZA') {
+        return 799.00;
+    } else if (cup === 'MARIANALIMA') {
+        return Number((amount * 0.85).toFixed(2));
+    } else if (cup === 'ABUUU') {
+        return Number((amount * 0.05).toFixed(2));
+    }
+    return amount;
+}
+
+function updateCouponPreview() {
+    try {
+        const feedback = document.getElementById('coupon-feedback');
+        if (!feedback) return;
+
+        const cupInput = document.getElementById('input-cupom');
+        const modalidadeEl = document.getElementById('modalidade');
+        const parcelasEl = document.getElementById('parcelas');
+        const pagamentoEl = document.getElementById('pagamento');
+
+        const cup = cupInput ? cupInput.value.trim() : '';
+        const modality = modalidadeEl ? modalidadeEl.value : '';
+        const parcelas = parcelasEl ? Number(parcelasEl.value) || 1 : 1;
+        const pagamento = pagamentoEl ? pagamentoEl.value : 'pix';
+
+        let base = calcularPrecoFrontend(modality);
+        let final = applyCouponFrontend(base, cup);
+
+        // Se não houver cupom digitado, limpa mensagem
+        if (!cup) {
+            feedback.innerText = '';
+            return;
+        }
+
+        const perParcel = parcelas > 0 ? Number((final / parcelas).toFixed(2)) : final;
+
+        // Mensagem simples e direta
+        feedback.innerHTML = `Valor com cupom: <strong>R$ ${final.toFixed(2)}</strong>` +
+            (pagamento === 'cartao' ? ` — ${parcelas}x de R$ ${perParcel.toFixed(2)}` : '');
+    } catch (e) {
+        console.warn('Erro ao atualizar preview do cupom:', e.message || e);
+    }
+}
+
 // 1. MÁSCARAS DE INPUT (FORMATACAO AUTOMÁTICA)
 
 // (Adiciona a / automaticamente na data)
@@ -413,4 +480,20 @@ window.addEventListener('click', (e) => {
     if (e.target == modal) {
         modal.style.display = 'none';
     }
+});
+
+// Inicializa preview do cupom e listeners associados
+document.addEventListener('DOMContentLoaded', () => {
+    const cupInput = document.getElementById('input-cupom');
+    const parcelasEl = document.getElementById('parcelas');
+    const modalidadeEl = document.getElementById('modalidade');
+    const pagamentoEl = document.getElementById('pagamento');
+
+    if (cupInput) cupInput.addEventListener('input', updateCouponPreview);
+    if (parcelasEl) parcelasEl.addEventListener('change', updateCouponPreview);
+    if (modalidadeEl) modalidadeEl.addEventListener('change', updateCouponPreview);
+    if (pagamentoEl) pagamentoEl.addEventListener('change', updateCouponPreview);
+
+    // chamada inicial caso tenha valor preenchido ao carregar
+    setTimeout(updateCouponPreview, 200);
 });
