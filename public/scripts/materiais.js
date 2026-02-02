@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
         card.innerHTML = `
             <button class="assunto-header" aria-expanded="false">
                 <div class="assunto-left">
-                    ${isEquacoes ? '<img class="assunto-thumb" src="/images/images_assuntos/image_funcaoFx.png" alt="miniatura">' : ''}
+                    ${isEquacoes ? '<img class="assunto-thumb" src="/images/logo_diego_png.png" alt="miniatura">' : ''}
                     <span class="assunto-title">${escapeHtml(aula.titulo)}</span>
                 </div>
                 <span class="assunto-toggle">▾</span>
@@ -117,7 +117,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const img = document.createElement('img');
                 img.className = 'assunto-thumb';
                 img.alt = 'miniatura';
-                img.setAttribute('data-src', `/images/images_assuntos/image_${nameSlug}.png`);
+                const lower = nameSlug.toLowerCase();
+                if (lower.includes('conjuntos') || lower.includes('funcao') || lower.includes('funcaofx') || lower.includes('funcao_fx')) {
+                    img.setAttribute('data-src', '/images/logo_diego_png.png');
+                } else {
+                    img.setAttribute('data-src', `/images/images_assuntos/image_${nameSlug}.png`);
+                }
                 headerLeft.insertBefore(img, headerLeft.firstChild);
             }
         } catch(e) {}
@@ -147,6 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
         thumbs.forEach((thumbEl, i) => {
             // priorizar campo aula.thumb, senão tentar por título slug, senão fallback
             const nameSlug = (aula.titulo || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g,'');
+            const lower = nameSlug.toLowerCase();
             const candidates = [];
             if (aula.thumb) candidates.push(aula.thumb);
             // tentar em images_assuntos
@@ -156,8 +162,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // tentar padrão por vimeoId
             if (aula.vimeoId) candidates.push(`/images/images_assuntos/${aula.vimeoId}.png`);
             // imagens conhecidas
-            candidates.push('/images/images_assuntos/image_funcaoFx.png');
+            candidates.push('/images/logo_diego_png.png');
             candidates.push('/images/teste.png');
+
+            // para assuntos como 'conjuntos' ou relacionados a função (Fx), priorizar o logo
+            if (lower.includes('conjuntos') || lower.includes('funcao') || lower.includes('funcaofx') || lower.includes('funcao_fx')) {
+                // colocar logo como primeira opção
+                candidates.unshift('/images/logo_diego_png.png');
+            }
 
             // se elemento já tem data-src explícito, tentar primeiro
             const dataSrc = thumbEl.getAttribute('data-src');
@@ -170,12 +182,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const headerThumb = card.querySelector('.assunto-thumb');
         if (headerThumb) {
             const nameSlug = (aula.titulo || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g,'');
+            const lower = nameSlug.toLowerCase();
             const headerCandidates = [];
             if (aula.thumb) headerCandidates.push(aula.thumb);
             if (nameSlug) headerCandidates.push(`/images/images_assuntos/image_${nameSlug}.png`);
             if (nameSlug) headerCandidates.push(`/images/images_assuntos/${nameSlug}.png`);
             if (aula.vimeoId) headerCandidates.push(`/images/images_assuntos/${aula.vimeoId}.png`);
-            headerCandidates.push('/images/images_assuntos/image_funcaoFx.png');
+            headerCandidates.push('/images/logo_diego_png.png');
+
+            // priorizar logo quando o assunto for 'conjuntos' ou relacionado a função
+            if (lower.includes('conjuntos') || lower.includes('funcao') || lower.includes('funcaofx') || lower.includes('funcao_fx')) {
+                headerCandidates.unshift('/images/logo_diego_png.png');
+            }
+
             tryLoadThumb(headerThumb, headerCandidates);
         }
     });

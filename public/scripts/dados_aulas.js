@@ -8,7 +8,8 @@ const cursoData = {
             {titulo: "Estatística", vimeoId: "987654321"},
             {titulo: "Conjuntos", vimeoId: "987654321"},
             {titulo: "Ponto e Introdução de Funções", vimeoId: "123141414"},
-            {titulo: "Reta, Função Afim e Proporcionalidade", vimeoId: "987654321"},
+            {titulo: "Reta, Função Afim", vimeoId: "987654321"},
+            {titulo: "Proporcionalidade", vimeoId: "987654321"},
         ]
     },
     "2": { // ID do Módulo 2

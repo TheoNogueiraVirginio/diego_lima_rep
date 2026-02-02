@@ -246,6 +246,7 @@
     color: var(--color-muted);
     margin: 0;
     margin-top: 10px; /* espaço entre título e descrição */
+    text-align: left;
 }
 /* Responsividade: adapta colunas conforme largura */
 @media (max-width: 1024px) {

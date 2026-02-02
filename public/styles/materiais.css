@@ -170,5 +170,5 @@
 
 /* miniatura específica para materiais */
 .assunto-left{ display:flex; align-items:center; gap:12px; }
-.assunto-thumb{ max-width: 60px; height: auto; border-radius: 6px; }
+.assunto-thumb{ width: 50px; max-width: 50px; height: auto; border-radius: 6px; }
 

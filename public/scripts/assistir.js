@@ -25,42 +25,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const tituloAssunto = assunto ? assunto.titulo : 'Assunto não encontrado';
     tituloPrincipal.innerText = mod.tituloModulo + ' - ' + tituloAssunto;
 
-    // Lista todos os assuntos do módulo
-    mod.aulas.forEach((a, idx) => {
+    // If a specific assunto was requested, show only that assunto in the sidebar
+    if (assunto) {
+        const a = assunto;
+        const idx = assuntoNum - 1;
         const li = document.createElement('li');
         li.className = 'lesson-card';
         li.textContent = a.titulo;
-        // data-id used to uniquely identify this lesson (ex: "1.1")
         const thisId = `${moduloNum}.${idx + 1}`;
         li.dataset.index = idx;
         li.dataset.id = thisId;
-        
-        // Marcar como ativo o assunto selecionado
-        if (idx === assuntoNum - 1) {
-            li.classList.add('active');
-        }
+        li.classList.add('active');
 
         li.addEventListener('click', () => {
-            document.querySelectorAll('#upcoming-classes .lesson-card').forEach(x => x.classList.remove('active'));
+            // keep single item active
             li.classList.add('active');
-
-            // Atualizar URL, idCombinado e título ao clicar em outro assunto
             const novoId = thisId;
             idCombinado = novoId;
             window.history.pushState({}, '', `assistir.html?id=${novoId}`);
             tituloPrincipal.innerText = mod.tituloModulo + ' - ' + a.titulo;
-
-            // atualizar estado do botão de conclusão para o novo lessonId
             updateFinishButtonFor(novoId);
-
-            // carregar vídeo apenas se existir vimeoId (opcional)
-            /*if (a.vimeoId) {
-                playerVideo.src = `https://player.vimeo.com/video/${a.vimeoId}`;
-            }*/
         });
 
         sidebarList.appendChild(li);
-    });
+        // TODO: in future, load sub-assuntos here as children of this assunto
+    } else {
+        // fallback: list all assuntos
+        mod.aulas.forEach((a, idx) => {
+            const li = document.createElement('li');
+            li.className = 'lesson-card';
+            li.textContent = a.titulo;
+            const thisId = `${moduloNum}.${idx + 1}`;
+            li.dataset.index = idx;
+            li.dataset.id = thisId;
+            li.addEventListener('click', () => {
+                document.querySelectorAll('#upcoming-classes .lesson-card').forEach(x => x.classList.remove('active'));
+                li.classList.add('active');
+                idCombinado = thisId;
+                window.history.pushState({}, '', `assistir.html?id=${thisId}`);
+                tituloPrincipal.innerText = mod.tituloModulo + ' - ' + a.titulo;
+                updateFinishButtonFor(thisId);
+            });
+            sidebarList.appendChild(li);
+        });
+    }
 
     // Botão de marcar como concluído
     const finishBtn = document.querySelector('.finished-video-button');
