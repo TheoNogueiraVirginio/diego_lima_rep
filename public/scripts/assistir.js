@@ -25,6 +25,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const tituloAssunto = assunto ? assunto.titulo : 'Assunto não encontrado';
     tituloPrincipal.innerText = mod.tituloModulo + ' - ' + tituloAssunto;
 
+    // --- Vimeo player integration: set iframe.src and attach SDK listeners ---
+    const playerIframe = document.getElementById('video-player');
+    let vimeoPlayer = null;
+    if (assunto && assunto.vimeoId && playerIframe) {
+        const vid = String(assunto.vimeoId).trim();
+        // keep the same params as your example; do not autoplay by default
+        playerIframe.src = `https://player.vimeo.com/video/${vid}?badge=0&autopause=0&player_id=0&app_id=58479`;
+        playerIframe.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share');
+        playerIframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+        playerIframe.title = assunto.titulo || 'Aula';
+
+        try {
+            // eslint-disable-next-line no-undef
+            vimeoPlayer = new Vimeo.Player(playerIframe);
+        } catch (e) {
+            // Vimeo global not available or error creating player
+            console.warn('Vimeo Player not available', e);
+            vimeoPlayer = null;
+        }
+    }
+
     // If a specific assunto was requested, show only that assunto in the sidebar
     if (assunto) {
         const a = assunto;
@@ -103,6 +124,82 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             // ignore
         }
+    }
+
+    // send progress to backend periodically and on ended
+    if (vimeoPlayer) {
+        let lastSentAt = 0;
+        let lastReportedSeconds = 0; // latest seconds from player
+        let lastSentRecordedSeconds = 0; // last seconds we successfully sent to server
+
+        vimeoPlayer.on('timeupdate', (data) => {
+            // data.seconds
+            lastReportedSeconds = Math.floor(data.seconds || 0);
+            const now = Date.now();
+
+            // Only attempt send if at least 10s passed since last attempt
+            if (now - lastSentAt < 10000) return;
+            // Only persist when user advanced at least 15s since last recorded sent value
+            if (lastReportedSeconds - lastSentRecordedSeconds < 15) return;
+
+            lastSentAt = now;
+            lastSentRecordedSeconds = lastReportedSeconds;
+
+            // send watchedSeconds as IN_PROGRESS
+            (async () => {
+                try {
+                    const res = await fetch('/api/progress/lesson', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ lessonId: idCombinado, watchedSeconds: lastReportedSeconds, status: 'IN_PROGRESS' })
+                    });
+                    if (!res.ok) {
+                        // if send failed, rollback lastSentRecordedSeconds so we retry later
+                        lastSentRecordedSeconds = Math.max(0, lastSentRecordedSeconds - 15);
+                    }
+                } catch (e) {
+                    // ignore network errors and allow retry later
+                    lastSentRecordedSeconds = Math.max(0, lastSentRecordedSeconds - 15);
+                }
+            })();
+        });
+
+        vimeoPlayer.on('ended', async () => {
+            try {
+                const res = await fetch('/api/progress/lesson', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lessonId: idCombinado, watchedSeconds: lastReportedSeconds || 0, status: 'COMPLETED' })
+                });
+                if (res.ok) {
+                    completedSet.add(String(idCombinado));
+                    updateFinishButtonFor(idCombinado);
+                    if (window.loadProgress) window.loadProgress();
+                }
+            } catch (e) {
+                console.error('Erro ao informar conclusão ao backend', e);
+            }
+        });
+
+        // on unload, try to persist latest watchedSeconds (use lastSentRecordedSeconds if available)
+        window.addEventListener('beforeunload', (ev) => {
+            try {
+                const sendSeconds = lastSentRecordedSeconds || lastReportedSeconds;
+                if (!sendSeconds) return;
+                const payload = JSON.stringify({ lessonId: idCombinado, watchedSeconds: sendSeconds, status: 'IN_PROGRESS' });
+                if (navigator.sendBeacon) {
+                    navigator.sendBeacon('/api/progress/lesson', payload);
+                } else {
+                    // best-effort synchronous XHR as fallback
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', '/api/progress/lesson', false);
+                    xhr.setRequestHeader('Content-Type', 'application/json');
+                    try { xhr.send(payload); } catch (e) {}
+                }
+            } catch (e) {}
+        });
     }
 
     // initial load of completedSet and button state, and attach listener
