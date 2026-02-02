@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <a href="#">
                             <div class="item-thumb" data-src="/images/images_modulos/image_listaExercicios.png"></div>
                             <div class="item-info">
-                                <span class="item-title">Praticando ENEM</span>
+                                <span class="item-title">Listas de Exercícios</span>
                                 <span class="item-sub">Praticar</span>
                             </div>
                         </a>
@@ -167,6 +167,90 @@ document.addEventListener('DOMContentLoaded', () => {
             headerCandidates.push(DEFAULT_LOGO);
 
             tryLoadThumb(headerThumb, headerCandidates);
+        }
+    });
+
+    // Modal helper: cria/abre modal centralizado com opções
+    function openModal(title, items){
+        let overlay = document.getElementById('global-modal-overlay');
+        if (!overlay){
+            overlay = document.createElement('div');
+            overlay.id = 'global-modal-overlay';
+            overlay.className = 'modal-overlay';
+            overlay.innerHTML = `<div class="modal-window" role="dialog" aria-modal="true">
+                <div class="modal-header">
+                    <div class="modal-title"></div>
+                    <button class="modal-close" aria-label="Fechar">✕</button>
+                </div>
+                <div class="modal-body"></div>
+            </div>`;
+            document.body.appendChild(overlay);
+        }
+
+        const modalWindow = overlay.querySelector('.modal-window');
+        const titleEl = overlay.querySelector('.modal-title');
+        const bodyEl = overlay.querySelector('.modal-body');
+        const closeBtn = overlay.querySelector('.modal-close');
+
+        titleEl.textContent = title || '';
+        bodyEl.innerHTML = '';
+
+        items.forEach(it => {
+            const btn = document.createElement('button');
+            btn.className = 'modal-option';
+            btn.type = 'button';
+            btn.textContent = it.label;
+            btn.addEventListener('click', () => {
+                if (it.href) window.location.href = it.href;
+                closeModal();
+            });
+            bodyEl.appendChild(btn);
+        });
+
+        function onOverlayClick(e){
+            if (e.target === overlay) closeModal();
+        }
+        function onEsc(e){ if (e.key === 'Escape') closeModal(); }
+        function closeModal(){
+            overlay.classList.remove('active');
+            overlay.removeEventListener('click', onOverlayClick);
+            document.removeEventListener('keydown', onEsc);
+        }
+
+        closeBtn.onclick = closeModal;
+        overlay.addEventListener('click', onOverlayClick);
+        document.addEventListener('keydown', onEsc);
+
+        overlay.classList.add('active');
+        // foco no primeiro botão
+        setTimeout(() => {
+            const first = bodyEl.querySelector('.modal-option');
+            if (first) first.focus();
+        }, 50);
+    }
+
+    // Anexar handlers para abrir modal quando clicar nas opções correspondentes
+    document.querySelectorAll('.assunto-content .item-title').forEach(el => {
+        const text = (el.textContent || '').trim().toLowerCase();
+        const anchor = el.closest('a');
+        if (!anchor) return;
+        if (text.includes('lista')){
+            anchor.addEventListener('click', (e) => {
+                e.preventDefault();
+                openModal('Listas de Exercícios', [
+                    { label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' },
+                    { label: 'Lista extra', href: 'questoes.html?lista=lista-extra' }
+                ]);
+            });
+        }
+        if (text.includes('gabarit')){
+            anchor.addEventListener('click', (e) => {
+                e.preventDefault();
+                openModal('Gabaritos', [
+                    { label: 'Praticando ENEM', href: 'questoes.html?gabarito=praticando-enem' },
+                    { label: 'Lista extra', href: 'questoes.html?gabarito=lista-extra' }
+                ]);
+            });
         }
     });
 
