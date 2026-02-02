@@ -108,8 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
         content.style.maxHeight = null;
 
         container.appendChild(card);
-        // garantir que todos os item-thumb do card usem o logo (uma única definição)
-        card.querySelectorAll('.item-thumb').forEach(t => t.setAttribute('data-src', DEFAULT_LOGO));
     });
 
     // após criar todos os cards, tentar carregar as miniaturas dinamicamente
