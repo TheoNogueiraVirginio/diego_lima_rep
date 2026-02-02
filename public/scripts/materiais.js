@@ -1,5 +1,7 @@
 // Arquivo renomeado a partir de modulo.js — mantém a mesma lógica
 document.addEventListener('DOMContentLoaded', () => {
+    // fallback único para todas as miniaturas dos assuntos
+    const DEFAULT_LOGO = '/images/logo_diego_png.png';
     const params = new URLSearchParams(window.location.search);
     const moduloId = params.get('id') || '1';
 
@@ -33,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
         card.innerHTML = `
             <button class="assunto-header" aria-expanded="false">
                 <div class="assunto-left">
-                    ${isEquacoes ? '<img class="assunto-thumb" src="/images/logo_diego_png.png" alt="miniatura">' : ''}
+                    <img class="assunto-thumb" src="${DEFAULT_LOGO}" alt="miniatura">
                     <span class="assunto-title">${escapeHtml(aula.titulo)}</span>
                 </div>
                 <span class="assunto-toggle">▾</span>
@@ -106,26 +108,8 @@ document.addEventListener('DOMContentLoaded', () => {
         content.style.maxHeight = null;
 
         container.appendChild(card);
-
-        // inserir placeholder de miniatura no header quando não for equações
-        // isso permite carregar imagens como `image_conjuntos.png`
-        try {
-            const aulaTitle = aula.titulo || '';
-            const nameSlug = aulaTitle.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g,'');
-            const headerLeft = card.querySelector('.assunto-left');
-            if (headerLeft && !headerLeft.querySelector('.assunto-thumb') && nameSlug) {
-                const img = document.createElement('img');
-                img.className = 'assunto-thumb';
-                img.alt = 'miniatura';
-                const lower = nameSlug.toLowerCase();
-                if (lower.includes('conjuntos') || lower.includes('funcao') || lower.includes('funcaofx') || lower.includes('funcao_fx')) {
-                    img.setAttribute('data-src', '/images/logo_diego_png.png');
-                } else {
-                    img.setAttribute('data-src', `/images/images_assuntos/image_${nameSlug}.png`);
-                }
-                headerLeft.insertBefore(img, headerLeft.firstChild);
-            }
-        } catch(e) {}
+        // garantir que todos os item-thumb do card usem o logo (uma única definição)
+        card.querySelectorAll('.item-thumb').forEach(t => t.setAttribute('data-src', DEFAULT_LOGO));
     });
 
     // após criar todos os cards, tentar carregar as miniaturas dinamicamente
@@ -155,21 +139,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const lower = nameSlug.toLowerCase();
             const candidates = [];
             if (aula.thumb) candidates.push(aula.thumb);
-            // tentar em images_assuntos
-            if (nameSlug) candidates.push(`/images/images_assuntos/${nameSlug}.png`);
-            // também tentar arquivos com prefixo `image_`
-            if (nameSlug) candidates.push(`/images/images_assuntos/image_${nameSlug}.png`);
+            // não tentar imagens específicas por assunto — usaremos o logo como único fallback
             // tentar padrão por vimeoId
             if (aula.vimeoId) candidates.push(`/images/images_assuntos/${aula.vimeoId}.png`);
             // imagens conhecidas
-            candidates.push('/images/logo_diego_png.png');
             candidates.push('/images/teste.png');
 
-            // para assuntos como 'conjuntos' ou relacionados a função (Fx), priorizar o logo
-            if (lower.includes('conjuntos') || lower.includes('funcao') || lower.includes('funcaofx') || lower.includes('funcao_fx')) {
-                // colocar logo como primeira opção
-                candidates.unshift('/images/logo_diego_png.png');
-            }
+            // por fim, fallback único e centralizado
+            candidates.push(DEFAULT_LOGO);
 
             // se elemento já tem data-src explícito, tentar primeiro
             const dataSrc = thumbEl.getAttribute('data-src');
@@ -188,12 +165,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (nameSlug) headerCandidates.push(`/images/images_assuntos/image_${nameSlug}.png`);
             if (nameSlug) headerCandidates.push(`/images/images_assuntos/${nameSlug}.png`);
             if (aula.vimeoId) headerCandidates.push(`/images/images_assuntos/${aula.vimeoId}.png`);
-            headerCandidates.push('/images/logo_diego_png.png');
-
-            // priorizar logo quando o assunto for 'conjuntos' ou relacionado a função
-            if (lower.includes('conjuntos') || lower.includes('funcao') || lower.includes('funcaofx') || lower.includes('funcao_fx')) {
-                headerCandidates.unshift('/images/logo_diego_png.png');
-            }
+            // fallback único e centralizado
+            headerCandidates.push(DEFAULT_LOGO);
 
             tryLoadThumb(headerThumb, headerCandidates);
         }

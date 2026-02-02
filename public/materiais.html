@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="/global.css">
     <link rel="stylesheet" href="/styles/materiais.css">
     <link rel="shortcut icon" href="/images/logo_diego_redonda.png">
-    <link rel="preload" href="/images/logo_diego_png.png" as="image">
 </head>
 <body>
 
@@ -20,8 +19,7 @@
                 <div class="barra-verde"></div>
             </div>
         </div>
-        <!-- Preload visual: carrega o logo diretamente no HTML (invisível) -->
-        <img id="logo-preload" src="/images/logo_diego_png.png" alt="" style="display:none;width:48px;height:auto">
+        <!-- Preload visual removido: logo agora é usado como fallback único via JS -->
         <header class="modulo-header">
             <h1 class="titulo-secao" id="modulo-title">Carregando módulo...</h1>
             <p class="subtitle" id="modulo-desc"></p>

@@ -27,6 +27,9 @@ app.use(cookieParser());
 // Servir arquivos estáticos da pasta public
 app.use(express.static(path.join(__dirname, '../public')));
 
+// Atender requests legados para `/images/assuntos/...` mapeando para images_assuntos
+app.use('/images/assuntos', express.static(path.join(__dirname, '../public/images/images_assuntos')));
+
 //ROTA DA API - CADASTRO
 app.use("/api/enrollment", enrollmentRoutes);
 app.use("/api/auth", authRoutes);
