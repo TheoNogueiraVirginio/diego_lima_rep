@@ -168,6 +168,17 @@
 	.assunto-card{ min-width: 260px; }
 }
 
+/* Em telas pequenas: empilhar itens do accordion em uma única coluna
+   (ex.: player, listas de exercícios, material teórico e gabaritos)
+   Mantém o comportamento 2x2 em telas maiores. */
+@media (max-width: 767px){
+	.assunto-content ul{
+		grid-template-columns: 1fr;
+	}
+	/* Garante que o player ainda ocupe toda a largura quando presente */
+	.assunto-content li:first-child a{ grid-column: 1 / -1; }
+}
+
 /* miniatura específica para materiais */
 .assunto-left{ display:flex; align-items:center; gap:12px; }
 .assunto-thumb{ width: 50px; max-width: 50px; height: auto; border-radius: 6px; }
