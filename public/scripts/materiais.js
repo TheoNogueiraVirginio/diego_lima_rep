@@ -230,10 +230,62 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Anexar handlers para abrir modal quando clicar nas opções correspondentes
+    // mapeamento de títulos (normalizados) -> docId (em api/storage/pdfs)
+    function normalizeTitle(s){
+        return String(s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,' ').trim();
+    }
+
+    // Mapeamento base dos assuntos -> sufixo comum usado nos arquivos
+    const gabaritoBase = {
+        [normalizeTitle('Identidades Importantes')]: 'IdentidadesImp',
+        [normalizeTitle('Equações do 1º e 2º Grau')]: 'Equacoes1e2Grau',
+        [normalizeTitle('Divisibilidade, MDC e MMC')]: 'DivisibilidadeMdcMmc',
+        [normalizeTitle('Estatistica')]: 'Estatistica',
+        [normalizeTitle('Conjuntos')]: 'Conjuntos',
+        [normalizeTitle('Ponto e Introducao de Funcoes')]: 'Ponto_IntFuncoes',
+        [normalizeTitle('Reta, Funcao Afim')]: 'RetaFuncaoAfim',
+        [normalizeTitle('Proporcionalidade')]: 'Proporcionalidade'
+    };
+
+    // Cache do usuário atual (fetch uma vez)
+    let cachedUser = null;
+    async function getCurrentUser(){
+        if (cachedUser) return cachedUser;
+        try{
+            const res = await fetch('/api/auth/me', { credentials: 'include' });
+            if (!res.ok) return cachedUser = null;
+            const json = await res.json();
+            cachedUser = json;
+            return cachedUser;
+        } catch(e){
+            return cachedUser = null;
+        }
+    }
+
+    // testa rapidamente se um doc existe (HEAD request)
+    async function docExists(docId){
+        try{
+            const res = await fetch(`/api/pdf/${encodeURIComponent(docId)}`, { method: 'HEAD', credentials: 'include' });
+            return res.ok;
+        } catch(e){
+            return false;
+        }
+    }
+
     document.querySelectorAll('.assunto-content .item-title').forEach(el => {
         const text = (el.textContent || '').trim().toLowerCase();
         const anchor = el.closest('a');
         if (!anchor) return;
+        // determinar qual assunto esse item pertence (usar index do card)
+        const card = el.closest('.assunto-card');
+        const cards = Array.from(document.querySelectorAll('.assunto-card'));
+        const cardIndex = cards.indexOf(card);
+        const aula = (mod && mod.aulas && mod.aulas[cardIndex]) || {};
+        const normalized = normalizeTitle(aula.titulo || '');
+        const base = gabaritoBase[normalized];
+        const mappedDocE = base ? `G_PE_E_${base}` : null;
+        const mappedDocA = base ? `G_PE_A_${base}` : null;
+
         if (text.includes('lista')){
             anchor.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -246,10 +298,56 @@ document.addEventListener('DOMContentLoaded', () => {
         if (text.includes('gabarit')){
             anchor.addEventListener('click', (e) => {
                 e.preventDefault();
-                openModal('Gabaritos', [
-                    { label: 'Praticando ENEM', href: 'questoes.html?gabarito=praticando-enem' },
-                    { label: 'Lista extra', href: 'questoes.html?gabarito=lista-extra' }
-                ]);
+
+                // Decidir qual PDF mostrar com base na modalidade/status do usuário
+                (async () => {
+                    const user = await getCurrentUser();
+                    const isAdmin = user && String(user.status).toUpperCase() === 'ADMIN';
+                    const modality = user && (user.modality || '').toUpperCase();
+
+                    // Admin vê ambos (se existirem)
+                    if (isAdmin) {
+                        const items = [];
+                        if (mappedDocE) items.push({ label: 'Gabarito (E) - Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${mappedDocE}` });
+                        if (mappedDocA) items.push({ label: 'Gabarito (A) - Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${mappedDocA}` });
+                        items.push({ label: 'Lista extra', href: 'questoes.html?gabarito=lista-extra' });
+                        openModal('Gabaritos', items);
+                        return;
+                    }
+
+                    // Aluno APROFUNDAMENTO -> preferir A, cair para E se A indisponível
+                    if (modality === 'APROFUNDAMENTO'){
+                        if (mappedDocA && await docExists(mappedDocA)){
+                            openModal('Gabaritos', [
+                                { label: 'Praticando ENEM (Aprofundamento)', href: `/pdf-viewer/viewer.html?doc=${mappedDocA}` },
+                                { label: 'Lista extra', href: 'questoes.html?gabarito=lista-extra' }
+                            ]);
+                            return;
+                        }
+                        if (mappedDocE && await docExists(mappedDocE)){
+                            openModal('Gabaritos', [
+                                { label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${mappedDocE}` },
+                                { label: 'Lista extra', href: 'questoes.html?gabarito=lista-extra' }
+                            ]);
+                            return;
+                        }
+                    }
+
+                    // Outros modulos (COM_MATERIAL; SEM_MATERIAL; PRESENCIAL etc) -> E preferencial
+                    if (mappedDocE && await docExists(mappedDocE)){
+                        openModal('Gabaritos', [
+                            { label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${mappedDocE}` },
+                            { label: 'Lista extra', href: 'questoes.html?gabarito=lista-extra' }
+                        ]);
+                        return;
+                    }
+
+                    // Fallback: mostrar links padrão mesmo sem PDFs
+                    openModal('Gabaritos', [
+                        { label: 'Praticando ENEM', href: 'questoes.html?gabarito=praticando-enem' },
+                        { label: 'Lista extra', href: 'questoes.html?gabarito=lista-extra' }
+                    ]);
+                })();
             });
         }
     });

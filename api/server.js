@@ -8,6 +8,7 @@ import enrollmentRoutes from "./src/routes/enrollmentRoutes.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import progressRoutes from "./src/routes/progressRoutes.js";
 import noticeRoutes from "./src/routes/noticeRoutes.js";
+import pdfRoutes from "./src/routes/pdfRoutes.js";
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -35,6 +36,7 @@ app.use("/api/enrollment", enrollmentRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/avisos", noticeRoutes);
+app.use("/api/pdf", pdfRoutes);
 
 
 // --- ROTAS DE PÁGINAS ---

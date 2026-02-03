@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Visualizador de PDF</title>
+  <link rel="stylesheet" href="viewer.css">
+  <link rel="shortcut icon" href="../images/logo_diego_redonda.png">
+</head>
+<body>
+  <div id="toolbar">
+    <button id="prev">Anterior</button>
+    <button id="next">Próxima</button>
+    <span> Página <span id="page_num">1</span> / <span id="page_count">–</span></span>
+    <button id="zoom_in">+</button>
+    <button id="zoom_out">−</button>
+  </div>
+  <div id="viewerContainer">
+    <canvas id="pdf-canvas"></canvas>
+  </div>
+
+  <!-- PDF.js via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script src="pdf_viewer.js"></script>
+</body>
+</html>
