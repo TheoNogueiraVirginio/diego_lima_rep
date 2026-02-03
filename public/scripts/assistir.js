@@ -1,16 +1,17 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const params = new URLSearchParams(window.location.search);
     let idCombinado = params.get('id') || '1.1';
 
-    // Parsear ID combinado (ex: "1.2" -> modulo=1, assunto=2)
-    const [moduloNum, assuntoNum] = idCombinado.split('.').map(Number);
+    // suporte a ids compostos: 1.1 ou 1.1.2 (módulo.assunto.sub)
+    const idParts = String(idCombinado).split('.');
+    const moduloNum = Number(idParts[0]) || 1;
+    const assuntoNum = Number(idParts[1]) || 1;
+    const subNum = idParts.length >= 3 ? Number(idParts[2]) : null;
 
-    const data = window.cursoData;
+    const data = window.cursoData || {};
     const mod = data && data[moduloNum];
-    const assunto = mod && mod.aulas && mod.aulas[assuntoNum - 1];
-    
     const tituloPrincipal = document.getElementById('class-title');
-    const playerVideo = document.getElementById('video-player');
+    const playerIframe = document.getElementById('video-player');
     const sidebarList = document.getElementById('upcoming-classes');
 
     sidebarList.innerHTML = '';
@@ -21,74 +22,231 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // Título combina o módulo com o assunto selecionado
-    const tituloAssunto = assunto ? assunto.titulo : 'Assunto não encontrado';
-    tituloPrincipal.innerText = mod.tituloModulo + ' - ' + tituloAssunto;
+    // localizar assunto e sub-aula (se existir)
+    const assunto = mod.aulas && mod.aulas[assuntoNum - 1];
+    // determinar se usuário é admin consultando o backend (/api/auth/me)
+    let isAdmin = false;
+    try {
+        const meRes = await fetch('/api/auth/me', { credentials: 'include' });
+        if (meRes && meRes.ok) {
+            const me = await meRes.json();
+            isAdmin = String(me?.status || '').toUpperCase().trim() === 'ADMIN';
+        }
+    } catch (e) {
+        // ignorar erros; isAdmin permanece false
+    }
 
-    // --- Vimeo player integration: set iframe.src and attach SDK listeners ---
-    const playerIframe = document.getElementById('video-player');
+    let subAula = null;
+    if (assunto && assunto.subAulas && subNum) {
+        const candidate = assunto.subAulas[subNum - 1];
+        if (candidate && !(candidate.adminOnly && !isAdmin)) subAula = candidate;
+    }
+
+    // atualizar título principal
+    if (assunto) {
+        const tituloAssunto = assunto.titulo;
+        if (subAula) {
+            // se a aula principal estiver oculta na sidebar, mostrar apenas o título da sub-aula
+            if (assunto.hideMainInSidebar) {
+                tituloPrincipal.innerText = mod.tituloModulo + ' - ' + subAula.titulo;
+            } else {
+                tituloPrincipal.innerText = mod.tituloModulo + ' - ' + `${tituloAssunto} — ${subAula.titulo}`;
+            }
+        } else {
+            tituloPrincipal.innerText = mod.tituloModulo + ' - ' + tituloAssunto;
+        }
+    } else {
+        tituloPrincipal.innerText = mod.tituloModulo;
+    }
+
+    // Helper: reuso ao trocar vídeo
     let vimeoPlayer = null;
-    if (assunto && assunto.vimeoId && playerIframe) {
-        const vid = String(assunto.vimeoId).trim();
-        // keep the same params as your example; do not autoplay by default
-        playerIframe.src = `https://player.vimeo.com/video/${vid}?badge=0&autopause=0&player_id=0&app_id=58479`;
+    let lastSentAt = 0;
+    let lastReportedSeconds = 0;
+    let lastSentRecordedSeconds = 0;
+
+    function cleanupPlayer() {
+        try {
+            if (vimeoPlayer) {
+                if (typeof vimeoPlayer.off === 'function') {
+                    try { vimeoPlayer.off('timeupdate'); } catch (e) {}
+                    try { vimeoPlayer.off('ended'); } catch (e) {}
+                }
+            }
+        } catch (e) {}
+        vimeoPlayer = null;
+    }
+
+    function attachPlayerListeners(player) {
+        if (!player) return;
+        player.on('timeupdate', (data) => {
+            lastReportedSeconds = Math.floor(data.seconds || 0);
+            const now = Date.now();
+            if (now - lastSentAt < 10000) return;
+            if (lastReportedSeconds - lastSentRecordedSeconds < 15) return;
+            lastSentAt = now;
+            lastSentRecordedSeconds = lastReportedSeconds;
+
+            (async () => {
+                try {
+                    const res = await fetch('/api/progress/lesson', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ lessonId: idCombinado, watchedSeconds: lastReportedSeconds, status: 'IN_PROGRESS' })
+                    });
+                    if (!res.ok) {
+                        lastSentRecordedSeconds = Math.max(0, lastSentRecordedSeconds - 15);
+                    }
+                } catch (e) {
+                    lastSentRecordedSeconds = Math.max(0, lastSentRecordedSeconds - 15);
+                }
+            })();
+        });
+
+        player.on('ended', async () => {
+            try {
+                const res = await fetch('/api/progress/lesson', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lessonId: idCombinado, watchedSeconds: lastReportedSeconds || 0, status: 'COMPLETED' })
+                });
+                if (res.ok) {
+                    completedSet.add(String(idCombinado));
+                    updateFinishButtonFor(idCombinado);
+                    if (window.loadProgress) window.loadProgress();
+                }
+            } catch (e) {
+                console.error('Erro ao informar conclusão ao backend', e);
+            }
+        });
+    }
+
+    function setPlayerTo(vimeoId, title, newId) {
+        if (!playerIframe) return;
+        const vid = String(vimeoId || '').trim();
+        idCombinado = newId;
+        // update URL and title
+        window.history.pushState({}, '', `assistir.html?id=${newId}`);
+        if (title) tituloPrincipal.innerText = mod.tituloModulo + ' - ' + title;
+
+        // set iframe src and attributes
+        playerIframe.src = vid ? `https://player.vimeo.com/video/${vid}?badge=0&autopause=0&player_id=0&app_id=58479` : '';
         playerIframe.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share');
         playerIframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
-        playerIframe.title = assunto.titulo || 'Aula';
+        playerIframe.title = title || 'Aula';
 
+        // recreate vimeo player and listeners
+        cleanupPlayer();
         try {
             // eslint-disable-next-line no-undef
-            vimeoPlayer = new Vimeo.Player(playerIframe);
+            if (typeof Vimeo !== 'undefined' && vid) {
+                vimeoPlayer = new Vimeo.Player(playerIframe);
+                attachPlayerListeners(vimeoPlayer);
+            }
         } catch (e) {
-            // Vimeo global not available or error creating player
             console.warn('Vimeo Player not available', e);
             vimeoPlayer = null;
         }
+
+        updateFinishButtonFor(newId);
     }
 
-    // If a specific assunto was requested, show only that assunto in the sidebar
+    // render sidebar: assunto principal + sub-aulas (se houver)
     if (assunto) {
-        const a = assunto;
         const idx = assuntoNum - 1;
-        const li = document.createElement('li');
-        li.className = 'lesson-card';
-        li.textContent = a.titulo;
-        const thisId = `${moduloNum}.${idx + 1}`;
-        li.dataset.index = idx;
-        li.dataset.id = thisId;
-        li.classList.add('active');
+        // Se a aula principal não deve aparecer na sidebar, pule sua renderização
+        const mainId = `${moduloNum}.${idx + 1}`;
+        const hideMain = !!assunto.hideMainInSidebar;
+        if (!hideMain) {
+            const mainLi = document.createElement('li');
+            mainLi.className = 'lesson-card';
+            mainLi.textContent = assunto.titulo;
+            mainLi.dataset.id = mainId;
+            mainLi.addEventListener('click', () => {
+                document.querySelectorAll('#upcoming-classes .lesson-card').forEach(x => x.classList.remove('active'));
+                mainLi.classList.add('active');
+                setPlayerTo(assunto.vimeoId, assunto.titulo, mainId);
+            });
+            sidebarList.appendChild(mainLi);
+        }
 
-        li.addEventListener('click', () => {
-            // keep single item active
-            li.classList.add('active');
-            const novoId = thisId;
-            idCombinado = novoId;
-            window.history.pushState({}, '', `assistir.html?id=${novoId}`);
-            tituloPrincipal.innerText = mod.tituloModulo + ' - ' + a.titulo;
-            updateFinishButtonFor(novoId);
-        });
+        if (assunto.subAulas && assunto.subAulas.length) {
+            const subUl = document.createElement('ul');
+            subUl.className = 'sub-lessons';
+            // apenas renderizar sub-aulas visíveis para o usuário
+            assunto.subAulas.forEach((s, sIdx) => {
+                if (s.adminOnly && !isAdmin) return; // pular se somente admin
+                const subLi = document.createElement('li');
+                subLi.className = 'lesson-card sub';
+                const subId = `${moduloNum}.${assuntoNum}.${sIdx + 1}`;
+                subLi.dataset.id = subId;
+                subLi.textContent = s.titulo;
+                subLi.addEventListener('click', () => {
+                    document.querySelectorAll('#upcoming-classes .lesson-card').forEach(x => x.classList.remove('active'));
+                    subLi.classList.add('active');
+                    const titleToUse = assunto.hideMainInSidebar ? s.titulo : `${assunto.titulo} — ${s.titulo}`;
+                    setPlayerTo(s.vimeoId, titleToUse, subId);
+                });
+                subUl.appendChild(subLi);
+            });
+            // anexar somente se existir pelo menos uma sub-aula visível
+            if (subUl.children.length) sidebarList.appendChild(subUl);
+        }
 
-        sidebarList.appendChild(li);
-        // TODO: in future, load sub-assuntos here as children of this assunto
+        // marcar ativo inicial e escolher li inicial
+        // se a aula principal estiver oculta, escolher a primeira sub-aula visível como inicial
+        let initialLesson = null;
+        let activeId = null;
+        if (subAula) {
+            initialLesson = subAula;
+            activeId = `${moduloNum}.${assuntoNum}.${subNum}`;
+        } else if (hideMain) {
+            // procurar primeira sub-aula visível
+            const firstVisibleIndex = assunto.subAulas ? assunto.subAulas.findIndex(s => !(s.adminOnly && !isAdmin)) : -1;
+            if (firstVisibleIndex >= 0) {
+                const s = assunto.subAulas[firstVisibleIndex];
+                initialLesson = s;
+                activeId = `${moduloNum}.${assuntoNum}.${firstVisibleIndex + 1}`;
+            }
+        } else {
+            initialLesson = assunto;
+            activeId = `${moduloNum}.${assuntoNum}`;
+        }
+
+        const toActivate = activeId ? sidebarList.querySelector(`[data-id='${activeId}']`) : null;
+        if (toActivate) toActivate.classList.add('active');
+
+        // iniciar player com a aula/sub-aula selecionada
+        if (initialLesson && initialLesson.vimeoId) {
+            let title;
+            if (initialLesson === assunto) {
+                title = assunto.titulo;
+            } else {
+                title = assunto.hideMainInSidebar ? initialLesson.titulo : `${assunto.titulo} — ${initialLesson.titulo}`;
+            }
+            setPlayerTo(initialLesson.vimeoId, title, activeId);
+        }
     } else {
-        // fallback: list all assuntos
+        // fallback: listar todas as aulas do módulo
         mod.aulas.forEach((a, idx) => {
             const li = document.createElement('li');
             li.className = 'lesson-card';
             li.textContent = a.titulo;
             const thisId = `${moduloNum}.${idx + 1}`;
-            li.dataset.index = idx;
             li.dataset.id = thisId;
             li.addEventListener('click', () => {
                 document.querySelectorAll('#upcoming-classes .lesson-card').forEach(x => x.classList.remove('active'));
                 li.classList.add('active');
-                idCombinado = thisId;
-                window.history.pushState({}, '', `assistir.html?id=${thisId}`);
-                tituloPrincipal.innerText = mod.tituloModulo + ' - ' + a.titulo;
-                updateFinishButtonFor(thisId);
+                setPlayerTo(a.vimeoId, a.titulo, thisId);
             });
             sidebarList.appendChild(li);
         });
+
+        // iniciar com a primeira aula por padrão
+        const first = mod.aulas && mod.aulas[0];
+        if (first) setPlayerTo(first.vimeoId, first.titulo, `${moduloNum}.1`);
     }
 
     // Botão de marcar como concluído
@@ -110,7 +268,6 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const btn = document.querySelector('.finished-video-button');
             if (!btn) return;
-            // reset state while checking
             btn.disabled = false;
             btn.textContent = 'Marcar como concluído';
             btn.classList.remove('done');
@@ -126,83 +283,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // send progress to backend periodically and on ended
-    if (vimeoPlayer) {
-        let lastSentAt = 0;
-        let lastReportedSeconds = 0; // latest seconds from player
-        let lastSentRecordedSeconds = 0; // last seconds we successfully sent to server
-
-        vimeoPlayer.on('timeupdate', (data) => {
-            // data.seconds
-            lastReportedSeconds = Math.floor(data.seconds || 0);
-            const now = Date.now();
-
-            // Only attempt send if at least 10s passed since last attempt
-            if (now - lastSentAt < 10000) return;
-            // Only persist when user advanced at least 15s since last recorded sent value
-            if (lastReportedSeconds - lastSentRecordedSeconds < 15) return;
-
-            lastSentAt = now;
-            lastSentRecordedSeconds = lastReportedSeconds;
-
-            // send watchedSeconds as IN_PROGRESS
-            (async () => {
-                try {
-                    const res = await fetch('/api/progress/lesson', {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ lessonId: idCombinado, watchedSeconds: lastReportedSeconds, status: 'IN_PROGRESS' })
-                    });
-                    if (!res.ok) {
-                        // if send failed, rollback lastSentRecordedSeconds so we retry later
-                        lastSentRecordedSeconds = Math.max(0, lastSentRecordedSeconds - 15);
-                    }
-                } catch (e) {
-                    // ignore network errors and allow retry later
-                    lastSentRecordedSeconds = Math.max(0, lastSentRecordedSeconds - 15);
-                }
-            })();
-        });
-
-        vimeoPlayer.on('ended', async () => {
-            try {
-                const res = await fetch('/api/progress/lesson', {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lessonId: idCombinado, watchedSeconds: lastReportedSeconds || 0, status: 'COMPLETED' })
-                });
-                if (res.ok) {
-                    completedSet.add(String(idCombinado));
-                    updateFinishButtonFor(idCombinado);
-                    if (window.loadProgress) window.loadProgress();
-                }
-            } catch (e) {
-                console.error('Erro ao informar conclusão ao backend', e);
+    // on unload: tentar enviar o último progresso
+    window.addEventListener('beforeunload', (ev) => {
+        try {
+            const sendSeconds = lastSentRecordedSeconds || lastReportedSeconds;
+            if (!sendSeconds) return;
+            const payload = JSON.stringify({ lessonId: idCombinado, watchedSeconds: sendSeconds, status: 'IN_PROGRESS' });
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon('/api/progress/lesson', payload);
+            } else {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/api/progress/lesson', false);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                try { xhr.send(payload); } catch (e) {}
             }
-        });
+        } catch (e) {}
+    });
 
-        // on unload, try to persist latest watchedSeconds (use lastSentRecordedSeconds if available)
-        window.addEventListener('beforeunload', (ev) => {
-            try {
-                const sendSeconds = lastSentRecordedSeconds || lastReportedSeconds;
-                if (!sendSeconds) return;
-                const payload = JSON.stringify({ lessonId: idCombinado, watchedSeconds: sendSeconds, status: 'IN_PROGRESS' });
-                if (navigator.sendBeacon) {
-                    navigator.sendBeacon('/api/progress/lesson', payload);
-                } else {
-                    // best-effort synchronous XHR as fallback
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('POST', '/api/progress/lesson', false);
-                    xhr.setRequestHeader('Content-Type', 'application/json');
-                    try { xhr.send(payload); } catch (e) {}
-                }
-            } catch (e) {}
-        });
-    }
-
-    // initial load of completedSet and button state, and attach listener
+    // initial load of completedSet and attach click for finish button
     if (finishBtn) {
         (async () => {
             await loadCompletedSet();
@@ -228,7 +326,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const err = await res.json().catch(() => ({}));
                     throw new Error(err.error || 'Falha ao marcar aula');
                 }
-                // update local set and UI
                 completedSet.add(String(idCombinado));
                 finishBtn.textContent = 'Concluído';
                 finishBtn.disabled = true;
@@ -242,5 +339,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    
 });

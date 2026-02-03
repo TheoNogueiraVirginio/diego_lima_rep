@@ -120,6 +120,22 @@ body {
     cursor: pointer;
 }
 
+/* Sub-aulas: torná-las visualmente alinhadas e com espaçamento igual ao dos itens principais */
+.sub-lessons {
+    list-style: none;
+    margin: 0; /* remove margin padrão de <ul> que cria espaçamento extra */
+    padding: 0 0 0 0; /* sem recuo */
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* igual ao gap do #upcoming-classes */
+}
+
+.lesson-card.sub {
+    height: 44px; /* mesma altura das lesson-card */
+    padding-left: 18px; /* leve recuo para diferenciar da aula principal */
+    border-radius: 8px;
+}
+
 
 
 .comments_practice {

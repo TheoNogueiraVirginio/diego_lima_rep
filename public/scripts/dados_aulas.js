@@ -2,9 +2,21 @@ const cursoData = {
     "1": { // ID do Módulo 1
         tituloModulo: "Módulo 1",
         aulas: [
-            {titulo: "Identidades Importantes", vimeoId: "1160829549"},
+            {titulo: "Identidades Importantes", vimeoId: "1160829549",
+                subAulas: [
+                    { titulo: "A cruzadinha", vimeoId: "1160830158" },
+                    { titulo: "Complemento de Quadrado", vimeoId: "1161234861" },
+                    { titulo: "Binômio de Newton", vimeoId: "1161235585", adminOnly: true },
+                ]
+            },
             {titulo: "Equações do 1º e 2º Grau", vimeoId: "123456789"},
-            {titulo: "Divisibilidade, MDC e MMC", vimeoId: "987654321"},
+            {titulo: "Divisibilidade, MDC e MMC", vimeoId: "ABU",
+                hideMainInSidebar: true,
+                subAulas: [
+                    { titulo: "Divisibilidade", vimeoId: "1161235737" },
+                    { titulo: "MDC e MMC", vimeoId: "1161235060" }
+                ]
+            },
             {titulo: "Estatística", vimeoId: "987654321"},
             {titulo: "Conjuntos", vimeoId: "987654321"},
             {titulo: "Ponto e Introdução de Funções", vimeoId: "123141414"},
