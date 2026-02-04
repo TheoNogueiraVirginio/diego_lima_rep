@@ -2,11 +2,38 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 
 // Resolver caminho relativo a este arquivo até: api/storage/pdfs
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const STORAGE_DIR = path.join(__dirname, '../../storage/pdfs');
+
+// Inicializar S3 client (Cloudflare R2 compatível com S3)
+const s3 = new S3Client({
+  region: process.env.S3_REGION || 'auto',
+  endpoint: process.env.S3_ENDPOINT || undefined,
+  credentials: process.env.S3_ACCESS_KEY_ID
+    ? {
+        accessKeyId: process.env.S3_ACCESS_KEY_ID,
+        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+      }
+    : undefined,
+  forcePathStyle: false,
+});
+
+async function streamToBuffer(readable) {
+  const chunks = [];
+  for await (const chunk of readable) chunks.push(Buffer.from(chunk));
+  return Buffer.concat(chunks);
+}
+
+async function fetchPdfBufferFromS3(key) {
+  const bucket = process.env.S3_BUCKET;
+  if (!bucket) throw new Error('S3_BUCKET not configured');
+  const res = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+  return await streamToBuffer(res.Body);
+}
 
 export const serveWatermarkedPdf = async (req, res) => {
   try {
@@ -14,8 +41,25 @@ export const serveWatermarkedPdf = async (req, res) => {
     // Ajuste de segurança: validar docId
     if (!/^[a-zA-Z0-9._-]+$/.test(docId)) return res.status(400).json({ error: 'Invalid document id' });
 
-    const filePath = path.join(STORAGE_DIR, `${docId}.pdf`);
-    const fileBuffer = await fs.readFile(filePath);
+    // Tentar buscar do R2/S3 quando as variáveis estiverem configuradas; fallback para disco
+    let fileBuffer;
+    try {
+      if (process.env.S3_ENDPOINT && process.env.S3_BUCKET) {
+        const key = `pdfs/${docId}.pdf`;
+        fileBuffer = await fetchPdfBufferFromS3(key);
+      } else {
+        const filePath = path.join(STORAGE_DIR, `${docId}.pdf`);
+        fileBuffer = await fs.readFile(filePath);
+      }
+    } catch (err) {
+      // se S3 falhar, tentar fallback local
+      try {
+        const filePath = path.join(STORAGE_DIR, `${docId}.pdf`);
+        fileBuffer = await fs.readFile(filePath);
+      } catch (e) {
+        throw err;
+      }
+    }
 
     // Gerar watermark com dados do usuário (não incluir CPF completo sem consentimento)
     const userTag = `${req.enrollment.name || req.enrollment.email || 'Usuário'} — ID:${req.enrollment.id}`;
