@@ -126,6 +126,7 @@
     .navbar {
         position: relative;
         padding-inline: 12px;
+
     }
     .navbar .pgs {
         display: none;
@@ -148,9 +149,7 @@
         padding: 10px 12px;
         border-radius: 6px;
     }
-    .navbar .user {
-        display: none; /* ocultar user no menu pequeno para não sobrecarregar */
-    }
+
 }
 
 @media (min-width: 1200px) {

@@ -1,7 +1,20 @@
 // Arquivo renomeado a partir de modulo.js — mantém a mesma lógica
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // fallback único para todas as miniaturas dos assuntos
     const DEFAULT_LOGO = '/images/logo_diego_png.png';
+
+    // Obter dados do usuário para verificação de modalidade
+    let currentUser = null;
+    let userModality = '';
+    let isAdmin = false;
+    try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        if (res.ok) {
+            currentUser = await res.json();
+            userModality = String(currentUser.modality || '').toLowerCase().trim();
+            isAdmin = String(currentUser.status || '').toUpperCase() === 'ADMIN';
+        }
+    } catch(e) {}
     const params = new URLSearchParams(window.location.search);
     const moduloId = params.get('id') || '1';
 
@@ -28,8 +41,36 @@ document.addEventListener('DOMContentLoaded', () => {
         const assuntoIndex = idx + 1;
         const card = document.createElement('div');
         card.className = 'assunto-card';
+        // Add data-id for progress tracking
+        card.setAttribute('data-id', `${moduloId}.${assuntoIndex}`);
         
         const mat = aula.materiais || {};
+
+        // Lógica de Material Teórico com suporte a requiredModality
+        let rawTeorico = mat.teorico || mat.teoria;
+        let teoricoUrl = null;
+
+        if (rawTeorico) {
+            if (typeof rawTeorico === 'string') {
+                teoricoUrl = rawTeorico;
+            } else if (typeof rawTeorico === 'object') {
+                const req = rawTeorico.requiredModality;
+                let visible = true;
+                if (req && !isAdmin) {
+                    const reqStr = String(req).toLowerCase().trim();
+                    // Lógica similar ao assistir.js
+                    if (reqStr === 'extensivo') {
+                        const validos = ['extensivo', 'com_material', 'sem_material'];
+                        if (!validos.some(v => userModality.includes(v))) visible = false;
+                    } else {
+                        if (!userModality.includes(reqStr)) visible = false;
+                    }
+                }
+                if (visible) {
+                    teoricoUrl = rawTeorico.file || rawTeorico.url;
+                }
+            }
+        }
 
         // incluir miniatura para aulas de equações (se identificadas pelo título)
         const isEquacoes = /Equa[cç]o/i.test(aula.titulo) || /Equações?/i.test(aula.titulo) || aula.titulo.includes('Equações');
@@ -53,8 +94,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </a>
                     </li>
-                    <li>
-                        <a href="${mat.teorico ? `/pdf-viewer/viewer.html?doc=${encodeURIComponent(mat.teorico)}` : '#'}" ${mat.teorico ? 'target="_blank"' : ''}>
+                    <li style="${teoricoUrl ? '' : 'display:none'}">
+                        <a href="${teoricoUrl ? `/pdf-viewer/viewer.html?doc=${encodeURIComponent(teoricoUrl)}` : '#'}" target="_blank">
                             <div class="item-thumb" data-src="/images/images_modulos/image_pdf.png"></div>
                             <div class="item-info">
                                 <span class="item-title">Material Teórico</span>
@@ -66,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <a href="#" class="btn-lista">
                             <div class="item-thumb" data-src="/images/images_modulos/image_listaExercicios.png"></div>
                             <div class="item-info">
-                                <span class="item-title">Listas de Exercícios</span>
+                                <span class="item-title">Para Praticar</span>
                                 <span class="item-sub">Praticar</span>
                             </div>
                         </a>
@@ -203,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.type = 'button';
             btn.textContent = it.label;
             btn.addEventListener('click', () => {
-                if (it.href) window.location.href = it.href;
+                if (it.href) window.open(it.href, '_blank');
                 closeModal();
             });
             bodyEl.appendChild(btn);
@@ -274,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const cardIndex = cards.indexOf(card);
         const aula = (mod && mod.aulas && mod.aulas[cardIndex]) || {};
         
-        if (text.includes('lista')){
+        if (text.includes('lista') || text.includes('praticar')){
             anchor.addEventListener('click', (e) => {
                 e.preventDefault();
                 
@@ -293,8 +334,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                    // Se for ADMIN, mostrar tudo
                    if (isAdmin) {
-                         if (hasExtensivo) items.push({ label: 'Lista Praticando ENEM (Extensivo)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtensivo)}` });
-                         if (hasAprof) items.push({ label: 'Lista Praticando ENEM (Aprofundamento)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasAprof)}` });
+                         if (hasExtensivo) items.push({ label: 'Praticando ENEM (Extensivo)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtensivo)}` });
+                         if (hasAprof) items.push({ label: 'Praticando ENEM (Aprofundamento)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasAprof)}` });
                          
                          // Se não tiver nenhum dos dois cadastrado, fallback
                          if (!hasExtensivo && !hasAprof) {
@@ -304,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
                          if (hasExtra) items.push({ label: 'Lista Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtra)}` });
                          else items.push({ label: 'Lista Extra', href: 'questoes.html?lista=lista-extra' });
 
-                         openModal('Listas de Exercícios', items);
+                         openModal('Para Praticar', items);
                          return;
                    }
 
@@ -335,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
                        items.push({ label: 'Lista Extra', href: 'questoes.html?lista=lista-extra' });
                    }
 
-                   openModal('Listas de Exercícios', items);
+                   openModal('Para Praticar', items);
                 })();
             });
         }

@@ -25,8 +25,8 @@ const cursoData = {
                     { titulo: "A cruzadinha", vimeoId: "1160830158" },
                     { titulo: "Complemento de Quadrado", vimeoId: "1161234861" },
                     { titulo: "Binômio de Newton", vimeoId: "1161235585", requiredModality: "aprofundamento" },
-                    {titulo: "Questões Difíceis", vimeoId: "1161236053", requiredModality: "extensivo" },
-                    {titulo: "Soma dos quadrados dos primeiros naturais", vimeoId: "1161236053", requiredModality: "aprofundamento" }
+                    {titulo: "Questões Difíceis", vimeoId: "1161773683", requiredModality: "extensivo" },
+                    {titulo: "Soma dos quadrados dos primeiros naturais", vimeoId: "1162044528", requiredModality: "aprofundamento" }
                 ]
             },
             
@@ -115,6 +115,12 @@ const cursoData = {
                     gabaritos: { pe_extensivo: "G_PE_E_Proporcionalidade.pdf", pe_aprofundamento: "G_PE_A_Proporcionalidade.pdf" }
                 }
             },
+            {
+                 titulo: "Resolução do Caderno Revisional",
+                 vimeoId: "",
+                 materiais: {},
+                 subAulas: []
+            }
         ]
     },
     "2": { // ID do Módulo 2
@@ -126,6 +132,12 @@ const cursoData = {
             {titulo: "Logaritmos e Função Logarítmica", vimeoId: "55667788" },
             {titulo: "Sequências, PA e PG", vimeoId: "11223344" },
             {titulo: "Matemática Financeira", vimeoId: "55667788" },
+            {
+                 titulo: "Resolução do Caderno Revisional",
+                 vimeoId: "",
+                 materiais: {},
+                 subAulas: []
+            }
         ]
     },
     "3": { // ID do Módulo 3
@@ -137,8 +149,14 @@ const cursoData = {
             {titulo: "Sistemas Lineares", vimeoId: "99887766" },
             {titulo: "Análise Combinatória", vimeoId: "99887766" },
             {titulo: "Probabilidade", vimeoId: "99887766" },
+            {
+                 titulo: "Resolução do Caderno Revisional",
+                 vimeoId: "",
+                 materiais: {},
+                 subAulas: []
+            }
         ]
-},
+    },
 
     "4": {
         tituloModulo: "Módulo 4",
@@ -150,6 +168,12 @@ const cursoData = {
             {titulo: "Geometria de Posição e Poliedros", vimeoId: "00000002" },
             {titulo: "Prisma e Pirâmides", vimeoId: "00000003" },
             {titulo: "Corpos Redondos", vimeoId: "00000003" },
+            {
+                 titulo: "Resolução do Caderno Revisional",
+                 vimeoId: "",
+                 materiais: {},
+                 subAulas: []
+            }
         ]
     }
 };

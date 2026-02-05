@@ -1,0 +1,25 @@
+
+/* Stronger titles */
+h1, h2, .page-title, .status-container h1, #modulo-title, #class-title, .titulo-secao {
+    font-weight: 800 !important;
+    color: #a78bfa !important; /* Lighter/Stronger Purple for dark mode */
+    text-shadow: 0 0 15px rgba(167, 139, 250, 0.3);
+    opacity: 1 !important;
+    letter-spacing: 0.5px;
+}
+
+/* Back button in player */
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    color: var(--color-muted);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+    font-size: 1rem;
+}
+.back-button:hover {
+    color: var(--color-accent);
+}
