@@ -24,7 +24,9 @@ const cursoData = {
                 subAulas: [
                     { titulo: "A cruzadinha", vimeoId: "1160830158" },
                     { titulo: "Complemento de Quadrado", vimeoId: "1161234861" },
-                    { titulo: "Binômio de Newton", vimeoId: "1161235585", adminOnly: true },
+                    { titulo: "Binômio de Newton", vimeoId: "1161235585", requiredModality: "aprofundamento" },
+                    {titulo: "Questões Difíceis", vimeoId: "1161236053", requiredModality: "extensivo" },
+                    {titulo: "Soma dos quadrados dos primeiros naturais", vimeoId: "1161236053", requiredModality: "aprofundamento" }
                 ]
             },
             
@@ -36,7 +38,11 @@ const cursoData = {
                 materiais: {
                     teoria: "Teoria_Equacoes1e2Grau.pdf",
                     gabaritos: { pe_extensivo: "G_PE_E_Equacoes1e2Grau.pdf", pe_aprofundamento: "G_PE_A_Equacoes1e2Grau.pdf"}
-                }
+                },
+                subaulas: [
+                    { titulo: "Equações do 1º Grau", vimeoId: "1161775298" },
+                    { titulo: "Equações do 2º Grau", vimeoId: "1161775798" }
+                ]
             },
             
             

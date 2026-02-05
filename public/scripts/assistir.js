@@ -26,20 +26,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     const assunto = mod.aulas && mod.aulas[assuntoNum - 1];
     // determinar se usuário é admin consultando o backend (/api/auth/me)
     let isAdmin = false;
+    let userModality = '';
     try {
         const meRes = await fetch('/api/auth/me', { credentials: 'include' });
         if (meRes && meRes.ok) {
             const me = await meRes.json();
             isAdmin = String(me?.status || '').toUpperCase().trim() === 'ADMIN';
+            userModality = String(me?.modality || '').toLowerCase().trim();
         }
     } catch (e) {
         // ignorar erros; isAdmin permanece false
     }
 
+    // Helper de visibilidade
+    const isVisible = (item) => {
+        if (!item) return false;
+        if (isAdmin) return true;
+        if (item.adminOnly) return false;
+        // Lógica de segregação por modalidade (extensivo, aprofundamento, etc)
+        if (item.requiredModality) {
+            if (!userModality) return false; // Se tem requisito e usuário não tem modalidade, esconde
+            const req = String(item.requiredModality).toLowerCase().trim();
+            
+            // "extensivo" inclui: extensivo, com_material, sem_material
+            if (req === 'extensivo') {
+                const validos = ['extensivo', 'com_material', 'sem_material'];
+                return validos.some(v => userModality.includes(v));
+            }
+            
+            // Para outros casos, verificação simples de inclusão
+            if (!userModality.includes(req)) return false;
+        }
+        return true;
+    };
+
     let subAula = null;
     if (assunto && assunto.subAulas && subNum) {
         const candidate = assunto.subAulas[subNum - 1];
-        if (candidate && !(candidate.adminOnly && !isAdmin)) subAula = candidate;
+        if (isVisible(candidate)) subAula = candidate;
     }
 
     // atualizar título principal
@@ -177,7 +201,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             subUl.className = 'sub-lessons';
             // apenas renderizar sub-aulas visíveis para o usuário
             assunto.subAulas.forEach((s, sIdx) => {
-                if (s.adminOnly && !isAdmin) return; // pular se somente admin
+                if (!isVisible(s)) return; // pular se não visível (adminOnly ou modalidade específica)
                 const subLi = document.createElement('li');
                 subLi.className = 'lesson-card sub';
                 const subId = `${moduloNum}.${assuntoNum}.${sIdx + 1}`;
@@ -204,7 +228,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             activeId = `${moduloNum}.${assuntoNum}.${subNum}`;
         } else if (hideMain) {
             // procurar primeira sub-aula visível
-            const firstVisibleIndex = assunto.subAulas ? assunto.subAulas.findIndex(s => !(s.adminOnly && !isAdmin)) : -1;
+            const firstVisibleIndex = assunto.subAulas ? assunto.subAulas.findIndex(s => isVisible(s)) : -1;
             if (firstVisibleIndex >= 0) {
                 const s = assunto.subAulas[firstVisibleIndex];
                 initialLesson = s;
