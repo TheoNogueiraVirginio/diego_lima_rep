@@ -40,7 +40,13 @@ export const serveWatermarkedPdf = async (req, res) => {
      const userName = req.enrollment?.name || 'Usuario';
      for (const page of pages) {
         const { width, height } = page.getSize();
-        page.drawText(userName, { x: 50, y: height/2, size: 40, font, color: rgb(0.5,0.5,0.5), opacity: 0.2, rotate: degrees(45) });
+        page.drawText(userName, { x: 130, y: height/2 - 115, size: 45, font, color: rgb(0.5,0.5,0.5), opacity: 0.15, rotate: degrees(45) });
+     }
+
+    const userCpf = req.enrollment?.cpf || '000.000.000-00';
+    for (const page of pages) {
+        const { width, height } = page.getSize();
+        page.drawText("CPF: " + userCpf, { x: 200, y: height/2 - 150, size: 40, font, color: rgb(0.5,0.5,0.5), opacity: 0.15, rotate: degrees(45) });
      }
 
     const pdfBytes = await pdfDoc.save();
