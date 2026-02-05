@@ -28,6 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const assuntoIndex = idx + 1;
         const card = document.createElement('div');
         card.className = 'assunto-card';
+        
+        const mat = aula.materiais || {};
 
         // incluir miniatura para aulas de equações (se identificadas pelo título)
         const isEquacoes = /Equa[cç]o/i.test(aula.titulo) || /Equações?/i.test(aula.titulo) || aula.titulo.includes('Equações');
@@ -52,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </a>
                     </li>
                     <li>
-                        <a href="#">
+                        <a href="${mat.teorico ? `/pdf-viewer/viewer.html?doc=${encodeURIComponent(mat.teorico)}` : '#'}" ${mat.teorico ? 'target="_blank"' : ''}>
                             <div class="item-thumb" data-src="/images/images_modulos/image_pdf.png"></div>
                             <div class="item-info">
                                 <span class="item-title">Material Teórico</span>
@@ -61,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </a>
                     </li>
                     <li>
-                        <a href="#">
+                        <a href="#" class="btn-lista">
                             <div class="item-thumb" data-src="/images/images_modulos/image_listaExercicios.png"></div>
                             <div class="item-info">
                                 <span class="item-title">Listas de Exercícios</span>
@@ -70,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </a>
                     </li>
                     <li>
-                        <a href="#">
+                        <a href="#" class="btn-gabarito">
                             <div class="item-thumb" data-src="/images/images_modulos/image_gabarito.png"></div>
                             <div class="item-info">
                                 <span class="item-title">Gabarito</span>
@@ -235,17 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return String(s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,' ').trim();
     }
 
-    // Mapeamento base dos assuntos -> sufixo comum usado nos arquivos
-    const gabaritoBase = {
-        [normalizeTitle('Identidades Importantes')]: 'IdentidadesImp',
-        [normalizeTitle('Equações do 1º e 2º Grau')]: 'Equacoes1e2Grau',
-        [normalizeTitle('Divisibilidade, MDC e MMC')]: 'DivisibilidadeMdcMmc',
-        [normalizeTitle('Estatistica')]: 'Estatistica',
-        [normalizeTitle('Conjuntos')]: 'Conjuntos',
-        [normalizeTitle('Ponto e Introducao de Funcoes')]: 'Ponto_IntFuncoes',
-        [normalizeTitle('Reta, Funcao Afim')]: 'RetaFuncaoAfim',
-        [normalizeTitle('Proporcionalidade')]: 'Proporcionalidade'
-    };
+    // Mapeamento base removido a favor da configuração explícita em dados_aulas.js
 
     // Cache do usuário atual (fetch uma vez)
     let cachedUser = null;
@@ -281,18 +273,70 @@ document.addEventListener('DOMContentLoaded', () => {
         const cards = Array.from(document.querySelectorAll('.assunto-card'));
         const cardIndex = cards.indexOf(card);
         const aula = (mod && mod.aulas && mod.aulas[cardIndex]) || {};
-        const normalized = normalizeTitle(aula.titulo || '');
-        const base = gabaritoBase[normalized];
-        const mappedDocE = base ? `G_PE_E_${base}` : null;
-        const mappedDocA = base ? `G_PE_A_${base}` : null;
-
+        
         if (text.includes('lista')){
             anchor.addEventListener('click', (e) => {
                 e.preventDefault();
-                openModal('Listas de Exercícios', [
-                    { label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' },
-                    { label: 'Lista extra', href: 'questoes.html?lista=lista-extra' }
-                ]);
+                
+                (async () => {
+                   const user = await getCurrentUser();
+                   const modality = user && (user.modality || '').toUpperCase();
+                   const isAdmin = user && String(user.status).toUpperCase() === 'ADMIN';
+
+                   // Dados novos
+                   const listas = (aula.materiais && aula.materiais.listas) || {};
+                   const hasExtensivo = listas.pe_extensivo;
+                   const hasAprof = listas.pe_aprofundamento;
+                   const hasExtra = listas.extra;
+                   
+                   const items = [];
+
+                   // Se for ADMIN, mostrar tudo
+                   if (isAdmin) {
+                         if (hasExtensivo) items.push({ label: 'Lista Praticando ENEM (Extensivo)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtensivo)}` });
+                         if (hasAprof) items.push({ label: 'Lista Praticando ENEM (Aprofundamento)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasAprof)}` });
+                         
+                         // Se não tiver nenhum dos dois cadastrado, fallback
+                         if (!hasExtensivo && !hasAprof) {
+                             items.push({ label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' });
+                         }
+
+                         if (hasExtra) items.push({ label: 'Lista Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtra)}` });
+                         else items.push({ label: 'Lista Extra', href: 'questoes.html?lista=lista-extra' });
+
+                         openModal('Listas de Exercícios', items);
+                         return;
+                   }
+
+                   // SEPARAÇÃO SOLICITADA PARA ALUNOS
+                   // Se o aluno for APROFUNDAMENTO, ele vê as duas opções separadas se existirem? 
+                   // Ou se ele for EXTENSIVO ele vê só a extensiva?
+                   // Assumindo que:
+                   // APROFUNDAMENTO -> Vê Aprofundamento E Extensivo (como opções separadas)
+                   // EXTENSIVO -> Vê Extensivo
+                   
+                   if (modality === 'APROFUNDAMENTO') {
+                       if (hasAprof) items.push({ label: 'Praticando ENEM (Aprofundamento)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasAprof)}` });
+                       if (hasExtensivo) items.push({ label: 'Praticando ENEM (Extensivo)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtensivo)}` });
+                       
+                       // Se não tem nenhum, fallback
+                       if (!hasAprof && !hasExtensivo) items.push({ label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' });
+
+                   } else {
+                       // Alunos EXTENSIVO ou outros
+                       if (hasExtensivo) items.push({ label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtensivo)}` });
+                       else items.push({ label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' });
+                   }
+
+                   // Lista Extra (sempre disponível)
+                   if (hasExtra) {
+                       items.push({ label: 'Lista Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtra)}` });
+                   } else {
+                       items.push({ label: 'Lista Extra', href: 'questoes.html?lista=lista-extra' });
+                   }
+
+                   openModal('Listas de Exercícios', items);
+                })();
             });
         }
         if (text.includes('gabarit')){
@@ -305,48 +349,57 @@ document.addEventListener('DOMContentLoaded', () => {
                     const isAdmin = user && String(user.status).toUpperCase() === 'ADMIN';
                     const modality = user && (user.modality || '').toUpperCase();
 
-                    // Admin vê ambos (se existirem)
+                    const gabs = (aula.materiais && aula.materiais.gabaritos) || {};
+
+                    // Admin vê tudo que estiver disponível
                     if (isAdmin) {
                         const items = [];
-                        if (mappedDocE) items.push({ label: 'Gabarito (E) - Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${mappedDocE}` });
-                        if (mappedDocA) items.push({ label: 'Gabarito (A) - Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${mappedDocA}` });
-                        items.push({ label: 'Lista extra', href: 'questoes.html?gabarito=lista-extra' });
+                        if (gabs.pe_extensivo) items.push({ label: 'Gabarito (E) - Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.pe_extensivo)}` });
+                        if (gabs.pe_aprofundamento) items.push({ label: 'Gabarito (A) - Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.pe_aprofundamento)}` });
+                        if (gabs.extra) items.push({ label: 'Gabarito Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.extra)}` });
+                        
+                        // Fallback caso não tenha nada cadastrado
+                        if (items.length === 0){
+                             items.push({ label: 'Lista extra', href: 'questoes.html?gabarito=lista-extra' });
+                        }
                         openModal('Gabaritos', items);
                         return;
                     }
 
-                    // Aluno APROFUNDAMENTO -> preferir A, cair para E se A indisponível
+                    const items = [];
+                    // Lógica para Aluno
+                    let mainLink = null;
+                    let label = 'Praticando ENEM';
+
                     if (modality === 'APROFUNDAMENTO'){
-                        if (mappedDocA && await docExists(mappedDocA)){
-                            openModal('Gabaritos', [
-                                { label: 'Praticando ENEM (Aprofundamento)', href: `/pdf-viewer/viewer.html?doc=${mappedDocA}` },
-                                { label: 'Lista extra', href: 'questoes.html?gabarito=lista-extra' }
-                            ]);
-                            return;
+                        if (gabs.pe_aprofundamento) {
+                            mainLink = `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.pe_aprofundamento)}`;
+                            label = 'Praticando ENEM (Aprof.)';
+                        } else if (gabs.pe_extensivo) {
+                            mainLink = `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.pe_extensivo)}`;
                         }
-                        if (mappedDocE && await docExists(mappedDocE)){
-                            openModal('Gabaritos', [
-                                { label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${mappedDocE}` },
-                                { label: 'Lista extra', href: 'questoes.html?gabarito=lista-extra' }
-                            ]);
-                            return;
+                    } else {
+                        // Extensivo e outros
+                        if (gabs.pe_extensivo) {
+                            mainLink = `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.pe_extensivo)}`;
                         }
                     }
 
-                    // Outros modulos (COM_MATERIAL; SEM_MATERIAL; PRESENCIAL etc) -> E preferencial
-                    if (mappedDocE && await docExists(mappedDocE)){
-                        openModal('Gabaritos', [
-                            { label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${mappedDocE}` },
-                            { label: 'Lista extra', href: 'questoes.html?gabarito=lista-extra' }
-                        ]);
-                        return;
+                    if (mainLink) {
+                        items.push({ label: label, href: mainLink });
+                    } else {
+                        // fallback
+                        items.push({ label: 'Praticando ENEM', href: 'questoes.html?gabarito=praticando-enem' });
                     }
 
-                    // Fallback: mostrar links padrão mesmo sem PDFs
-                    openModal('Gabaritos', [
-                        { label: 'Praticando ENEM', href: 'questoes.html?gabarito=praticando-enem' },
-                        { label: 'Lista extra', href: 'questoes.html?gabarito=lista-extra' }
-                    ]);
+                    // Extra
+                    if (gabs.extra) {
+                         items.push({ label: 'Gabarito Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.extra)}` });
+                    } else {
+                         items.push({ label: 'Lista extra', href: 'questoes.html?gabarito=lista-extra' });
+                    }
+
+                    openModal('Gabaritos', items);
                 })();
             });
         }

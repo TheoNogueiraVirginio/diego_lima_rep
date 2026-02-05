@@ -215,3 +215,12 @@
 	.modal-window{ padding:22px; }
 }
 
+/* Estilo para links desabilitados */
+.disabled-link {
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: default;
+    filter: grayscale(1);
+}
+
+

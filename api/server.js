@@ -9,6 +9,7 @@ import authRoutes from "./src/routes/authRoutes.js";
 import progressRoutes from "./src/routes/progressRoutes.js";
 import noticeRoutes from "./src/routes/noticeRoutes.js";
 import pdfRoutes from "./src/routes/pdfRoutes.js";
+import materiaisRoutes from './src/routes/materialRoutes.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -17,6 +18,8 @@ const __dirname = path.dirname(__filename);
 
 
 const app = express();
+
+app.use('/api/materiais', materiaisRoutes);
 
 // Permitir credenciais (cookies) e refletir a origem da requisição.
 app.use(cors({ origin: true, credentials: true }));
