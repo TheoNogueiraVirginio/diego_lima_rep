@@ -290,8 +290,8 @@
     left: 0;
     width: 100%;
     pointer-events: none;
-    z-index: 0;
-    overflow: visible; /* permitir que badges apareçam corretamente nas laterais/below */
+    z-index: 999;
+    overflow: hidden; /* Evita scrollbars acidentais */
 }
 
 .floating-badge {
@@ -340,3 +340,50 @@
 
 /* -------------------------------------------------------------------- */
 /* botão removido conforme solicitado */
+
+/* ---------- Marquee para Mobile ---------- */
+.marquee-container {
+    display: none; /* controlado via JS ou media query */
+    width: 100%;
+    overflow: hidden;
+    background: linear-gradient(90deg, rgba(17,24,39,0.95), rgba(45,108,223,0.15), rgba(17,24,39,0.95));
+    border-top: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding: 12px 0;
+    margin-bottom: 24px;
+    position: relative;
+    white-space: nowrap;
+}
+
+.marquee-track {
+    display: inline-block;
+    white-space: nowrap;
+    animation: marquee-scroll 25s linear infinite;
+    will-change: transform;
+}
+
+.marquee-item {
+    display: inline-block;
+    margin-right: 40px;
+    color: #cbd5e1;
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+
+.marquee-item strong {
+    color: var(--color-accent);
+    font-weight: 600;
+}
+
+@keyframes marquee-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+@media (max-width: 1024px) {
+    /* Esconde as badges flutuantes em mobile via CSS também, por garantia */
+    .floating-badge {
+        display: none !important;
+    }
+}

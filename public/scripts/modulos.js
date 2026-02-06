@@ -160,92 +160,153 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(overlay);
     }
 
-    /* ---------- Badges animadas de fundo (dinâmicas) ---------- */
-    function createFloatingBadges() {
-        const container = document.getElementById('floating-badges');
-        const status = document.querySelector('.status-container');
-        const modulesWrap = document.querySelector('.modulos');
-        if (!container || !status || !modulesWrap) return;
+    /* ---------- Gestão de Mensagens Motivacionais (Badges / Marquee) ---------- */
+    const motivationalTexts = [
+        '4x nota máxima em 2024',
+        '2x nota máxima em 2025',
+        'Única nota máxima da Paraíba em 2022',
+        'Aprenda com quem sabe',
+        'Rumo à aprovação',
 
-        // mover o container para o <body> para cobrir toda a largura da página
+    ];
+
+    let badgesInterval = null;
+    let marqueeCreated = false;
+
+    function initMessages() {
+        checkScreenMode();
+        window.addEventListener('resize', () => {
+             // Debounce simples
+             clearTimeout(window._resizeTimer);
+             window._resizeTimer = setTimeout(checkScreenMode, 200);
+        });
+    }
+
+    function checkScreenMode() {
+        const isSmallScreen = window.innerWidth <= 1024; // Mudança: passou de 768 para 1024
+
+        if (isSmallScreen) {
+            destroyFloatingBadges();
+            mountMarquee();
+        } else {
+            destroyMarquee();
+            mountFloatingBadges();
+        }
+    }
+
+    // --- Lógica Marquee (Mobile) ---
+    function mountMarquee() {
+        if (marqueeCreated) return;
+        
+        const titleElement = document.querySelector('.titulo-modulos');
+        if (!titleElement) return;
+
+        // Container marquee
+        const container = document.createElement('div');
+        container.className = 'marquee-container';
+        
+        // Track (faixa que corre)
+        const track = document.createElement('div');
+        track.className = 'marquee-track';
+
+        // Duplicar conteúdo para scroll infinito (pelo menos 4x para garantir cobrir telas largas se necessário)
+        const contentStr = motivationalTexts.map(t => `<span class="marquee-item">${t}</span>`).join('');
+        track.innerHTML = contentStr + contentStr + contentStr + contentStr;
+
+        container.appendChild(track);
+        
+        // Inserir ANTES do título "Meus Módulos"
+        titleElement.parentNode.insertBefore(container, titleElement);
+        
+        container.style.display = 'block';
+        marqueeCreated = true;
+    }
+
+    function destroyMarquee() {
+        const m = document.querySelector('.marquee-container');
+        if (m) m.remove();
+        marqueeCreated = false;
+    }
+
+    // --- Lógica Floating Badges (Desktop) ---
+    function mountFloatingBadges() {
+        const container = document.getElementById('floating-badges');
+        if (!container) return; 
+
+        // Mover para body para garantir posicionamento absoluto correto em relação à página
         if (container.parentElement !== document.body) {
             document.body.appendChild(container);
         }
 
-        const texts = [
-            '4x nota máxima em 2024',
-            '4x nota máxima em 2024',
-            '4x nota máxima em 2024',
-            '4x nota máxima em 2024',
-            '2x nota máxima em 2025',
-            '2x nota máxima em 2025',
-            'Única nota máxima da Paraíba em 2022'
-        ];
+        if (badgesInterval) return; // já rodando
 
-        // define área disponível: entre a base de status-container e a área dos módulos
+        // Assegurar visibilidade caso tenha sido ocultado
+        container.style.display = 'block';
+
+        const status = document.querySelector('.status-container');
+        const modulesWrap = document.querySelector('.modulos');
+        if (!status || !modulesWrap) return;
+
+        // Calcular layout
         function layoutContainer() {
+            if (window.innerWidth <= 1024) return; // ignorar em mobile/tablet (1024px)
             const statusRect = status.getBoundingClientRect();
-            const modulesRect = modulesWrap.getBoundingClientRect();
-
-            // topo relativo ao documento (início abaixo de status-container)
+            
+            // Usar window.scrollY para posição absoluta correta no body
             const top = Math.round(statusRect.bottom + window.scrollY + 6);
-            const left = 0;
-            const width = document.documentElement.scrollWidth || window.innerWidth;
-            // altura até o final do conteúdo para permitir aparecer abaixo dos módulos
+            
+            // Usar innerWidth para evitar criar scroll horizontal
+            const width = window.innerWidth; 
+            
+            // Altura até o final do documento
             const height = Math.max(document.body.scrollHeight - top, window.innerHeight - (statusRect.bottom + 6));
 
             container.style.position = 'absolute';
-            container.style.left = left + 'px';
+            container.style.left = '0px';
             container.style.top = top + 'px';
-            container.style.width = Math.max(width, 120) + 'px';
-            container.style.height = Math.max(height, 120) + 'px';
+            container.style.width = width + 'px';
+            container.style.height = height + 'px';
             container.style.pointerEvents = 'none';
         }
-
+        
         layoutContainer();
-        window.addEventListener('resize', layoutContainer);
-        window.addEventListener('scroll', layoutContainer);
+        // Nota: O resize já chama checkScreenMode, que chama mountFloatingBadges se desktop
+        // Mas se apenas redimensionar dentro de desktop, precisamos atualizar layout
+        window.addEventListener('resize', layoutContainer); 
 
         const activeTexts = new Set();
-
+        const activeBadgePositions = []; // {x, y}
+        
         function moduleRectsRelative() {
             const contRect = container.getBoundingClientRect();
-            return Array.from(modulesWrap.querySelectorAll('.modulo')).map(m => {
-                const r = m.getBoundingClientRect();
-                return {
-                    left: r.left - contRect.left,
-                    top: r.top - contRect.top,
-                    right: r.right - contRect.left,
-                    bottom: r.bottom - contRect.top
-                };
-            });
+            // Alterado para usar o retângulo do wrapper inteiro (.modulos)
+            // Isso garante que a área 'proibida' inclua os módulos E os espaços entre eles (gaps)
+            const wRect = modulesWrap.getBoundingClientRect();
+            return [{
+                left: wRect.left - contRect.left,
+                top: wRect.top - contRect.top,
+                right: wRect.right - contRect.left,
+                bottom: wRect.bottom - contRect.top
+            }];
         }
 
-        // Tamanho estimado máximo de uma badge para cálculo seguro de colisão e limites
-        // Aumentado para lidar com textos longos e a animação vertical (translateY +/- 18px)
         const BADGE_SAFE_W = 360; 
         const BADGE_SAFE_H = 90;
 
         function isOverlapping(bx, by, rects) {
-            // Badge bounds (centralizado em bx, by)
             const bLeft = bx - BADGE_SAFE_W / 2;
             const bRight = bx + BADGE_SAFE_W / 2;
             const bTop = by - BADGE_SAFE_H / 2;
             const bBottom = by + BADGE_SAFE_H / 2;
-
-            const pad = 20; // margem extra de conforto visual em torno dos módulos
+            const pad = 20;
 
             return rects.some(r => {
-                // Dimensões do módulo com padding
                 const mLeft = r.left - pad;
                 const mRight = r.right + pad;
                 const mTop = r.top - pad;
                 const mBottom = r.bottom + pad;
-
-                // Verifica intersecção de retângulos
                 const overlapX = (bLeft < mRight) && (bRight > mLeft);
                 const overlapY = (bTop < mBottom) && (bBottom > mTop);
-
                 return overlapX && overlapY;
             });
         }
@@ -256,38 +317,60 @@ document.addEventListener('DOMContentLoaded', () => {
             const ch = contRect.height;
             const rects = moduleRectsRelative();
             
-            // Define área 'segura' para o centro da badge, garantindo que ela não saia da tela
-            // (Assumindo que o CSS centraliza com translate(-50%, -50%))
             const marginX = (BADGE_SAFE_W / 2) + 10;
             const marginY = (BADGE_SAFE_H / 2) + 10;
             
-            // Se a tela for muito pequena, reduz margens ou centraliza
-            if (cw < BADGE_SAFE_W) {
-                return { x: cw / 2, y: ch / 2, cw, ch };
-            }
+            if (cw < BADGE_SAFE_W) return { x: cw / 2, y: ch / 2, cw, ch };
 
             const minX = marginX;
             const maxX = cw - marginX;
             const minY = marginY;
             const maxY = Math.max(minY, ch - marginY);
 
+            // Distância mínima (quadrada) entre badges para evitar aglomeração
+            // Ex: 350px de distância => 350*350 = 122500
+            const MIN_DIST_SQ = 350 * 350; 
+
             let attempts = 0;
-            while (attempts < 50) {
+            while (attempts < 100) {
                 const x = minX + Math.random() * (maxX - minX);
                 const y = minY + Math.random() * (maxY - minY);
                 
-                if (!isOverlapping(x, y, rects)) {
+                // 1. Evitar sobreposição com módulos
+                if (isOverlapping(x, y, rects)) {
+                    attempts++;
+                    continue;
+                }
+
+                // 2. Evitar proximidade com outras badges ativas
+                const tooClose = activeBadgePositions.some(p => {
+                    const dx = x - p.x;
+                    const dy = y - p.y;
+                    return (dx * dx + dy * dy) < MIN_DIST_SQ;
+                });
+
+                if (!tooClose) {
                     return { x, y, cw, ch };
                 }
+                
                 attempts++;
             }
-            // fallback: tenta não sair da tela, mesmo que sobreponha
-            return { x: cw / 2, y: ch / 2, cw, ch };
+            // Se não encontrou lugar seguro após tentativas, retorna null para não exibir em local proibido
+            return null;
         }
 
         function createBadge(text) {
-            if (activeTexts.has(text)) return null; // não criar duplicata simultânea
+            if (activeTexts.has(text)) return;
+            // Se estiver em modo mobile/tablet, abortar criaçao (segurança extra)
+            if (window.innerWidth <= 1024) return;
+
             const pos = pickPositionAvoidingModules();
+            if (!pos) return; // Não encontrou espaço válido
+            
+            // Registrar posição usada
+            const posObj = { x: pos.x, y: pos.y };
+            activeBadgePositions.push(posObj);
+
             const leftPerc = ((pos.x / pos.cw) * 100).toFixed(2) + '%';
             const topPerc = ((pos.y / pos.ch) * 100).toFixed(2) + '%';
 
@@ -313,29 +396,48 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 try { el.remove(); } catch (e) {}
                 activeTexts.delete(text);
+                // Remover posição do registro
+                const idx = activeBadgePositions.indexOf(posObj);
+                if (idx > -1) activeBadgePositions.splice(idx, 1);
             }, lifeMs + 1200);
-
-            return el;
         }
 
-        // inicial: criar badges únicas (não duplicadas ao mesmo tempo)
-        const uniqueTexts = Array.from(new Set(texts));
-        const initialCount = window.innerWidth < 600 ? 3 : Math.min(uniqueTexts.length, 6);
+        // Inicial
+        const uniqueTexts = Array.from(new Set(motivationalTexts));
+        const initialCount = Math.min(uniqueTexts.length, 6);
         for (let i = 0; i < initialCount; i++) {
-            const t = uniqueTexts[i % uniqueTexts.length];
-            createBadge(t);
+            createBadge(uniqueTexts[i % uniqueTexts.length]);
         }
 
-        // spawn periódico — tenta criar uma nova badge única quando houver oportunidade
-        setInterval(() => {
-            const pool = Array.from(new Set(texts));
+        // Loop
+        badgesInterval = setInterval(() => {
+            if (window.innerWidth <= 1024) return; 
+            const pool = Array.from(new Set(motivationalTexts));
             const available = pool.filter(t => !activeTexts.has(t));
             if (available.length === 0) return;
             const pick = available[Math.floor(Math.random() * available.length)];
             createBadge(pick);
         }, 2800 + Math.random() * 2200);
+
+        // Salvar referência cleanup
+        container._cleanup = () => {
+            clearInterval(badgesInterval);
+            badgesInterval = null;
+            container.innerHTML = '';
+            // Remove listener de resize específico dessa função ao destruir
+            window.removeEventListener('resize', layoutContainer);
+        };
     }
 
-    createFloatingBadges();
+    function destroyFloatingBadges() {
+        const container = document.getElementById('floating-badges');
+        if (container && container._cleanup) {
+            container._cleanup();
+        }
+        if (container) container.style.display = 'none';
+        badgesInterval = null;
+    }
+
+    initMessages();
 
 });

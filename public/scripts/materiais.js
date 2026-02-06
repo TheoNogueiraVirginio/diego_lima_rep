@@ -409,11 +409,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                    // EXTENSIVO -> Vê Extensivo
                    
                    if (modality === 'APROFUNDAMENTO') {
-                       if (hasAprof) items.push({ label: 'Praticando ENEM (Aprofundamento)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasAprof)}` });
-                       if (hasExtensivo) items.push({ label: 'Praticando ENEM (Extensivo)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtensivo)}` });
-                       
-                       // Se não tem nenhum, fallback
-                       if (!hasAprof && !hasExtensivo) items.push({ label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' });
+                       if (hasAprof) {
+                           items.push({ label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasAprof)}` });
+                       } else {
+                           // Fallback genérico se aluno Aprofundamento não tem PDF Aprofundamento cadastrado
+                           // Se não há aprofundamento, tentamos dar algo genérico
+                           items.push({ label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' });
+                       }
 
                    } else {
                        // Alunos EXTENSIVO ou outros

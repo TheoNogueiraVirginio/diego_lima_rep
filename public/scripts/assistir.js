@@ -59,6 +59,122 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // --- Lógica "Ir para a prática" ---
+    const practiceBtn = document.querySelector('.practice-button');
+    if (practiceBtn) {
+        practiceBtn.addEventListener('click', () => {
+            if (!assunto) return;
+            
+            // Dados similares ao materiais.js
+            const listas = (assunto.materiais && assunto.materiais.listas) || {};
+            const hasExtensivo = listas.pe_extensivo;
+            const hasAprof = listas.pe_aprofundamento;
+            const hasExtra = listas.extra;
+            
+            const items = [];
+            const userModUpper = userModality.toUpperCase();
+
+            // Se for ADMIN, mostrar tudo
+            if (isAdmin) {
+                if (hasExtensivo) items.push({ label: 'Praticando ENEM (Extensivo)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtensivo)}` });
+                if (hasAprof) items.push({ label: 'Praticando ENEM (Aprofundamento)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasAprof)}` });
+                
+                if (!hasExtensivo && !hasAprof) {
+                    items.push({ label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' });
+                }
+
+                if (hasExtra) items.push({ label: 'Lista Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtra)}` });
+                else items.push({ label: 'Lista Extra', href: 'questoes.html?lista=lista-extra' });
+
+                openModal('Para Praticar', items);
+                return;
+            }
+
+            // Lógica para Alunos
+            if (userModUpper === 'APROFUNDAMENTO') { 
+                // Aprofundamento vê APENAS o PDF de aprofundamento (se existir).
+                if (hasAprof) {
+                    items.push({ label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasAprof)}` });
+                } else {
+                    // Fallback se não tiver lista específica cadastrada
+                    items.push({ label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' });
+                }
+
+            } else { 
+                // Extensivo (e outros) vê apenas extensivo
+                if (hasExtensivo) items.push({ label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtensivo)}` });
+                else items.push({ label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' });
+            }
+
+            // Lista Extra (sempre disponível)
+            if (hasExtra) {
+                items.push({ label: 'Lista Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtra)}` });
+            } else {
+                items.push({ label: 'Lista Extra', href: 'questoes.html?lista=lista-extra' });
+            }
+
+            openModal('Para Praticar', items);
+        });
+    }
+
+    // Modal helper (versão simplificada/inline)
+    function openModal(title, items){
+        let overlay = document.getElementById('global-modal-overlay');
+        if (!overlay){
+            overlay = document.createElement('div');
+            overlay.id = 'global-modal-overlay';
+            overlay.className = 'modal-overlay';
+            overlay.innerHTML = `<div class="modal-window" role="dialog" aria-modal="true">
+                <div class="modal-header">
+                    <div class="modal-title"></div>
+                    <button class="modal-close" aria-label="Fechar">✕</button>
+                </div>
+                <div class="modal-body"></div>
+            </div>`;
+            document.body.appendChild(overlay);
+        }
+
+        const modalWindow = overlay.querySelector('.modal-window');
+        const titleEl = overlay.querySelector('.modal-title');
+        const bodyEl = overlay.querySelector('.modal-body');
+        const closeBtn = overlay.querySelector('.modal-close');
+
+        titleEl.textContent = title || '';
+        bodyEl.innerHTML = '';
+
+        items.forEach(it => {
+            const btn = document.createElement('button');
+            btn.className = 'modal-option';
+            btn.type = 'button';
+            btn.textContent = it.label;
+            btn.addEventListener('click', () => {
+                if (it.href) window.open(it.href, '_blank');
+                closeModal();
+            });
+            bodyEl.appendChild(btn);
+        });
+
+        function onOverlayClick(e){
+            if (e.target === overlay) closeModal();
+        }
+        function onEsc(e){ if (e.key === 'Escape') closeModal(); }
+        function closeModal(){
+            overlay.classList.remove('active');
+            overlay.removeEventListener('click', onOverlayClick);
+            document.removeEventListener('keydown', onEsc);
+        }
+
+        closeBtn.onclick = closeModal;
+        overlay.addEventListener('click', onOverlayClick);
+        document.addEventListener('keydown', onEsc);
+
+        overlay.classList.add('active');
+        setTimeout(() => {
+            const first = bodyEl.querySelector('.modal-option');
+            if (first) first.focus();
+        }, 50);
+    }
+
     sidebarList.innerHTML = '';
 
     if (!mod) {
