@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import { MercadoPagoConfig, Payment } from 'mercadopago';
-import nodemailer from 'nodemailer';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { signAccess, signRefresh, ACCESS_EXPIRES, REFRESH_EXPIRES } from '../utils/jwt.js';
@@ -27,54 +26,6 @@ async function calcularPreco(modalidade) {
     // Mantemos as outras regras/valores no código para histórico/futuro uso.
     const valorFinal = (modalidade === 'COM_MATERIAL') ? PRECOS.TIER_3.COM : PRECOS.TIER_3.SEM;
     return valorFinal;
-}
-
-// --- Envio de e-mail (nodemailer) ---
-async function sendEnrollmentEmail(toEmail, studentName, modality, amount) {
-    try {
-        // Configuração simplificada: usar apenas GMAIL_USER e GMAIL_PASS
-        const gmailUser = process.env.GMAIL_USER;
-        const gmailPass = process.env.GMAIL_PASS;
-        const fromAddress = process.env.SMTP_FROM || gmailUser || 'no-reply@seusite.com';
-
-        if (!gmailUser || !gmailPass) {
-            console.warn('⚠️ [sendEnrollmentEmail] Credenciais Gmail não configuradas. Logando o e-mail no console como fallback.');
-            console.log(`Email para: ${toEmail}\nAssunto: Matrícula confirmada\nCorpo: Olá ${studentName}, sua matrícula na modalidade ${modality} foi confirmada. Valor: R$ ${Number(amount).toFixed(2)}.`);
-            return;
-        }
-
-        const transporter = nodemailer.createTransport({
-            host: 'smtp.gmail.com',
-            port: 587,
-            secure: false,
-            auth: {
-                user: gmailUser,
-                pass: gmailPass
-            }
-        });
-
-        const subject = 'Confirmação de Matrícula - Curso de Matemática';
-        const html = `
-            <p>Olá ${studentName},</p>
-            <p>Seu pagamento foi confirmado e sua matrícula na modalidade <strong>${modality}</strong> foi finalizada com sucesso.</p>
-            <p><strong>Valor:</strong> R$ ${Number(amount).toFixed(2)}</p>
-            <p>Em breve entraremos em contato com as instruções de acesso ao material.</p>
-            <br>
-            <p>Atenciosamente,<br>Equipe Diego Lima Cursos</p>
-        `;
-
-        await transporter.sendMail({
-            from: fromAddress,
-            to: toEmail,
-            subject,
-            html
-        });
-
-        console.log(`✅ [sendEnrollmentEmail] E-mail enviado para ${toEmail}`);
-
-    } catch (err) {
-        console.error('❌ [sendEnrollmentEmail] Erro ao enviar e-mail:', err.message);
-    }
 }
 
 export const createEnrollment = async (req, res) => {
@@ -173,12 +124,7 @@ export const createEnrollment = async (req, res) => {
                     // Se MP já aprovou, atualiza como PAID e retorna informação
                     if (mpStatus === 'approved') {
                         await prisma.enrollment.update({ where: { id: alunoExistente.id }, data: { status: 'PAID' } });
-                        // Enviar email de confirmação
-                        try {
-                            await sendEnrollmentEmail(alunoExistente.email, alunoExistente.name, alunoExistente.modality, alunoExistente.amount);
-                        } catch (e) {
-                            console.error('❌ Erro ao enviar e-mail após detectar pagamento aprovado:', e.message);
-                        }
+
                         return res.status(200).json({ resume: false, message: 'Pagamento já aprovado.' , status: 'approved' });
                     }
 
@@ -222,10 +168,8 @@ export const createEnrollment = async (req, res) => {
                         await prisma.enrollment.update({ where: { id: alunoExistente.id }, data: { status: 'REJECTED' } });
                         // prosseguir criando novo pagamento abaixo
                     }
-
                 } catch (err) {
                     console.error('❌ [createEnrollment] Erro ao consultar MP para paymentId existente:', err.message);
-                    // Em caso de erro ao consultar MP, prosseguir com a criação/atualização normalmente
                 }
             }
 
@@ -378,12 +322,6 @@ export const checkPaymentStatus = async (req, res) => {
             } catch (err) {
                 console.error('❌ [checkPaymentStatus] Erro ao marcar PAID no DB:', err.message);
             }
-            // Enviar e-mail de confirmação
-            try {
-                await sendEnrollmentEmail(existingPayment.email, existingPayment.name, existingPayment.modality, existingPayment.amount);
-            } catch (err) {
-                console.error('❌ Erro ao enviar e-mail após confirmação via polling:', err.message);
-            }
         } else {
             // Fallback: Se por algum motivo o registro não existir (ex: criado antes dessa mudança),
             // tentamos criar/atualizar usando o metadata como antes.
@@ -410,20 +348,10 @@ export const checkPaymentStatus = async (req, res) => {
                     where: { id: alunoExistente.id },
                     data: novoAluno
                 });
-                try {
-                    await sendEnrollmentEmail(alunoExistente.email || novoAluno.email, novoAluno.name, novoAluno.modality, novoAluno.amount);
-                } catch (err) {
-                    console.error('❌ Erro ao enviar e-mail após criar/atualizar via metadata:', err.message);
-                }
             } else {
                 await prisma.enrollment.create({
                     data: novoAluno
                 });
-                try {
-                    await sendEnrollmentEmail(novoAluno.email, novoAluno.name, novoAluno.modality, novoAluno.amount);
-                } catch (err) {
-                    console.error('❌ Erro ao enviar e-mail após criar novo aluno via metadata:', err.message);
-                }
             }
         }
 
@@ -511,7 +439,8 @@ export const verifyLogin = async (req, res) => {
             success: true, 
             message: "Login bem-sucedido.",
             userId: user.id,
-            userName: user.name
+            userName: user.name,
+            status: user.status
         });
     }
     catch (err) {

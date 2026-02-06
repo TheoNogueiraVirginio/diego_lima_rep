@@ -11,14 +11,84 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const botoes = document.querySelectorAll('.btn-fazer-simulado');
 
-    // comportamento padrão dos botões (será desabilitado caso necessário)
+    // comportamento padrão dos botões
     botoes.forEach(botao => {
-        botao.addEventListener('click', () => {
+        botao.addEventListener('click', (e) => {
             if (botao.disabled) return;
             const idSimulado = botao.getAttribute('data-id');
             window.location.href = `questoes.html?id=${idSimulado}`;
         });
     });
+
+    function showBlockModal() {
+        // Remove overlay existente se houver
+        const existing = document.getElementById('module-lock-overlay');
+        if (existing) return; // Já está exibindo
+
+        const overlay = document.createElement('div');
+        overlay.id = 'module-lock-overlay';
+        overlay.style.position = 'fixed';
+        overlay.style.inset = '0';
+        overlay.style.background = 'linear-gradient(180deg, rgba(2,6,90,0.95), rgba(2,6,90,1))';
+        overlay.style.display = 'flex';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        overlay.style.zIndex = '99999';
+
+        const box = document.createElement('div');
+        box.style.maxWidth = '480px';
+        box.style.margin = '20px';
+        box.style.background = '#1a2233'; // Cor escura coerente com o tema
+        box.style.border = '1px solid rgba(255,255,255,0.1)';
+        box.style.padding = '32px';
+        box.style.borderRadius = '16px';
+        box.style.textAlign = 'center';
+        box.style.color = 'white';
+        box.style.boxShadow = '0 10px 25px rgba(0,0,0,0.5)';
+
+        const icon = document.createElement('div');
+        icon.innerHTML = '🔒';
+        icon.style.fontSize = '40px';
+        icon.style.marginBottom = '16px';
+
+        const title = document.createElement('h3');
+        title.textContent = 'Acesso Bloqueado';
+        title.style.fontSize = '1.5rem';
+        title.style.marginBottom = '12px';
+        title.style.color = '#fff';
+
+        const p = document.createElement('p');
+        p.textContent = 'Para prosseguir, conclua todas as atividades pendentes do Módulo 1.';
+        p.style.color = '#cbd5e1';
+        p.style.lineHeight = '1.5';
+        p.style.marginBottom = '24px';
+
+        const btn = document.createElement('button');
+        btn.textContent = 'Voltar para Módulos';
+        btn.style.padding = '12px 24px';
+        btn.style.borderRadius = '8px';
+        btn.style.border = 'none';
+        btn.style.fontWeight = '600';
+        btn.style.background = 'linear-gradient(90deg, #3b82f6, #06b6d4)';
+        btn.style.color = 'white';
+        btn.style.cursor = 'pointer';
+        btn.style.fontSize = '1rem';
+        btn.style.transition = 'opacity 0.2s';
+        
+        btn.addEventListener('mouseover', () => btn.style.opacity = '0.9');
+        btn.addEventListener('mouseout', () => btn.style.opacity = '1');
+        btn.addEventListener('click', () => {
+            window.location.href = '/modulos.html';
+        });
+
+        box.appendChild(icon);
+        box.appendChild(title);
+        box.appendChild(p);
+        box.appendChild(btn);
+        overlay.appendChild(box);
+
+        document.body.appendChild(overlay);
+    }
 
     // verifica se o usuário é ADMIN
     async function isAdmin() {
@@ -76,13 +146,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     (async () => {
+        // --- NOVO BLOQUEIO DE FACHADA (PÁGINA INTEIRA) ---
+        // Verifica se é Admin (do localStorage salvo no login, para ser rápido)
+        const userStatus = localStorage.getItem('userStatus');
+        const isAdminLocal = (userStatus === 'ADMIN');
+
+        // Se NÃO for admin, bloqueia a página imediatamente
+        if (!isAdminLocal) {
+            showBlockModal();
+            return; // Interrompe o restante
+        }
+        // -------------------------------------------------
+
+
         const admin = await isAdmin();
         if (admin) return; // admin sempre pode acessar
 
+        /* LÓGICA ANTIGA BYPASSADA PELA FACHADA
         const completed = await hasCompletedModule();
         if (!completed) {
             redirectBlocked();
         }
+        */
     })();
 
 });

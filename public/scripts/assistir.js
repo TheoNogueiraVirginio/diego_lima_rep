@@ -5,6 +5,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // suporte a ids compostos: 1.1 ou 1.1.2 (módulo.assunto.sub)
     const idParts = String(idCombinado).split('.');
     const moduloNum = Number(idParts[0]) || 1;
+    
+    const backBtn = document.getElementById('back-btn');
+    if (backBtn) {
+        backBtn.href = `/materiais.html?id=${moduloNum}`;
+    }
+    
     const assuntoNum = Number(idParts[1]) || 1;
     const subNum = idParts.length >= 3 ? Number(idParts[2]) : null;
 

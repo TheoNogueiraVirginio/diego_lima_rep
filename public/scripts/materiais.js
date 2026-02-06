@@ -1,12 +1,63 @@
 // Arquivo renomeado a partir de modulo.js — mantém a mesma lógica
 document.addEventListener('DOMContentLoaded', async () => {
+    // --- TRAVA DE SEGURANÇA (URL HACK) ---
+    // Impede que usuário comum acesse módulos 2, 3 ou 4 direto pela URL
+    const params = new URLSearchParams(window.location.search);
+    const moduloId = params.get('id') || '1';
+
+    const localUserStatus = localStorage.getItem('userStatus');
+    const isLocalAdmin = (localUserStatus === 'ADMIN');
+
+    if (!isLocalAdmin && ['2', '3', '4'].includes(moduloId)) {
+        // Função inline para garantir o bloqueio imediato
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.inset = '0';
+        overlay.style.background = 'linear-gradient(180deg, rgba(2,6,90,0.95), rgba(2,6,90,1))';
+        overlay.style.display = 'flex';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        overlay.style.zIndex = '99999';
+
+        const box = document.createElement('div');
+        box.style.maxWidth = '480px';
+        box.style.margin = '20px';
+        box.style.background = '#1a2233';
+        box.style.border = '1px solid rgba(255,255,255,0.1)';
+        box.style.padding = '32px';
+        box.style.borderRadius = '16px';
+        box.style.textAlign = 'center';
+        box.style.color = 'white';
+        box.style.boxShadow = '0 10px 25px rgba(0,0,0,0.5)';
+
+        box.innerHTML = `
+            <div style="font-size: 40px; margin-bottom: 16px;">🔒</div>
+            <h3 style="font-size: 1.5rem; margin-bottom: 12px; color: #fff;">Módulo Bloqueado</h3>
+            <p style="color: #cbd5e1; line-height: 1.5; margin-bottom: 24px;">Para acessar este conteúdo, você precisa concluir as atividades do Módulo 1.</p>
+            <button id="btn-voltar-modulos" style="padding: 12px 24px; border-radius: 8px; border: none; font-weight: 600; background: linear-gradient(90deg, #3b82f6, #06b6d4); color: white; cursor: pointer; font-size: 1rem;">Voltar para Módulos</button>
+        `;
+
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+
+        document.getElementById('btn-voltar-modulos').addEventListener('click', () => {
+             window.location.href = '/modulos.html';
+        });
+
+         // Parar execução do resto do script para não carregar conteúdo
+         return; 
+    }
+    // --------------------------------------
+
     // fallback único para todas as miniaturas dos assuntos
     const DEFAULT_LOGO = '/images/logo_diego_png.png';
-
+    
     // Obter dados do usuário para verificação de modalidade
     let currentUser = null;
     let userModality = '';
     let isAdmin = false;
+
+    // Tentar obter sessão real para atualizar nomes, mas a trava local já agiu se necessário
     try {
         const res = await fetch('/api/auth/me', { credentials: 'include' });
         if (res.ok) {
@@ -15,8 +66,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             isAdmin = String(currentUser.status || '').toUpperCase() === 'ADMIN';
         }
     } catch(e) {}
-    const params = new URLSearchParams(window.location.search);
-    const moduloId = params.get('id') || '1';
+    
+    // const params = new URLSearchParams(window.location.search); // Já declarado acima
+    // const moduloId = params.get('id') || '1'; // Já declarado acima
 
     const data = window.cursoData || {};
     const mod = data[moduloId];
