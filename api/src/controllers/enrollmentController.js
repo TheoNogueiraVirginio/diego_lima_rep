@@ -422,11 +422,6 @@ export const verifyLogin = async (req, res) => {
                return res.status(403).json({ error: "Seu pagamento ainda não foi confirmado." });
            }
 
-        // Atualizar Último Acesso
-        try {
-            await prisma.enrollment.update({ where: { id: user.id }, data: { lastAccess: new Date() } });
-        } catch(e) { console.error('Error updating lastAccess', e); }
-
         // Gerar tokens e setar cookies para compatibilidade com novo fluxo
         const accessToken = signAccess(user.id);
         const refreshToken = signRefresh(user.id);

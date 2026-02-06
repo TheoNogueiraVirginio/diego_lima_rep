@@ -30,7 +30,6 @@ model Enrollment {
   status String @default("PENDING")
   paymentId String?
   passwordHash String?
-  lastAccess DateTime?
 
   createdAt DateTime @default(now())
 
