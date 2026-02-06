@@ -138,10 +138,32 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        function isInsideAnyModule(x, y, rects) {
+        // Tamanho estimado máximo de uma badge para cálculo seguro de colisão e limites
+        // Aumentado para lidar com textos longos e a animação vertical (translateY +/- 18px)
+        const BADGE_SAFE_W = 360; 
+        const BADGE_SAFE_H = 90;
+
+        function isOverlapping(bx, by, rects) {
+            // Badge bounds (centralizado em bx, by)
+            const bLeft = bx - BADGE_SAFE_W / 2;
+            const bRight = bx + BADGE_SAFE_W / 2;
+            const bTop = by - BADGE_SAFE_H / 2;
+            const bBottom = by + BADGE_SAFE_H / 2;
+
+            const pad = 20; // margem extra de conforto visual em torno dos módulos
+
             return rects.some(r => {
-                const pad = 20; // distância mínima das badges em relação aos módulos
-                return x >= (r.left - pad) && x <= (r.right + pad) && y >= (r.top - pad) && y <= (r.bottom + pad);
+                // Dimensões do módulo com padding
+                const mLeft = r.left - pad;
+                const mRight = r.right + pad;
+                const mTop = r.top - pad;
+                const mBottom = r.bottom + pad;
+
+                // Verifica intersecção de retângulos
+                const overlapX = (bLeft < mRight) && (bRight > mLeft);
+                const overlapY = (bTop < mBottom) && (bBottom > mTop);
+
+                return overlapX && overlapY;
             });
         }
 
@@ -150,16 +172,33 @@ document.addEventListener('DOMContentLoaded', () => {
             const cw = contRect.width;
             const ch = contRect.height;
             const rects = moduleRectsRelative();
+            
+            // Define área 'segura' para o centro da badge, garantindo que ela não saia da tela
+            // (Assumindo que o CSS centraliza com translate(-50%, -50%))
+            const marginX = (BADGE_SAFE_W / 2) + 10;
+            const marginY = (BADGE_SAFE_H / 2) + 10;
+            
+            // Se a tela for muito pequena, reduz margens ou centraliza
+            if (cw < BADGE_SAFE_W) {
+                return { x: cw / 2, y: ch / 2, cw, ch };
+            }
+
+            const minX = marginX;
+            const maxX = cw - marginX;
+            const minY = marginY;
+            const maxY = Math.max(minY, ch - marginY);
+
             let attempts = 0;
-            while (attempts < 40) {
-                const x = 8 + Math.random() * Math.max(0, cw - 16);
-                const y = 6 + Math.random() * Math.max(0, ch - 12);
-                if (!isInsideAnyModule(x, y, rects)) {
+            while (attempts < 50) {
+                const x = minX + Math.random() * (maxX - minX);
+                const y = minY + Math.random() * (maxY - minY);
+                
+                if (!isOverlapping(x, y, rects)) {
                     return { x, y, cw, ch };
                 }
                 attempts++;
             }
-            // fallback: center
+            // fallback: tenta não sair da tela, mesmo que sobreponha
             return { x: cw / 2, y: ch / 2, cw, ch };
         }
 
