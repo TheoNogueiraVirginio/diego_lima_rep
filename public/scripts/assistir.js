@@ -13,6 +13,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tituloPrincipal = document.getElementById('class-title');
     const playerIframe = document.getElementById('video-player');
     const sidebarList = document.getElementById('upcoming-classes');
+    
+    // --- Lógica de Comentários ---
+    const commentInput = document.getElementById('comment-input');
+    const submitCommentBtn = document.getElementById('submit-comment');
+
+    if (submitCommentBtn) {
+        submitCommentBtn.addEventListener('click', async () => {
+            const content = commentInput.value;
+            if (!content || !content.trim()) {
+                alert('Por favor, escreva um comentário.');
+                return;
+            }
+
+            // Desabilitar botão para evitar duplo clique
+            submitCommentBtn.disabled = true;
+            submitCommentBtn.innerText = 'Enviando...';
+
+            try {
+                const res = await fetch('/api/comments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lessonId: idCombinado, content: content.trim() })
+                });
+
+                if (res.ok) {
+                    alert('Comentário particular enviado com sucesso!');
+                    commentInput.value = '';
+                } else {
+                    alert('Erro ao enviar comentário. Tente novamente.');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Erro de conexão ao enviar comentário.');
+            } finally {
+                submitCommentBtn.disabled = false;
+                submitCommentBtn.innerText = 'Enviar Comentário';
+            }
+        });
+    }
 
     sidebarList.innerHTML = '';
 

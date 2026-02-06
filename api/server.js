@@ -10,6 +10,7 @@ import progressRoutes from "./src/routes/progressRoutes.js";
 import noticeRoutes from "./src/routes/noticeRoutes.js";
 import pdfRoutes from "./src/routes/pdfRoutes.js";
 import materiaisRoutes from './src/routes/materialRoutes.js';
+import commentRoutes from './src/routes/commentRoutes.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -40,6 +41,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/avisos", noticeRoutes);
 app.use("/api/pdf", pdfRoutes);
+app.use("/api/comments", commentRoutes);
 
 
 // --- ROTAS DE PÁGINAS ---

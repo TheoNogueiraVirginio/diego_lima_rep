@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   const currentCourse = getCourseValue();
   fetchPaidStudents(currentSearch || '', currentCourse || '');
   fetchEnrollmentSummary();
+  fetchCommentsForDashboard();
 
   // Busca dinâmica enquanto digita (debounce)
   if (searchInput) {
@@ -250,4 +251,114 @@ function getOrCreateDebugContainer(){
     else document.body.appendChild(el);
   }
   return el;
+}
+
+// --- Lógica de Comentários ---
+async function fetchCommentsForDashboard() {
+  const listEl = document.getElementById('comments-list');
+  try {
+    const res = await fetch('/api/comments?limit=5');
+    if (!res.ok) throw new Error('Erro ao buscar comentários');
+    const comments = await res.json();
+    
+    listEl.innerHTML = '';
+    if (comments.length === 0) {
+      listEl.innerHTML = '<div style="color:var(--muted); padding:5px;">Nenhum comentário recente.</div>';
+      return;
+    }
+
+    comments.forEach(c => {
+      const div = document.createElement('div');
+      div.style.padding = '8px 0';
+      div.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+      
+      const date = new Date(c.createdAt).toLocaleDateString('pt-BR');
+      const name = c.enrollment ? c.enrollment.name.split(' ')[0] : 'Anônimo';
+      
+      div.innerHTML = `
+        <div style="font-size:0.85em; color:var(--text-secondary); display:flex; justify-content:space-between;">
+           <span>${escapeHtml(name)}</span> <span>${date}</span>
+        </div>
+        <div style="font-size:0.95em; margin-top:2px;">${escapeHtml(c.content.substring(0, 60))}${c.content.length>60?'...':''}</div>
+        <div style="font-size:0.75em; color:var(--muted); margin-top:2px;">Aula ID: ${c.lessonId}</div>
+      `;
+      listEl.appendChild(div);
+    });
+
+    // Setup Modal
+    const btn = document.getElementById('view-all-comments');
+    const modal = document.getElementById('commentsModal');
+    const close = document.getElementById('closeCommentsModal');
+    
+    if(btn && modal && close) {
+        btn.onclick = () => {
+             modal.style.display = 'flex';
+             fetchAllCommentsForModal();
+        };
+        close.onclick = () => { modal.style.display = 'none'; };
+        
+        // Close on click outside
+        modal.onclick = (e) => {
+           if(e.target === modal) modal.style.display = 'none';
+        };
+    }
+
+  } catch (e) {
+    console.error(e);
+    if(listEl) listEl.innerHTML = '<div style="color:red">Erro ao carregar comments</div>';
+  }
+}
+
+async function fetchAllCommentsForModal() {
+    const container = document.getElementById('modalCommentsList');
+    container.innerHTML = 'Carregando todos os comentários...';
+    
+    try {
+        const res = await fetch('/api/comments?limit=100');
+        const comments = await res.json();
+        
+        container.innerHTML = '';
+        if (comments.length === 0) {
+            container.innerHTML = 'Nenhum comentário encontrado.';
+            return;
+        }
+        
+        comments.forEach(c => {
+            const div = document.createElement('div');
+            div.style.background = 'rgba(255,255,255,0.03)';
+            div.style.padding = '10px';
+            div.style.marginBottom = '10px';
+            div.style.borderRadius = '5px';
+            
+            const date = new Date(c.createdAt).toLocaleString('pt-BR');
+            const name = c.enrollment ? c.enrollment.name : 'Desconhecido';
+            const email = c.enrollment ? c.enrollment.email : '';
+            
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:5px;">
+                    <strong style="color:#6ee7b7">${escapeHtml(name)} <span style="font-weight:normal; color:var(--muted); font-size:0.9em;">(${email})</span></strong>
+                    <span style="font-size:0.85em; color:var(--text-secondary)">${date}</span>
+                </div>
+                <div style="margin-bottom:5px; white-space:pre-wrap;">${escapeHtml(c.content)}</div>
+                <div style="font-size:0.8em; color:var(--muted); text-align:right;">Aula: ${c.lessonId}</div>
+            `;
+            container.appendChild(div);
+        });
+        
+    } catch(e) {
+        container.innerHTML = 'Erro ao carregar comentários.';
+    }
+}
+
+// Helper para escape (reuso se já existir, senão define)
+if (typeof window.escapeHtml !== 'function') {
+    window.escapeHtml = function(text) {
+      if (!text) return '';
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
 }

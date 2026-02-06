@@ -457,22 +457,63 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (barraVerde) barraVerde.style.width = '0%';
 
-    const MODULE_TOTALS = { '1': 7, '2': 6, '3': 6, '4': 7 };
-
     async function loadProgress(){
         try {
             const res = await fetch('/api/progress/lessons/me', { credentials: 'include' });
-            if (!res.ok) return applyProgress(0, MODULE_TOTALS[moduloId] || 0);
+            if (!res.ok) return applyProgress(0, 10); // fallback default
+
             const items = await res.json();
-            const completed = items.filter(p => String(p.status).toUpperCase() === 'COMPLETED')
-                .map(p => String(p.lessonId))
-                .filter(id => id && id.startsWith(moduloId + '.'));
-            const completedCount = new Set(completed).size;
-            const total = MODULE_TOTALS[moduloId] || (mod.aulas ? mod.aulas.length : 0);
-            applyProgress(completedCount, total);
+            const completedIds = items
+                .filter(p => String(p.status).toUpperCase() === 'COMPLETED')
+                .map(p => String(p.lessonId));
+
+            // Calcular TOTAL de itens para este módulo (Espaço amostral = soma de todas as aulas e subaulas)
+            let totalItems = 0;
+            let completedCount = 0;
+
+            if (mod && mod.aulas) {
+                mod.aulas.forEach((aula, idx) => {
+                    const assuntoId = `${moduloId}.${idx + 1}`;
+                    
+                    // Contar subaulas
+                    const subs = aula.subAulas || aula.subaulas || [];
+                    if (subs.length > 0) {
+                        subs.forEach((sub, sIdx) => {
+                            totalItems++;
+                            const subId = `${assuntoId}.${sIdx + 1}`;
+                            if (completedIds.includes(subId)) {
+                                completedCount++;
+                            }
+                        });
+                        // User request: "soma de todas as aulas/subaulas"
+                        // Does main 'aula' count if it has subaulas?
+                        // Usually main container is separate.
+                        // If checking dados_aulas, some 'aulas' have main video (vimeoId).
+                        // If vimeoId exists, count it?
+                        if (aula.vimeoId) {
+                            totalItems++;
+                            if (completedIds.includes(assuntoId)) completedCount++;
+                        }
+                    } else {
+                        // Se não tem subaulas, conta a própria aula
+                        // Apenas se tiver conteudo? Ou sempre?
+                        // Vamos assumir sempre contado como 1 item
+                        totalItems++;
+                        if (completedIds.includes(assuntoId)) {
+                            completedCount++;
+                        }
+                    }
+                });
+            }
+
+            // Fallback se totalItems for 0 (evitar divisão por zero)
+            const finalTotal = totalItems > 0 ? totalItems : (mod.aulas ? mod.aulas.length : 1);
+            
+            applyProgress(completedCount, finalTotal);
+
         } catch (err) {
             console.warn('Erro ao carregar progresso do módulo', err);
-            applyProgress(0, MODULE_TOTALS[moduloId] || 0);
+            applyProgress(0, 1);
         }
     }
 

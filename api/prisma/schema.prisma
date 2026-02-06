@@ -38,6 +38,19 @@ model Enrollment {
   moduleProgress ModuleProgress[]
   refreshTokens RefreshToken[]
   notices Notice[]
+  comments LessonComment[]
+}
+
+model LessonComment {
+  id        String   @id @default(uuid())
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
+  enrollmentId String
+  lessonId String
+  content String @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([enrollmentId])
+  @@index([lessonId])
 }
 
 enum LessonStatus {
@@ -110,7 +123,7 @@ model RefreshToken {
 model Notice {
   id String @id @default(uuid())
   title String
-  content String
+  content String @db.LongText
   category String?
   date DateTime @default(now())
   createdBy Enrollment? @relation(fields: [createdById], references: [id])
