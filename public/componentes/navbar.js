@@ -44,10 +44,10 @@ function carregarNavbar() {
                 overlay.style.justifyContent = 'center';
                 overlay.style.zIndex = '99999';
                 overlay.style.flexDirection = 'column';
-                overlay.innerHTML = `<div style="max-width:90%;text-align:center;"><h2>Sessão expirada</h2><p>Você será redirecionado para o login em <span id="auth-redirect-count">5</span> segundos.</p></div>`;
+                overlay.innerHTML = `<div style="max-width:90%;text-align:center;"><h2>Sessão expirada</h2><p>Você será redirecionado para o login em <span id="auth-redirect-count">3</span> segundos.</p></div>`;
                 document.body.appendChild(overlay);
 
-                let t = 5;
+                let t = 3;
                 const counter = document.getElementById('auth-redirect-count');
                 const iv = setInterval(()=>{
                     t--; if (counter) counter.textContent = String(t);

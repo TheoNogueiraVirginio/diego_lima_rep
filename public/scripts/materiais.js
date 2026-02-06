@@ -95,7 +95,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         card.className = 'assunto-card';
         // Add data-id for progress tracking
         card.setAttribute('data-id', `${moduloId}.${assuntoIndex}`);
+
+        // CALCULO DE TEMPO TOTAL (AULA + SUBAULAS)
+        let totalMinutes = 0;
+        const subs = aula.subAulas || aula.subaulas || [];
         
+        let hasVideo = false;
+        if (aula.vimeoId && aula.vimeoId.trim()) hasVideo = true;
+
+        // Tempo da aula principal
+        if (aula.duracao && typeof aula.duracao === 'number') {
+            totalMinutes += aula.duracao;
+        }
+
+        // Tempo das subaulas
+        if (Array.isArray(subs)) {
+            subs.forEach(s => {
+                if (s.vimeoId && String(s.vimeoId).trim()) hasVideo = true;
+                
+                if (s.duracao && typeof s.duracao === 'number') {
+                    totalMinutes += s.duracao;
+                }
+            });
+        }
+
+        // Definir texto de status/duração
+        let statusText = '';
+        if (!hasVideo) {
+            statusText = '(Em manutenção)';
+        } else {
+            statusText = totalMinutes > 0 ? `(${totalMinutes}min)` : '';
+        }
+
         const mat = aula.materiais || {};
 
         // Lógica de Material Teórico com suporte a requiredModality
@@ -142,7 +173,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <div class="item-thumb" data-src="/images/images_modulos/image_video.png"></div>
                             <div class="item-info">
                                 <span class="item-title">Player de videoaulas</span>
-                                <span class="item-sub">Assistir Aula (15min)</span>
+                                <span class="item-sub">Assistir Aula ${statusText}</span>
                             </div>
                         </a>
                     </li>

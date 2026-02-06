@@ -5,6 +5,7 @@ const cursoData = {
             {
                 titulo: "Identidades Importantes", 
                 vimeoId: "1160829549",
+                duracao: 15,
                 
                 // Nova estrutura de materiais
                 materiais: {
@@ -22,11 +23,11 @@ const cursoData = {
                 },
                  
                 subAulas: [
-                    { titulo: "A cruzadinha", vimeoId: "1160830158" },
-                    { titulo: "Complemento de Quadrado", vimeoId: "1161234861" },
-                    { titulo: "Binômio de Newton", vimeoId: "1161235585", requiredModality: "aprofundamento" },
-                    {titulo: "Questões Difíceis", vimeoId: "1161773683", requiredModality: "extensivo" },
-                    {titulo: "Soma dos quadrados dos primeiros naturais", vimeoId: "1162044528", requiredModality: "aprofundamento" }
+                    { titulo: "A cruzadinha", vimeoId: "1160830158", duracao: 5 },
+                    { titulo: "Complemento de Quadrado", vimeoId: "1161234861", duracao: 8 },
+                    { titulo: "Binômio de Newton", vimeoId: "1161235585", requiredModality: "aprofundamento", duracao: 10 },
+                    {titulo: "Questões Difíceis", vimeoId: "1161773683", requiredModality: "extensivo", duracao: 12 },
+                    {titulo: "Soma dos quadrados dos primeiros naturais", vimeoId: "1162044528", requiredModality: "aprofundamento", duracao: 6 }
                 ]
             },
             
@@ -39,9 +40,10 @@ const cursoData = {
                     teoria: "Teoria_Equacoes1e2Grau.pdf",
                     gabaritos: { pe_extensivo: "G_PE_E_Equacoes1e2Grau.pdf", pe_aprofundamento: "G_PE_A_Equacoes1e2Grau.pdf"}
                 },
-                subaulas: [
-                    { titulo: "Equações do 1º Grau", vimeoId: "1161775298" },
-                    { titulo: "Equações do 2º Grau", vimeoId: "1161775798" }
+                hideMainInSidebar: true,
+                subAulas: [
+                    { titulo: "Equações do 1º Grau", vimeoId: "1161775298", duracao: 9},
+                    { titulo: "Equações do 2º Grau", vimeoId: "1161775798", duracao: 26 }
                 ]
             },
             
@@ -56,8 +58,8 @@ const cursoData = {
                 },
                 hideMainInSidebar: true,
                 subAulas: [
-                    { titulo: "Divisibilidade", vimeoId: "1161235737" },
-                    { titulo: "MDC e MMC", vimeoId: "1161235060" }
+                    { titulo: "Divisibilidade", vimeoId: "1161235737", duracao: 24 },
+                    { titulo: "MDC e MMC", vimeoId: "1161235060", duracao: 37 }
                 ]
             },
             
