@@ -1,11 +1,9 @@
-import { PrismaClient } from "@prisma/client";
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { signAccess, signRefresh, ACCESS_EXPIRES, REFRESH_EXPIRES } from '../utils/jwt.js';
 import { sendWelcomeEmail } from '../services/emailService.js';
-
-const prisma = new PrismaClient();
+import prisma from '../db.js';
 
 const client = new MercadoPagoConfig({
     accessToken: process.env.MP_ACCESS_TOKEN,
