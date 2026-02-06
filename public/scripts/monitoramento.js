@@ -140,13 +140,19 @@ async function fetchPaidStudents(q = '', modality = ''){
 
     students.forEach(s => {
       const tr = document.createElement('tr');
-      const created = new Date(s.createdAt);
-      const createdStr = created.toLocaleString();
+      // const created = new Date(s.createdAt);
+      // const createdStr = created.toLocaleString();
+      
+      let lastAccessStr = '—';
+      if (s.lastAccess) {
+        lastAccessStr = new Date(s.lastAccess).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
+      }
+
       const percent = Number(s.lessonsPercent || (s.lessons && s.lessons.percent) || 0);
 
       tr.innerHTML = `
         <td>${escapeHtml(s.name)}</td>
-        <td>${createdStr}</td>
+        <td>${lastAccessStr}</td>
         <td>${escapeHtml(s.modality || '')}</td>
         <td><div class="progress"><div style="width:${percent}%"></div></div>${percent}%</td>
         <td>—</td>

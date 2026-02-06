@@ -3,6 +3,7 @@ import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { signAccess, signRefresh, ACCESS_EXPIRES, REFRESH_EXPIRES } from '../utils/jwt.js';
+import { sendWelcomeEmail } from '../services/emailService.js';
 
 const prisma = new PrismaClient();
 
@@ -124,6 +125,9 @@ export const createEnrollment = async (req, res) => {
                     // Se MP já aprovou, atualiza como PAID e retorna informação
                     if (mpStatus === 'approved') {
                         await prisma.enrollment.update({ where: { id: alunoExistente.id }, data: { status: 'PAID' } });
+
+                        // Enviar email de boas-vindas
+                        await sendWelcomeEmail(alunoExistente.email, alunoExistente.name);
 
                         return res.status(200).json({ resume: false, message: 'Pagamento já aprovado.' , status: 'approved' });
                     }
@@ -254,7 +258,7 @@ export const createEnrollment = async (req, res) => {
             try {
                 // Obtemos os dados atuais do aluno para preencher o e-mail
                 const aluno = await prisma.enrollment.findUnique({ where: { id: alunoId } });
-                await sendEnrollmentEmail(aluno.email, aluno.name, aluno.modality, aluno.amount);
+                await sendWelcomeEmail(aluno.email, aluno.name);
             } catch (err) {
                 console.error('❌ [createEnrollment] Erro ao enviar e-mail após aprovação imediata:', err.message);
             }
@@ -319,6 +323,10 @@ export const checkPaymentStatus = async (req, res) => {
                     where: { id: existingPayment.id },
                     data: { status: 'PAID', paymentId: id }
                 });
+                
+                // Enviar email de boas-vindas
+                await sendWelcomeEmail(existingPayment.email, existingPayment.name);
+
             } catch (err) {
                 console.error('❌ [checkPaymentStatus] Erro ao marcar PAID no DB:', err.message);
             }
@@ -353,6 +361,8 @@ export const checkPaymentStatus = async (req, res) => {
                     data: novoAluno
                 });
             }
+            // Enviar email de boas-vindas no fluxo de fallback
+            await sendWelcomeEmail(novoAluno.email, novoAluno.name);
         }
 
         res.json({ status: status, message: "Matrícula confirmada!" });
@@ -413,6 +423,11 @@ export const verifyLogin = async (req, res) => {
            if (!['PAID','ADMIN'].includes(user.status)) {
                return res.status(403).json({ error: "Seu pagamento ainda não foi confirmado." });
            }
+
+        // Atualizar Último Acesso
+        try {
+            await prisma.enrollment.update({ where: { id: user.id }, data: { lastAccess: new Date() } });
+        } catch(e) { console.error('Error updating lastAccess', e); }
 
         // Gerar tokens e setar cookies para compatibilidade com novo fluxo
         const accessToken = signAccess(user.id);
@@ -487,7 +502,8 @@ export const listPaidEnrollments = async (req, res) => {
                 phone: true,
                 modality: true,
                 amount: true,
-                createdAt: true
+                createdAt: true,
+                lastAccess: true
             }
         });
 

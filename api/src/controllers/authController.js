@@ -47,6 +47,11 @@ export const login = async (req, res) => {
     // Allow ADMIN users to login as equivalent to PAID
     if (!['PAID','ADMIN'].includes(user.status)) return res.status(403).json({ error: 'Seu pagamento ainda não foi confirmado.' });
 
+    // Atualizar Último Acesso
+    try {
+        await prisma.enrollment.update({ where: { id: user.id }, data: { lastAccess: new Date() } });
+    } catch(e) { console.error('Error updating lastAccess', e); }
+
     const accessToken = signAccess(user.id);
     const refreshToken = signRefresh(user.id);
 

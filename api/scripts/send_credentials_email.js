@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
 import path from 'path';
-import { sendWelcomeEmail } from '../src/services/emailService.js';
+import { sendCredentialsEmail } from '../src/services/emailService.js';
 
 // Carregar variáveis de ambiente do .env na raiz da api
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
@@ -9,7 +9,7 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 const prisma = new PrismaClient();
 
 async function main() {
-    console.log("🚀 Iniciando script de envio de email em massa...");
+    console.log("🚀 Iniciando script de envio de CREDENCIAIS em massa...");
 
     // 1. Validar Credenciais
     if (!process.env.GMAIL_USER || !process.env.GMAIL_PASS) {
@@ -26,6 +26,7 @@ async function main() {
             id: true,
             email: true,
             name: true,
+            cpf: true,
             status: true
         }
     });
@@ -33,8 +34,8 @@ async function main() {
     console.log(`📋 Total de alunos 'PAID' encontrados: ${students.length}`);
 
     // --- SEGURANÇA: MODO DE EXECUÇÃO ---
-    // Altere para 'SEND' para enviar de fato.
-    // Use --resume-after "Nome Completo" para continuar após um aluno específico
+    // Use --send para enviar de fato.
+    // Use --resume-after "Nome Completo" para continuar.
     const MODE = process.argv.includes('--send') ? 'SEND' : 'DRY_RUN';
     
     // Lógica de Retomada
@@ -54,7 +55,7 @@ async function main() {
     
     if (MODE !== 'SEND') {
         console.log("\n⚠️ ATENÇÃO: Os e-mails NÃO estão sendo enviados (Modo Simulação).");
-        console.log("⚠️ Para enviar de fato, execute: node scripts/send_broadcast_email.js --send\n");
+        console.log("⚠️ Para enviar de fato, execute: node scripts/send_credentials_email.js --send\n");
     }
 
     let successCount = 0;
@@ -64,8 +65,8 @@ async function main() {
     console.log("Iniciando processamento...\n");
 
     for (const student of students) {
-        if (skipping) {
-            // Se encontrar o nome exato, paramos de pular NA PRÓXIMA iteração (ou seja, pulamos este também pois já foi enviado)
+         if (skipping) {
+            // Se encontrar o nome exato, paramos de pular NA PRÓXIMA iteração
             if (student.name === resumeAfterName) {
                 console.log(`📍 Encontrado último enviado: ${student.name}. Retomando envios a partir do PRÓXIMO.`);
                 skipping = false;
@@ -74,19 +75,19 @@ async function main() {
         }
 
         if (MODE === 'SEND') {
-            process.stdout.write(`Envianado para ${student.email} (${student.name})... `);
-            const sent = await sendWelcomeEmail(student.email, student.name);
+            process.stdout.write(`Enviando credenciais para ${student.email} (${student.name})... `);
+            const sent = await sendCredentialsEmail(student.email, student.name, student.cpf);
             if (sent) {
                 successCount++;
             } else {
                 errorCount++;
             }
         } else {
-            console.log(`[SIMULAÇÃO] Enviaria para: ${student.email} (${student.name})`);
-            successCount++; // Contamos como sucesso na simulação
+            console.log(`[SIMULAÇÃO] Enviaria credenciais para: ${student.email} (Senha: CPF ${student.cpf.replace(/\D/g, '')})`);
+            successCount++; 
         }
 
-        // Delay para evitar bloqueio do Gmail (opcional, mas recomendado)
+        // Delay para evitar bloqueio do Gmail
         if (MODE === 'SEND') await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
