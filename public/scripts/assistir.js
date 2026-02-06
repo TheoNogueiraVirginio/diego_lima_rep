@@ -70,6 +70,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const hasExtensivo = listas.pe_extensivo;
             const hasAprof = listas.pe_aprofundamento;
             const hasExtra = listas.extra;
+            const hasExtra2 = listas.extra2;
             
             const items = [];
             const userModUpper = userModality.toUpperCase();
@@ -85,6 +86,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (hasExtra) items.push({ label: 'Lista Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtra)}` });
                 else items.push({ label: 'Lista Extra', href: 'questoes.html?lista=lista-extra' });
+
+                if (hasExtra2) items.push({ label: 'Lista Extra 2', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtra2)}` });
 
                 openModal('Para Praticar', items);
                 return;
@@ -111,6 +114,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 items.push({ label: 'Lista Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtra)}` });
             } else {
                 items.push({ label: 'Lista Extra', href: 'questoes.html?lista=lista-extra' });
+            }
+
+            if (hasExtra2) {
+                items.push({ label: 'Lista Extra 2', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtra2)}` });
             }
 
             openModal('Para Praticar', items);

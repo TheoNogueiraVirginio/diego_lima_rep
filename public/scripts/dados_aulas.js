@@ -13,7 +13,7 @@ const cursoData = {
                     listas: {
                         pe_extensivo: "Q_PE_E_IdentidadesImportantes.pdf",         
                         pe_aprofundamento: "Q_PE_A_IdentidadesImportantes.pdf",    
-                        extra: ""                  
+                        extra: "extra_IdentidadesImportantes.pdf"          
                     },
                     gabaritos: {
                         pe_extensivo: "G_PE_E_IdentidadesImportantes.pdf",  
@@ -38,7 +38,18 @@ const cursoData = {
                 vimeoId: "",
                 materiais: {
                     teoria: "Teoria_Equacoes1e2Grau.pdf",
-                    gabaritos: { pe_extensivo: "G_PE_E_Equacoes1e2Grau.pdf", pe_aprofundamento: "G_PE_A_Equacoes1e2Grau.pdf"}
+                    listas: {
+                        pe_extensivo: "Q_PE_E_Equacoes1e2Grau.pdf", 
+                        pe_aprofundamento: "Q_PE_E_Equacoes1e2Grau.pdf", 
+                        extra: "extra_Equacoes1e2Grau.pdf",
+                        extra2: "extra2_Equacoes1e2Grau.pdf"
+                    },
+                    gabaritos: { 
+                        pe_extensivo: "G_PE_E_Equacoes1e2Grau.pdf", 
+                        pe_aprofundamento: "G_PE_A_Equacoes1e2Grau.pdf",
+                        extra: "extra_G_Equacoes1e2Grau.pdf",
+                        extra2: "extra2_G_Equacoes1e2Grau.pdf"
+                    }
                 },
                 hideMainInSidebar: true,
                 subAulas: [
@@ -54,12 +65,14 @@ const cursoData = {
                 vimeoId: "ABU",
                 materiais: {
                     teoria: "Teoria_DivisibilidadeMdcMmc.pdf",
+                    listas: {pe_extensivo: "Q_PE_E_DivisibilidadeMdcMmc.pdf", pe_aprofundamento: "Q_PE_E_DivisibilidadeMdcMmc.pdf"},
                     gabaritos: { pe_extensivo: "G_PE_E_DivisibilidadeMdcMmc.pdf", pe_aprofundamento: "G_PE_A_DivisibilidadeMdcMmc.pdf" }
                 },
                 hideMainInSidebar: true,
                 subAulas: [
                     { titulo: "Divisibilidade", vimeoId: "1161235737", duracao: 24 },
-                    { titulo: "MDC e MMC", vimeoId: "1161235060", duracao: 37 }
+                    { titulo: "MDC e MMC", vimeoId: "1161235060", duracao: 37 },
+                    {titulo: "Congruência Modular", vimeoId: "1162319710", requiredModality: "aprofundamento", duracao: 37 }
                 ]
             },
             
@@ -70,6 +83,7 @@ const cursoData = {
                 vimeoId: "",
                 materiais: {
                     teoria: "Teoria_Estatistica.pdf",
+                    listas: {pe_extensivo: "Q_PE_E_Estatistica.pdf", pe_aprofundamento: "Q_PE_E_Estatistica.pdf"},
                     gabaritos: { pe_extensivo: "G_PE_E_Estatistica.pdf", pe_aprofundamento: "G_PE_A_Estatistica.pdf" }
                 }
             },
@@ -81,6 +95,7 @@ const cursoData = {
                 vimeoId: "",
                 materiais: {
                     teoria: "Teoria_Conjuntos.pdf",
+                    listas: {pe_extensivo: "Q_PE_E_Conjuntos.pdf", pe_aprofundamento: "Q_PE_E_Conjuntos.pdf"},
                     gabaritos: { pe_extensivo: "G_PE_E_Conjuntos.pdf", pe_aprofundamento: "G_PE_A_Conjuntos.pdf" }
                 }
             },
@@ -92,6 +107,7 @@ const cursoData = {
                 vimeoId: "",
                 materiais: {
                     teoria: "Teoria_PontoIntFuncoes.pdf",
+                    listas: {pe_extensivo: "Q_PE_E_PontoIntFuncoes.pdf", pe_aprofundamento: "Q_PE_E_PontoIntFuncoes.pdf"},
                     gabaritos: { pe_extensivo: "G_PE_E_PontoIntFuncoes.pdf", pe_aprofundamento: "G_PE_A_PontoIntFuncoes.pdf" }
                 }
             },
@@ -103,6 +119,7 @@ const cursoData = {
                 vimeoId: "",
                 materiais: {
                     teoria: "Teoria_RetaFuncaoAfim.pdf",
+                    listas: {pe_extensivo: "Q_PE_E_RetaFuncaoAfim.pdf", pe_aprofundamento: "Q_PE_E_RetaFuncaoAfim.pdf"},
                     gabaritos: { pe_extensivo: "G_PE_E_RetaFuncaoAfim.pdf", pe_aprofundamento: "G_PE_A_RetaFuncaoAfim.pdf" }
                 }
             },
@@ -114,6 +131,7 @@ const cursoData = {
                 vimeoId: "",
                 materiais: {
                     teoria: "Teoria_Proporcionalidade.pdf",
+                    listas: {pe_extensivo: "Q_PE_E_Proporcionalidade.pdf", pe_aprofundamento: "Q_PE_E_Proporcionalidade.pdf"},
                     gabaritos: { pe_extensivo: "G_PE_E_Proporcionalidade.pdf", pe_aprofundamento: "G_PE_A_Proporcionalidade.pdf" }
                 }
             },

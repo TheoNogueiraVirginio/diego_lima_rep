@@ -85,6 +85,53 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    // Helper: verifica se o item deve contar para a soma de minutos com base na modalidade
+    const shouldCountTime = (item) => {
+        if (!item) return false;
+        // ADMIN conta tudo (todos os vídeos possíveis)
+        if (isAdmin) return true;
+
+        if (item.requiredModality) {
+            const req = String(item.requiredModality).toLowerCase().trim();
+            // APROFUNDAMENTO: conta aulas gerais + exclusivas de "aprofundamento"
+            if (userModality === 'aprofundamento') {
+                if (req === 'aprofundamento') return true;
+                // Se for extensivo, o aluno de aprofundamento vê? 
+                // Assumindo que aprofundamento inclui conteudo extensivo?
+                // A regra diz: "caso seja APROFUNDAMENTO, conte as alunas gerais e as exclusivas do aprofundamento."
+                // Isso PODE implicar que ele não vê 'extensivo' exclusivo se houver.
+                // Mas, geralmente, Aprofundamento vê tudo do Extensivo.
+                // Vou seguir estritamente o pedido: "conte gerais e exclusivas do aprofundamento".
+                // Se existir uma aula com requiredModality="extensivo" ela seria ignorada aqui?
+                // Se sim, ok. Se ele deveria ver, então a regra precisa ser mais ampla.
+                // Vou assumir que "gerais" = sem requiredModality.
+                
+                // Mas espere, "extensivo (composto por: EXTENSIVO, COM_MATERIAL e SEM_MATERIAL)"
+                // A regra para Extensivo é: gerais + exclusivas de extensivo.
+                
+                // Se o texto é "verifique se o aluno é APROFUNDAMENTO e, caso seja, conte as alunas gerais e as exclusivas do aprofundamento", 
+                // então ele NÃO conta as exclusivas de extensivo (que teriam requiredModality='extensivo').
+                
+                return false; 
+            }
+            
+            // EXTENSIVO (qualquer variação)
+            const isExtensivoUser = ['extensivo', 'com_material', 'sem_material'].some(v => userModality.includes(v));
+            if (isExtensivoUser) {
+                 if (req === 'extensivo') return true;
+                 // Extensivo não conta 'aprofundamento'
+                 return false;
+            }
+            
+            // Outros casos (se houver): verifica inclusão direta
+            return userModality.includes(req);
+        }
+        
+        // Sem requiredModality = Geral -> Conta para todos
+        return true;
+    };
+
+
     titleEl.textContent = mod.tituloModulo || `Módulo ${moduloId}`;
     descEl.textContent = mod.descricao || '';
 
@@ -104,8 +151,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (aula.vimeoId && aula.vimeoId.trim()) hasVideo = true;
 
         // Tempo da aula principal
+        // Só conta se o usuário tiver acesso àquela modalidade/aula
         if (aula.duracao && typeof aula.duracao === 'number') {
-            totalMinutes += aula.duracao;
+            if (shouldCountTime(aula)) {
+                totalMinutes += aula.duracao;
+            }
         }
 
         // Tempo das subaulas
@@ -114,7 +164,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (s.vimeoId && String(s.vimeoId).trim()) hasVideo = true;
                 
                 if (s.duracao && typeof s.duracao === 'number') {
-                    totalMinutes += s.duracao;
+                    if (shouldCountTime(s)) {
+                        totalMinutes += s.duracao;
+                    }
                 }
             });
         }
@@ -412,6 +464,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                    const hasExtensivo = listas.pe_extensivo;
                    const hasAprof = listas.pe_aprofundamento;
                    const hasExtra = listas.extra;
+                   const hasExtra2 = listas.extra2;
                    
                    const items = [];
 
@@ -427,6 +480,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                          if (hasExtra) items.push({ label: 'Lista Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtra)}` });
                          else items.push({ label: 'Lista Extra', href: 'questoes.html?lista=lista-extra' });
+
+                         if (hasExtra2) items.push({ label: 'Lista Extra 2', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtra2)}` });
 
                          openModal('Para Praticar', items);
                          return;
@@ -461,6 +516,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                        items.push({ label: 'Lista Extra', href: 'questoes.html?lista=lista-extra' });
                    }
 
+                   // Lista Extra 2
+                   if (hasExtra2) {
+                       items.push({ label: 'Lista Extra 2', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtra2)}` });
+                   }
+
                    openModal('Para Praticar', items);
                 })();
             });
@@ -483,6 +543,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if (gabs.pe_extensivo) items.push({ label: 'Gabarito (E) - Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.pe_extensivo)}` });
                         if (gabs.pe_aprofundamento) items.push({ label: 'Gabarito (A) - Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.pe_aprofundamento)}` });
                         if (gabs.extra) items.push({ label: 'Gabarito Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.extra)}` });
+                        if (gabs.extra2) items.push({ label: 'Gabarito Extra 2', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.extra2)}` });
                         
                         // Fallback caso não tenha nada cadastrado
                         if (items.length === 0){
@@ -523,6 +584,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                          items.push({ label: 'Gabarito Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.extra)}` });
                     } else {
                          items.push({ label: 'Lista extra', href: 'questoes.html?gabarito=lista-extra' });
+                    }
+
+                    if (gabs.extra2) {
+                         items.push({ label: 'Gabarito Extra 2', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.extra2)}` });
                     }
 
                     openModal('Gabaritos', items);

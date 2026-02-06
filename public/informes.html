@@ -103,7 +103,7 @@
                                 <h3 class="card-title">${escapeHtml(n.title)}</h3>
                             </div>
                             <div class="card-date">📅 ${new Date(n.date).toLocaleDateString('pt-BR')}</div>
-                            <p class="card-desc">${escapeHtml(n.content)}</p>
+                            <p class="card-desc">${escapeHtml(n.content).replace(/\n/g, '<br>')}</p>
                         </div>
                         <button class="btn-read-more">Ler mais</button>
                         `;
