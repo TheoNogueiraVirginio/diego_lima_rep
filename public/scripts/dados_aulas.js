@@ -64,9 +64,12 @@ const cursoData = {
                 titulo: "Divisibilidade, MDC e MMC", 
                 vimeoId: "ABU",
                 materiais: {
-                    teoria: "Teoria_DivisibilidadeMdcMmc.pdf",
-                    listas: {pe_extensivo: "Q_PE_E_DivisibilidadeMdcMmc.pdf", pe_aprofundamento: "Q_PE_E_DivisibilidadeMdcMmc.pdf"},
-                    gabaritos: { pe_extensivo: "G_PE_E_DivisibilidadeMdcMmc.pdf", pe_aprofundamento: "G_PE_A_DivisibilidadeMdcMmc.pdf" }
+                    teoria: {
+                        pe_extensivo: "Teoria_DivisibilidadeMdcMmc.pdf",
+                        pe_aprofundamento: "Teoria_Congruencia.pdf"
+                    },
+                    listas: {pe_extensivo: "Q_PE_E_DivisibilidadeMdcMmc.pdf", pe_aprofundamento: "Q_PE_A_DivisibilidadeMdcMmc.pdf", extra: "Q_E_A_Congruencia.pdf"},
+                    gabaritos: { pe_extensivo: "G_PE_E_DivisibilidadeMdcMmc.pdf", pe_aprofundamento: "G_PE_A_DivisibilidadeMdcMmc.pdf", extra: "G_E_A_Congruencia" }
                 },
                 hideMainInSidebar: true,
                 subAulas: [
@@ -83,7 +86,7 @@ const cursoData = {
                 vimeoId: "",
                 materiais: {
                     teoria: "Teoria_Estatistica.pdf",
-                    listas: {pe_extensivo: "Q_PE_E_Estatistica.pdf", pe_aprofundamento: "Q_PE_E_Estatistica.pdf"},
+                    listas: {pe_extensivo: "Q_PE_E_Estatistica.pdf", pe_aprofundamento: "Q_PE_A_Estatistica.pdf"},
                     gabaritos: { pe_extensivo: "G_PE_E_Estatistica.pdf", pe_aprofundamento: "G_PE_A_Estatistica.pdf" }
                 }
             },
@@ -95,14 +98,14 @@ const cursoData = {
                 vimeoId: "",
                 materiais: {
                     teoria: "Teoria_Conjuntos.pdf",
-                    listas: {pe_extensivo: "Q_PE_E_Conjuntos.pdf", pe_aprofundamento: "Q_PE_E_Conjuntos.pdf"},
+                    listas: {pe_extensivo: "Q_PE_E_Conjuntos.pdf", pe_aprofundamento: "Q_PE_A_Conjuntos.pdf"},
                     gabaritos: { pe_extensivo: "G_PE_E_Conjuntos.pdf", pe_aprofundamento: "G_PE_A_Conjuntos.pdf" }
                 }
             },
             
             
             
-            {
+            { //falta conteudo
                 titulo: "Ponto e Introdução de Funções", 
                 vimeoId: "",
                 materiais: {
@@ -115,11 +118,11 @@ const cursoData = {
             
             
             {
-                titulo: "Reta, Função Afim", 
+                titulo: "Reta e Função", 
                 vimeoId: "",
                 materiais: {
                     teoria: "Teoria_RetaFuncaoAfim.pdf",
-                    listas: {pe_extensivo: "Q_PE_E_RetaFuncaoAfim.pdf", pe_aprofundamento: "Q_PE_E_RetaFuncaoAfim.pdf"},
+                    listas: {pe_extensivo: "Q_PE_E_RetaFuncaoAfim.pdf", pe_aprofundamento: "Q_PE_A_RetaFuncaoAfim.pdf"},
                     gabaritos: { pe_extensivo: "G_PE_E_RetaFuncaoAfim.pdf", pe_aprofundamento: "G_PE_A_RetaFuncaoAfim.pdf" }
                 }
             },
@@ -131,12 +134,12 @@ const cursoData = {
                 vimeoId: "",
                 materiais: {
                     teoria: "Teoria_Proporcionalidade.pdf",
-                    listas: {pe_extensivo: "Q_PE_E_Proporcionalidade.pdf", pe_aprofundamento: "Q_PE_E_Proporcionalidade.pdf"},
+                    listas: {pe_extensivo: "Q_PE_E_Proporcionalidade.pdf", pe_aprofundamento: "Q_PE_A_Proporcionalidade.pdf"},
                     gabaritos: { pe_extensivo: "G_PE_E_Proporcionalidade.pdf", pe_aprofundamento: "G_PE_A_Proporcionalidade.pdf" }
                 }
             },
             {
-                 titulo: "Resolução do Caderno Revisional",
+                 titulo: "Caderno Revisional",
                  vimeoId: "",
                  materiais: {},
                  subAulas: []

@@ -181,28 +181,43 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const mat = aula.materiais || {};
 
-        // Lógica de Material Teórico com suporte a requiredModality
+        // Lógica de Material Teórico com suporte a requiredModality e Múltiplos Arquivos
         let rawTeorico = mat.teorico || mat.teoria;
         let teoricoUrl = null;
+        let hasComplexTeoria = false;
 
         if (rawTeorico) {
             if (typeof rawTeorico === 'string') {
                 teoricoUrl = rawTeorico;
             } else if (typeof rawTeorico === 'object') {
-                const req = rawTeorico.requiredModality;
-                let visible = true;
-                if (req && !isAdmin) {
-                    const reqStr = String(req).toLowerCase().trim();
-                    // Lógica similar ao assistir.js
-                    if (reqStr === 'extensivo') {
-                        const validos = ['extensivo', 'com_material', 'sem_material'];
-                        if (!validos.some(v => userModality.includes(v))) visible = false;
-                    } else {
-                        if (!userModality.includes(reqStr)) visible = false;
+                // Caso antigo: um único arquivo com restrição de modalidade
+                if (rawTeorico.requiredModality || rawTeorico.file || rawTeorico.url) {
+                    const req = rawTeorico.requiredModality;
+                    let visible = true;
+                    if (req && !isAdmin) {
+                        const reqStr = String(req).toLowerCase().trim();
+                        if (reqStr === 'extensivo') {
+                            const validos = ['extensivo', 'com_material', 'sem_material'];
+                            if (!validos.some(v => userModality.includes(v))) visible = false;
+                        } else {
+                            if (!userModality.includes(reqStr)) visible = false;
+                        }
                     }
-                }
-                if (visible) {
-                    teoricoUrl = rawTeorico.file || rawTeorico.url;
+                    if (visible) {
+                        teoricoUrl = rawTeorico.file || rawTeorico.url;
+                    }
+                } else {
+                    // Novo caso: Objeto com múltiplas chaves (pe_extensivo, pe_aprofundamento, etc.)
+                    // Verifica se há pelo menos alguma chave relevante
+                    if (rawTeorico.pe_extensivo || rawTeorico.pe_aprofundamento || rawTeorico.extensivo || rawTeorico.aprofundamento) {
+                         // Se for ADMIN ou APROFUNDAMENTO, mostra modal com opções
+                         if (isAdmin || userModality.includes('aprofundamento')) {
+                              hasComplexTeoria = true;
+                         } else {
+                              // Outros alunos abrem direto a versão extensivo (ou equivalente padrão)
+                              teoricoUrl = rawTeorico.pe_extensivo || rawTeorico.extensivo;
+                         }
+                    }
                 }
             }
         }
@@ -229,8 +244,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                             </div>
                         </a>
                     </li>
-                    <li style="${teoricoUrl ? '' : 'display:none'}">
-                        <a href="${teoricoUrl ? `/pdf-viewer/viewer.html?doc=${encodeURIComponent(teoricoUrl)}` : '#'}" target="_blank">
+                    <li style="${(teoricoUrl || hasComplexTeoria) ? '' : 'display:none'}">
+                        <a href="${teoricoUrl ? `/pdf-viewer/viewer.html?doc=${encodeURIComponent(teoricoUrl)}` : '#'}" target="_blank" class="${hasComplexTeoria ? 'btn-complex-teoria' : ''}">
                             <div class="item-thumb" data-src="/images/images_modulos/image_pdf.png"></div>
                             <div class="item-info">
                                 <span class="item-title">Material Teórico</span>
@@ -591,6 +606,71 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
 
                     openModal('Gabaritos', items);
+                })();
+            });
+        }
+        
+        if (text.includes('material teórico') || text.includes('ler resumo')) {
+            anchor.addEventListener('click', (e) => {
+                e.preventDefault();
+
+                (async () => {
+                   const hasComplex = anchor.classList.contains('btn-complex-teoria');
+                   const directHref = anchor.getAttribute('href');
+
+                   // Se não for complexo e tiver link direto válido, abrir
+                   if (!hasComplex && directHref && directHref !== '#' && directHref !== 'javascript:void(0)') {
+                       window.open(directHref, '_blank');
+                       return;
+                   }
+
+                   // Lógica para modal de teoria
+                   const user = await getCurrentUser();
+                   const modality = user && (user.modality || '').toUpperCase();
+                   const isAdmin = user && String(user.status).toUpperCase() === 'ADMIN';
+
+                   const mat = aula.materiais || {};
+                   const rawTeorico = mat.teorico || mat.teoria || {};
+                   
+                   const items = [];
+
+                   // Helper para adicionar item
+                   const add = (label, url) => {
+                       if (url) items.push({ label, href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(url)}` });
+                   };
+
+                   if (isAdmin) {
+                        add('Teoria Divisibilidade', rawTeorico.pe_extensivo || rawTeorico.extensivo);
+                        add('Teoria Congruência Modular', rawTeorico.pe_aprofundamento || rawTeorico.aprofundamento);
+                        // Suporte a extra se houver futuro
+                        if (rawTeorico.extra) add('Teoria Extra', rawTeorico.extra);
+                        
+                        if (items.length > 0) openModal('Material Teórico', items);
+                        return;
+                   }
+
+                   // Alunos
+                   // Extensivo sempre disponível se existir
+                   const extUrl = rawTeorico.pe_extensivo || rawTeorico.extensivo;
+                   const aprofUrl = rawTeorico.pe_aprofundamento || rawTeorico.aprofundamento;
+
+                   // Todos veem extensivo (base) - ou discute-se se aprofundamento substitui
+                   // Vou assumir que Aprofundamento vê AMBOS
+                   if (extUrl) {
+                       add('Teoria', extUrl);
+                   }
+
+                   if (modality === 'APROFUNDAMENTO' && aprofUrl) {
+                       add('Teoria (Aprofundamento)', aprofUrl);
+                   }
+
+                   if (items.length > 0) {
+                       openModal('Material Teórico', items);
+                   } else {
+                       // Caso de fallback (se clicou e não tem nada, mas deveria estar hidden se não tivesse)
+                       // Mas se for direct link falhando...
+                   }
+
                 })();
             });
         }
