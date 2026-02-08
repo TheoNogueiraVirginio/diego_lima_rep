@@ -26,7 +26,7 @@ const cursoData = {
                     { titulo: "A cruzadinha", vimeoId: "1160830158", duracao: 5 },
                     { titulo: "Complemento de Quadrado", vimeoId: "1161234861", duracao: 8 },
                     { titulo: "Binômio de Newton", vimeoId: "1161235585", requiredModality: "aprofundamento", duracao: 10 },
-                    {titulo: "Questões Difíceis", vimeoId: "1161773683", requiredModality: "extensivo", duracao: 12 },
+                    {titulo: "Questões Difíceis", vimeoId: "1161773683", requiredModality: "extensivo", duracao: 12, requiredModality: "extensivo" },
                     {titulo: "Soma dos quadrados dos primeiros naturais", vimeoId: "1162044528", requiredModality: "aprofundamento", duracao: 6 }
                 ]
             },
@@ -53,8 +53,11 @@ const cursoData = {
                 },
                 hideMainInSidebar: true,
                 subAulas: [
-                    { titulo: "Equações do 1º Grau", vimeoId: "1161775298", duracao: 9},
-                    { titulo: "Equações do 2º Grau", vimeoId: "1161775798", duracao: 26 }
+                    {titulo: "Equações do 1º Grau", vimeoId: "1161775298", duracao: 9},
+                    {titulo: "Equações do 2º Grau", vimeoId: "1161775798", duracao: 26 },
+                    {titulo: "Resolução de Questões Difíceis", vimeoId: "1162672760", duracao: 21, requiredModality: "extensivo" },
+                    {titulo: "Problematizações Clássicas", vimeoId: "1162269655", duracao: 40, requiredModality: "aprofundamento" },
+                    {titulo: "Demonstração da Fórmula de Bhaskara", vimeoId: "1162704955", duracao: 10, requiredModality: "aprofundamento" }
                 ]
             },
             
@@ -75,7 +78,8 @@ const cursoData = {
                 subAulas: [
                     { titulo: "Divisibilidade", vimeoId: "1161235737", duracao: 24 },
                     { titulo: "MDC e MMC", vimeoId: "1161235060", duracao: 37 },
-                    {titulo: "Congruência Modular", vimeoId: "1162319710", requiredModality: "aprofundamento", duracao: 37 }
+                    {titulo: "Congruência Modular", vimeoId: "1162319710", requiredModality: "aprofundamento", duracao: 37 },
+                    {titulo: "Resolução de Questões Difíceis", vimeoId: "1162675712", requiredModality: "extensivo", duracao: 37 }
                 ]
             },
             
@@ -88,19 +92,31 @@ const cursoData = {
                     teoria: "Teoria_Estatistica.pdf",
                     listas: {pe_extensivo: "Q_PE_E_Estatistica.pdf", pe_aprofundamento: "Q_PE_A_Estatistica.pdf"},
                     gabaritos: { pe_extensivo: "G_PE_E_Estatistica.pdf", pe_aprofundamento: "G_PE_A_Estatistica.pdf" }
-                }
+                },
+                hideMainInSidebar: true,
+                subAulas: [
+                    { titulo: "Interpretação de gráficos e tabelas", vimeoId: "", duracao: 0 },
+                    { titulo: "Medidas de tendências centrais", vimeoId: "1162863498", duracao: 53 },
+                    {titulo: "Medidas de dispersão", vimeoId: "1162863498", duracao: 35},
+                    {titulo: "Resolução de Questões Difíceis", vimeoId: "1162676792", duracao: 21, requiredModality: "extensivo" }
+                ]
             },
             
             
             
             {
                 titulo: "Conjuntos", 
-                vimeoId: "",
+                vimeoId: "1162704195", duracao: 40,
                 materiais: {
                     teoria: "Teoria_Conjuntos.pdf",
                     listas: {pe_extensivo: "Q_PE_E_Conjuntos.pdf", pe_aprofundamento: "Q_PE_A_Conjuntos.pdf"},
                     gabaritos: { pe_extensivo: "G_PE_E_Conjuntos.pdf", pe_aprofundamento: "G_PE_A_Conjuntos.pdf" }
-                }
+                },
+                subAulas: [
+                    { titulo: "Conjuntos Numéricos", vimeoId: "1162703820", duracao: 34 },
+                    { titulo: "Subconjuntos da Reta Real", vimeoId: "1162807626", duracao: 19 },
+                    { titulo: "Resolução de Questões Difíceis", vimeoId: "", duracao: 0, requiredModality: "extensivo" }
+                ]
             },
             
             
@@ -112,7 +128,19 @@ const cursoData = {
                     teoria: "Teoria_PontoIntFuncoes.pdf",
                     listas: {pe_extensivo: "Q_PE_E_PontoIntFuncoes.pdf", pe_aprofundamento: "Q_PE_E_PontoIntFuncoes.pdf"},
                     gabaritos: { pe_extensivo: "G_PE_E_PontoIntFuncoes.pdf", pe_aprofundamento: "G_PE_A_PontoIntFuncoes.pdf" }
-                }
+                },
+                hideMainInSidebar: true,
+
+                subAulas: [
+                    {titulo: "Ponto", vimeoId: "1162703424", duracao: 39},
+                    {titulo: "Introdução de Funções", vimeoId: "1162705064", duracao: 22},
+                    {titulo: "Estudo do domínio de funções", vimeoId: "1162705583", duracao: 15},
+                    {titulo: "Gráficos de uma função", vimeoId: "1162728681", duracao: 12},
+                    {titulo: "Função injetora, sobrejetora e bijetora", vimeoId: "1162728306", duracao: 12},
+                    {titulo: "Paridade de função", vimeoId: "1162728272", duracao: 7},
+                    {titulo: "Função inversa", vimeoId: "1162728343", duracao: 15},
+                    {titulo: "Translações no gráfico de uma função", vimeoId: "1162729664", duracao: 27},
+                ]
             },
     
             
@@ -124,7 +152,14 @@ const cursoData = {
                     teoria: "Teoria_RetaFuncaoAfim.pdf",
                     listas: {pe_extensivo: "Q_PE_E_RetaFuncaoAfim.pdf", pe_aprofundamento: "Q_PE_A_RetaFuncaoAfim.pdf"},
                     gabaritos: { pe_extensivo: "G_PE_E_RetaFuncaoAfim.pdf", pe_aprofundamento: "G_PE_A_RetaFuncaoAfim.pdf" }
-                }
+                },
+                hideMainInSidebar: true,
+
+                subAulas: [
+                    {titulo: "Reta", vimeoId: "1162852980", duracao: 36},
+                    {titulo: "Distância do Ponto à Reta", vimeoId: "1162853078", duracao: 15},
+                    {titulo: "Retas Perpendiculares - o Porquê", vimeoId: "1162853173", duracao: 8},
+                ]
             },
             
             
