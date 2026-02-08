@@ -40,7 +40,7 @@ const cursoData = {
                     teoria: "Teoria_Equacoes1e2Grau.pdf",
                     listas: {
                         pe_extensivo: "Q_PE_E_Equacoes1e2Grau.pdf", 
-                        pe_aprofundamento: "Q_PE_E_Equacoes1e2Grau.pdf", 
+                        pe_aprofundamento: "Q_PE_A_Equacoes1e2Grau.pdf", 
                         extra: "extra_Equacoes1e2Grau.pdf",
                         extra2: "extra2_Equacoes1e2Grau.pdf"
                     },
@@ -72,7 +72,7 @@ const cursoData = {
                         pe_aprofundamento: "Teoria_Congruencia.pdf"
                     },
                     listas: {pe_extensivo: "Q_PE_E_DivisibilidadeMdcMmc.pdf", pe_aprofundamento: "Q_PE_A_DivisibilidadeMdcMmc.pdf", extra: "Q_E_A_Congruencia.pdf"},
-                    gabaritos: { pe_extensivo: "G_PE_E_DivisibilidadeMdcMmc.pdf", pe_aprofundamento: "G_PE_A_DivisibilidadeMdcMmc.pdf", extra: "G_E_A_Congruencia" }
+                    gabaritos: { pe_extensivo: "G_PE_E_DivisibilidadeMdcMmc.pdf", pe_aprofundamento: "G_PE_A_DivisibilidadeMdcMmc.pdf", extra: "G_E_A_Congruencia.pdf" }
                 },
                 hideMainInSidebar: true,
                 subAulas: [

@@ -235,6 +235,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             </button>
             <div class="assunto-content">
                 <ul>
+                    ${aula.titulo === 'Caderno Revisional' ? '' : `
                     <li>
                         <a class="link-player" href="assistir.html?id=${moduloId}.${assuntoIndex}">
                             <div class="item-thumb" data-src="/images/images_modulos/image_video.png"></div>
@@ -244,6 +245,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             </div>
                         </a>
                     </li>
+                    `}
                     <li style="${(teoricoUrl || hasComplexTeoria) ? '' : 'display:none'}">
                         <a href="${teoricoUrl ? `/pdf-viewer/viewer.html?doc=${encodeURIComponent(teoricoUrl)}` : '#'}" target="_blank" class="${hasComplexTeoria ? 'btn-complex-teoria' : ''}">
                             <div class="item-thumb" data-src="/images/images_modulos/image_pdf.png"></div>
