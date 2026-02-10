@@ -10,7 +10,7 @@ if (!process.env.GMAIL_USER) {
 // Criar o transporter uma vez (singleton pattern simplificado)
 const getTransporter = () => {
     if (!process.env.GMAIL_USER || !process.env.GMAIL_PASS) {
-        console.warn('⚠️ GMAIL_USER ou GMAIL_PASS não definidos. Emails não serão enviados.');
+        console.warn('GMAIL_USER ou GMAIL_PASS não definidos. Emails não serão enviados.');
         return null;
     }
 
@@ -56,9 +56,9 @@ const getCredentialsHtml = (name, email, cpf) => `
         <p>Seguem abaixo suas credenciais de acesso:</p>
 
         <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <p style="margin: 5px 0;">🔗 <strong>Link de Acesso:</strong> <a href="${PLATFORM_URL}" target="_blank">Clique aqui para entrar</a></p>
-            <p style="margin: 5px 0;">📧 <strong>Login (E-mail):</strong> ${email}</p>
-            <p style="margin: 5px 0;">🔑 <strong>Senha:</strong> ${cpf} <span style="font-size: 0.9em; color: #666;">(apenas os números do seu CPF)</span></p>
+            <p style="margin: 5px 0;"><strong>Link de Acesso:</strong> <a href="${PLATFORM_URL}" target="_blank">Clique aqui para entrar</a></p>
+            <p style="margin: 5px 0;"><strong>Login (E-mail):</strong> ${email}</p>
+            <p style="margin: 5px 0;"><strong>Senha:</strong> ${cpf} <span style="font-size: 0.9em; color: #666;">(apenas os números do seu CPF)</span></p>
         </div>
 
         <p>Recomendamos que mantenha essas informações em segurança.</p>
@@ -93,10 +93,10 @@ export const sendWelcomeEmail = async (toEmail, name) => {
             subject: WELCOME_SUBJECT,
             html: getWelcomeHtml(firstName)
         });
-        console.log(`✅ Email de boas-vindas enviado para ${toEmail} (ID: ${info.messageId})`);
+        console.log(`Email de boas-vindas enviado para ${toEmail} (ID: ${info.messageId})`);
         return true;
     } catch (error) {
-        console.error(`❌ Erro ao enviar email para ${toEmail}:`, error.message);
+        console.error(`Erro ao enviar email para ${toEmail}:`, error.message);
         return false;
     }
 };
@@ -123,10 +123,10 @@ export const sendCredentialsEmail = async (toEmail, name, cpf) => {
             subject: CREDENTIALS_SUBJECT,
             html: getCredentialsHtml(firstName, toEmail, cpfNumbers)
         });
-        console.log(`✅ Email de credenciais enviado para ${toEmail} (ID: ${info.messageId})`);
+        console.log(`Email de credenciais enviado para ${toEmail} (ID: ${info.messageId})`);
         return true;
     } catch (error) {
-        console.error(`❌ Erro ao enviar email para ${toEmail}:`, error.message);
+        console.error(`Erro ao enviar email para ${toEmail}:`, error.message);
         return false;
     }
 };

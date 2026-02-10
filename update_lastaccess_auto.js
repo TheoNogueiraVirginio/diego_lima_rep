@@ -17,12 +17,12 @@ const loginReplacement = `if (!['PAID','ADMIN'].includes(user.status)) {
 if (!controllerContent.includes('lastAccess Update')) {
     if (loginRegex.test(controllerContent)) {
         controllerContent = controllerContent.replace(loginRegex, loginReplacement);
-        console.log('✅ enrollmentController.js (login logic) updated.');
+        console.log('enrollmentController.js (login logic) updated.');
     } else {
-        console.log('❌ Could not find login logic pattern in enrollmentController.js');
+        console.log('Could not find login logic pattern in enrollmentController.js');
     }
 } else {
-    console.log('ℹ️ enrollmentController.js (login logic) already updated.');
+    console.log('enrollmentController.js (login logic) already updated.');
 }
 
 // B. Inserir campo no select
@@ -46,9 +46,9 @@ const simpleSelectRegex = /amount: true,\s*createdAt: true/g;
 if (!controllerContent.includes('lastAccess: true')) {
     if (simpleSelectRegex.test(controllerContent)) {
         controllerContent = controllerContent.replace(simpleSelectRegex, 'amount: true,\n                lastAccess: true,\n                createdAt: true');
-        console.log('✅ enrollmentController.js (select logic) updated.');
+        console.log('enrollmentController.js (select logic) updated.');
     } else {
-        console.log('❌ Could not find select logic pattern in enrollmentController.js');
+        console.log('Could not find select logic pattern in enrollmentController.js');
     }
 }
 
@@ -76,10 +76,10 @@ if (monitoramentoContent.includes('<td>—</td>')) {
         '<td>—</td>', 
         '<td>${s.lastAccess ? new Date(s.lastAccess).toLocaleDateString("pt-BR") + " " + new Date(s.lastAccess).toLocaleTimeString("pt-BR", {hour:"2-digit",minute:"2-digit"}) : "—"}</td>'
     );
-    console.log('✅ monitoramento.js updated.');
+    console.log('monitoramento.js updated.');
     fs.writeFileSync(monitoramentoPath, monitoramentoContent);
 } else {
-     console.log('ℹ️ monitoramento.js already updated or pattern not found.');
+     console.log('monitoramento.js already updated or pattern not found.');
 }
 
 console.log('Done.');

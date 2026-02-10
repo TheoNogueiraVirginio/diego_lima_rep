@@ -9,11 +9,11 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 const prisma = new PrismaClient();
 
 async function main() {
-    console.log("🚀 Iniciando script de envio de CREDENCIAIS em massa...");
+    console.log("Iniciando script de envio de CREDENCIAIS em massa...");
 
     // 1. Validar Credenciais
     if (!process.env.GMAIL_USER || !process.env.GMAIL_PASS) {
-        console.error("❌ Credenciais GMAIL_USER ou GMAIL_PASS não encontradas no .env");
+        console.error("Credenciais GMAIL_USER ou GMAIL_PASS não encontradas no .env");
         process.exit(1);
     }
 
@@ -31,7 +31,7 @@ async function main() {
         }
     });
 
-    console.log(`📋 Total de alunos 'PAID' encontrados: ${students.length}`);
+    console.log(`Total de alunos 'PAID' encontrados: ${students.length}`);
 
     // --- SEGURANÇA: MODO DE EXECUÇÃO ---
     // Use --send para enviar de fato.
@@ -43,19 +43,19 @@ async function main() {
     const resumeAfterName = resumeArgIndex !== -1 ? process.argv[resumeArgIndex + 1] : null;
 
     if (students.length === 0) {
-        console.log("⚠️ Nenhum aluno para enviar.");
+        console.log("Nenhum aluno para enviar.");
         return;
     }
 
-    console.log(`🔒 Modo de Execução: ${MODE}`);
+    console.log(`Modo de Execução: ${MODE}`);
 
     if (resumeAfterName) {
         console.log(`⏩ Configurado para retomar APÓS: "${resumeAfterName}"`);
     }
     
     if (MODE !== 'SEND') {
-        console.log("\n⚠️ ATENÇÃO: Os e-mails NÃO estão sendo enviados (Modo Simulação).");
-        console.log("⚠️ Para enviar de fato, execute: node scripts/send_credentials_email.js --send\n");
+        console.log("\nATENÇÃO: Os e-mails NÃO estão sendo enviados (Modo Simulação).");
+        console.log("Para enviar de fato, execute: node scripts/send_credentials_email.js --send\n");
     }
 
     let successCount = 0;
@@ -68,7 +68,7 @@ async function main() {
          if (skipping) {
             // Se encontrar o nome exato, paramos de pular NA PRÓXIMA iteração
             if (student.name === resumeAfterName) {
-                console.log(`📍 Encontrado último enviado: ${student.name}. Retomando envios a partir do PRÓXIMO.`);
+                console.log(`Encontrado último enviado: ${student.name}. Retomando envios a partir do PRÓXIMO.`);
                 skipping = false;
             }
             continue;
@@ -92,9 +92,9 @@ async function main() {
     }
 
     console.log("\n=========================================");
-    console.log(`🏁 Finalizado!`);
-    console.log(`✅ Sucessos: ${successCount}`);
-    console.log(`❌ Erros: ${errorCount}`);
+    console.log(`Finalizado!`);
+    console.log(`Sucessos: ${successCount}`);
+    console.log(`Erros: ${errorCount}`);
     console.log("=========================================");
 }
 
