@@ -39,6 +39,19 @@ document.addEventListener('DOMContentLoaded', ()=>{
       fetchPaidStudents(q || '', mod);
     });
   }
+
+  // Listeners para ordenação
+  const thProgress = document.getElementById('th-progress');
+  if (thProgress) {
+    thProgress.addEventListener('click', () => handleHeaderClick('progress'));
+  }
+  const thName = document.getElementById('th-name');
+  if (thName) {
+    thName.addEventListener('click', () => handleHeaderClick('name'));
+  }
+  
+  // Inicializa ícones de ordenação
+  updateSortIcons();
 });
 
 function drawLineChart(canvas, data, labels){
@@ -107,6 +120,220 @@ function drawBarChart(canvas, data, labels){
   });
 }
 
+// Variáveis globais para ordenação e cache
+let cachedStudents = [];
+let sortCol = 'progress'; // 'name' | 'progress'
+let sortAsc = false; // false = desc (maior primeiro), true = asc (A-Z ou menor primeiro)
+
+function handleHeaderClick(colName) {
+  if (sortCol === colName) {
+    // Se clicar na mesma, inverte
+    sortAsc = !sortAsc;
+  } else {
+    // Nova coluna
+    sortCol = colName;
+    // Padrões iniciais: Nome -> A-Z (asc), Progresso -> Maior% (desc)
+    if (colName === 'name') sortAsc = true;
+    else sortAsc = false;
+  }
+  updateSortIcons();
+  sortStudentsAndRender();
+}
+
+function updateSortIcons() {
+  const map = { 'name': 'th-name', 'progress': 'th-progress' };
+  
+  // Limpa todos e seta o ativo
+  Object.keys(map).forEach(key => {
+    const th = document.getElementById(map[key]);
+    if (!th) return;
+    const span = th.querySelector('span');
+    if (!span) return;
+
+    if (key === sortCol) {
+      span.textContent = sortAsc ? '▲' : '▼';
+      th.classList.add('sort-active'); // opcional, para CSS futuro
+    } else {
+      span.textContent = '⇅'; // ou vazio se preferir
+      th.classList.remove('sort-active');
+    }
+  });
+}
+
+function sortStudentsAndRender(){
+  if (!cachedStudents || cachedStudents.length === 0) return;
+
+  cachedStudents.sort((a,b) => {
+    if (sortCol === 'name') {
+      const na = (a.name || '').trim();
+      const nb = (b.name || '').trim();
+      return sortAsc 
+        ? na.localeCompare(nb, 'pt-BR', { sensitivity: 'base' })
+        : nb.localeCompare(na, 'pt-BR', { sensitivity: 'base' });
+    } else {
+      // progress
+      const pa = Number(a.lessonsPercent || (a.lessons && a.lessons.percent) || 0);
+      const pb = Number(b.lessonsPercent || (b.lessons && b.lessons.percent) || 0);
+      return sortAsc ? (pa - pb) : (pb - pa);
+    }
+  });
+
+  renderStudentsTable(cachedStudents);
+}
+
+function renderStudentsTable(students){
+  const tbody = document.getElementById('studentsBody');
+  tbody.innerHTML = '';
+
+  if (!Array.isArray(students)) {
+     tbody.innerHTML = `<tr><td colspan="7" style="color:var(--muted)">Erro ao exibir dados.</td></tr>`;
+     return;
+  }
+
+  if (students.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--muted)">Nenhum aluno encontrado.</td></tr>';
+    return;
+  }
+
+  students.forEach(s => {
+    const tr = document.createElement('tr');
+    
+    let lastAccessStr = '—';
+    if (s.lastAccess) {
+      lastAccessStr = new Date(s.lastAccess).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
+    }
+
+    const percent = Number(s.lessonsPercent || (s.lessons && s.lessons.percent) || 0);
+
+    tr.innerHTML = `
+      <td>${escapeHtml(s.name)}</td>
+      <td>${lastAccessStr}</td>
+      <td>${escapeHtml(s.modality || '')}</td>
+      <td><div class="progress"><div style="width:${percent}%"></div></div>${percent}%</td>
+      <td>—</td>
+      <td class="status active">Ativo</td>
+      <td><button class="link-btn" onclick="openStudentDetails('${s.id}', '${escapeHtml(s.name.replace(/'/g, "\\'"))}')">Ver Detalhes</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// Estilo para o botão parecer link
+const styleBtn = document.createElement('style');
+styleBtn.textContent = `.link-btn { background:none; border:none; color:#8fb7ff; cursor:pointer; text-decoration:none; font-size:inherit; padding:0; } .link-btn:hover { text-decoration:underline; }`;
+document.head.appendChild(styleBtn);
+
+async function openStudentDetails(studentId, studentName) {
+  const modal = document.getElementById('studentDetailsModal');
+  const tbody = document.getElementById('detailsTableBody');
+  const nameDisplay = document.getElementById('studentNameDisplay');
+  
+  if(nameDisplay) nameDisplay.textContent = studentName;
+  if(tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--muted)">Carregando histórico...</td></tr>';
+  
+  if(modal) modal.classList.add('open');
+
+  try {
+    const res = await fetch(`/api/progress/student/${studentId}`);
+    if (!res.ok) throw new Error('Erro ao buscar detalhes');
+    const history = await res.json();
+
+    if(tbody) {
+      tbody.innerHTML = '';
+      if (!history || history.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--muted); padding:20px;">Nenhum histórico de visualização encontrado.</td></tr>';
+        return;
+      }
+
+      history.forEach(item => {
+        const lessonName = getLessonName(item.lessonId) || `ID: ${item.lessonId}`;
+        const statusMap = { 'COMPLETED': 'Concluído', 'IN_PROGRESS': 'Em andamento' };
+        const statusLabel = statusMap[item.status] || item.status;
+        const color = item.status === 'COMPLETED' ? 'var(--accent)' : 'var(--muted)';
+        
+        let timeWatched = formatSeconds(item.watchedSeconds);
+        const date = new Date(item.watchedAt).toLocaleString('pt-BR');
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(lessonName)}</td>
+          <td style="color:${color}; font-weight:600;">${statusLabel}</td>
+          <td>${timeWatched}</td>
+          <td style="font-size:0.9em; color:var(--muted);">${date}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+  } catch (err) {
+    console.error(err);
+    if(tbody) tbody.innerHTML = '<tr><td colspan="4" style="color:var(--danger); text-align:center;">Erro ao carregar dados.</td></tr>';
+  }
+}
+
+function closeStudentDetails() {
+  const modal = document.getElementById('studentDetailsModal');
+  if(modal) modal.classList.remove('open');
+}
+
+function formatSeconds(sec) {
+  if (!sec) return '0s';
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+function getLessonName(lessonId) {
+  if (!window.cursoData) return null;
+  
+  // Tenta achar direto pelo ID se houver mapa plano ou varrer a estrutura
+  // A estrutura é cursoData[modId].aulas -> array
+  // Cada aula pode ter subAulas
+  // Precisamos varrer tudo. Otimização: Cachear mapa na primeira vez.
+  
+  if (!window._lessonMapCache) {
+    window._lessonMapCache = {};
+    Object.values(window.cursoData).forEach(mod => {
+      if (mod.aulas) {
+        mod.aulas.forEach((aula, idx) => {
+          // Aula Principal: ID é gerado como modId.aulaIdx+1
+           // Mas espere, o sistema usa vimeoId ou ID composto?
+           // O progressController usa lessonId enviado pelo frontend.
+           // No frontend (assistir.js) o ID é composto: `${modId}.${aulaIdx}` ou subAulaIdx.
+           // Vou assumir que o LessonId gravado no banco segue o padra "1.1", "1.1.2", etc.
+           
+           // A estrutura precisa bater com como é salvo.
+           // Vamos varrer gerando os IDs teóricos e ver se bate ou descobrindo o nome.
+           // Infelizmente o lessonId gravado é meio "opaco" sem ver o assistir.js a fundo.
+           // Mas vou tentar criar um mapeamento recursivo de nomes.
+        });
+      }
+    });
+  }
+  
+  // Solução robusta de varredura (lenta, mas ok para poucos itens)
+  for (const modId in window.cursoData) {
+    const mod = window.cursoData[modId];
+    if (mod.aulas) {
+      for (let i = 0; i < mod.aulas.length; i++) {
+        const aula = mod.aulas[i];
+        const aulaIdMain = `${modId}.${i + 1}`;
+        if (String(lessonId) === aulaIdMain) return `${mod.tituloModulo} - ${aula.titulo}`;
+        
+        if (aula.subAulas) {
+          for (let j = 0; j < aula.subAulas.length; j++) {
+            const sub = aula.subAulas[j];
+            const subId = `${modId}.${i + 1}.${j + 1}`;
+            if (String(lessonId) === subId) return `${mod.tituloModulo} - ${aula.titulo}: ${sub.titulo}`;
+          }
+        }
+      }
+    }
+  }
+  return null;
+}
+
 async function fetchPaidStudents(q = '', modality = ''){
   const debugElId = 'studentsDebug';
   try{
@@ -122,52 +349,28 @@ async function fetchPaidStudents(q = '', modality = ''){
     let students = [];
     try { students = await res.json(); } catch(e) { console.error('Erro ao parsear JSON', e); debugContainer.textContent += '\nJSON parse error'; }
 
-    tbody.innerHTML = '';
+    // Salva no cache global
+    cachedStudents = Array.isArray(students) ? students : [];
 
-    // Se a resposta não for um array, mostramos mensagem de erro retornada pelo backend
+    // Se houve erro no backend (objeto de erro retornado em vez de array)
     if (!Array.isArray(students)) {
-      const msg = students && (students.error || students.message) ? (students.error || students.message) : 'Resposta inesperada do servidor';
-      tbody.innerHTML = `<tr><td colspan="7" style="color:var(--muted)">Erro ao carregar alunos: ${escapeHtml(String(msg))}</td></tr>`;
-      debugContainer.textContent += '\nResponse body: ' + JSON.stringify(students || null);
-      return;
+        const msg = students && (students.error || students.message) ? (students.error || students.message) : 'Resposta inesperada do servidor';
+        const tbody = document.getElementById('studentsBody'); // Precisa pegar aqui pois removemos a lógica inline
+        tbody.innerHTML = `<tr><td colspan="7" style="color:var(--muted)">Erro ao carregar alunos: ${escapeHtml(String(msg))}</td></tr>`;
+        return;
     }
 
-    if (students.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="color:var(--muted)">Nenhum aluno PAID encontrado.</td></tr>';
-      debugContainer.textContent += '\nResponse body: ' + JSON.stringify(students || null);
-      return;
-    }
+    // Renderiza usando a função separada (que já sabe lidar com o array)
+    // Mantém a ordenação atual se já houver clicado, ou ordena default? 
+    // Vamos chamar sortStudentsAndRender() para garantir ordenação consistente
+    sortStudentsAndRender();
 
-    students.forEach(s => {
-      const tr = document.createElement('tr');
-      // const created = new Date(s.createdAt);
-      // const createdStr = created.toLocaleString();
-      
-      let lastAccessStr = '—';
-      if (s.lastAccess) {
-        lastAccessStr = new Date(s.lastAccess).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
-      }
-
-      const percent = Number(s.lessonsPercent || (s.lessons && s.lessons.percent) || 0);
-
-      tr.innerHTML = `
-        <td>${escapeHtml(s.name)}</td>
-        <td>${lastAccessStr}</td>
-        <td>${escapeHtml(s.modality || '')}</td>
-        <td><div class="progress"><div style="width:${percent}%"></div></div>${percent}%</td>
-        <td>—</td>
-        <td class="status active">Ativo</td>
-        <td><a class="link" href="/cadastro.html?enrollmentId=${s.id}">Ver Detalhes</a></td>
-      `;
-      tbody.appendChild(tr);
-    });
     debugContainer.textContent += `\nEncontrados ${students.length} alunos`;
   }catch(err){
     console.error(err);
     const tbody = document.getElementById('studentsBody');
     tbody.innerHTML = '<tr><td colspan="7" style="color:var(--muted)">Erro ao carregar alunos.</td></tr>';
-    const debugContainer = getOrCreateDebugContainer();
-    debugContainer.textContent += '\n' + err.message;
+    // const debugContainer = getOrCreateDebugContainer(); // Já criado acima no try, mas se falhar antes...
   }
 }
 

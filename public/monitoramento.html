@@ -47,6 +47,8 @@
 
               <ul class="cs-options" aria-hidden="true">
                 <li data-value="">Todas</li>
+                <li data-value="EXTENSIVO">Extensivo</li>
+                <li data-value="APROFUNDAMENTO">Aprofundamento</li>
                 <li data-value="COM_MATERIAL">Com material</li>
                 <li data-value="SEM_MATERIAL">Sem material</li>
               </ul>
@@ -54,22 +56,24 @@
             <select><option>Status</option></select>
           </div>
 
-          <table class="students-table">
-            <thead>
-              <tr>
-                <th>Nome do Aluno</th>
-                <th>Último Acesso</th>
-                <th>Módulo Atual</th>
-                <th>Aulas Assistidas</th>
-                <th>Simulados Concluídos</th>
-                <th>Status</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody id="studentsBody">
-              <!-- Rows serão populadas via JS -->
-            </tbody>
-          </table>
+          <div class="table-container">
+            <table class="students-table">
+              <thead>
+                <tr>
+                  <th id="th-name" style="cursor: pointer;" title="Clique para ordenar">Nome do Aluno <span></span></th>
+                  <th>Último Acesso</th>
+                  <th>Módulo Atual</th>
+                  <th id="th-progress" style="cursor: pointer;" title="Clique para ordenar">Aulas Assistidas <span>⇅</span></th>
+                  <th>Simulados Concluídos</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="studentsBody">
+                <!-- Rows serão populadas via JS -->
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -93,6 +97,8 @@
     </section>
   </main>
 
+  <!-- Dados das aulas para mapear IDs par nomes -->
+  <script src="/scripts/dados_aulas.js"></script>
   <script src="/scripts/monitoramento.js"></script>
 
   <!-- Modal de Comentários -->
@@ -105,6 +111,33 @@
         <div id="modalCommentsList" style="flex:1; overflow-y:auto; padding:15px;">
             Carregando...
         </div>
+    </div>
+  </div>
+  <!-- Modal de Detalhes do Aluno -->
+  <div id="studentDetailsModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="detailsModalTitle">Histórico de Aulas</h2>
+        <button class="close-btn" onclick="closeStudentDetails()">×</button>
+      </div>
+      <div class="modal-body">
+        <p id="studentNameDisplay" style="color:var(--accent); margin-bottom:16px; font-weight:600; font-size:1.1em;"></p>
+        <div class="table-container" style="max-height: 50vh;">
+            <table class="students-table">
+                <thead>
+                    <tr>
+                        <th style="background:var(--panel);">Aula</th>
+                        <th style="background:var(--panel);">Status</th>
+                        <th style="background:var(--panel);">Tempo Assistido</th>
+                        <th style="background:var(--panel);">Data</th>
+                    </tr>
+                </thead>
+                <tbody id="detailsTableBody">
+                    <!-- JS preenche -->
+                </tbody>
+            </table>
+        </div>
+      </div>
     </div>
   </div>
 </body>

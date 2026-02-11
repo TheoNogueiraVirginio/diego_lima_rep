@@ -78,6 +78,25 @@ export const getExamAttempts = async (req, res) => {
   }
 };
 
+// GET /api/progress/student/:id (Admin)
+export const getStudentProgress = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ error: 'Student ID required' });
+    
+    // Busca todo o histórico de aulas
+    const history = await prisma.lessonProgress.findMany({ 
+        where: { enrollmentId: id },
+        orderBy: { watchedAt: 'desc' }
+    });
+    
+    return res.json(history);
+  } catch (err) {
+    console.error('getStudentProgress error', err.message);
+    return res.status(500).json({ error: 'Internal error' });
+  }
+};
+
 // GET /api/progress/summary/me
 export const getSummary = async (req, res) => {
   try {
