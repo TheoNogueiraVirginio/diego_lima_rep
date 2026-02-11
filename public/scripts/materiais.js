@@ -88,8 +88,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Helper: verifica se o item deve contar para a soma de minutos com base na modalidade
     const shouldCountTime = (item) => {
         if (!item) return false;
-        // ADMIN conta tudo (todos os vídeos possíveis)
+        
         if (isAdmin) return true;
+
+        if (userModality.includes('integral')) return true;
+
 
         if (item.requiredModality) {
             const req = String(item.requiredModality).toLowerCase().trim();
@@ -211,10 +214,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // Verifica se há pelo menos alguma chave relevante
                     if (rawTeorico.pe_extensivo || rawTeorico.pe_aprofundamento || rawTeorico.extensivo || rawTeorico.aprofundamento) {
                          // Se for ADMIN ou APROFUNDAMENTO, mostra modal com opções
-                         if (isAdmin || userModality.includes('aprofundamento')) {
+                         if (isAdmin || userModality.includes('aprofundamento') || userModality.includes('integral')) {
                               hasComplexTeoria = true;
                          } else {
                               // Outros alunos abrem direto a versão extensivo (ou equivalente padrão)
+
                               teoricoUrl = rawTeorico.pe_extensivo || rawTeorico.extensivo;
                          }
                     }

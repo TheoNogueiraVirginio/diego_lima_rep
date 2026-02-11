@@ -206,12 +206,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         // ignorar erros; isAdmin permanece false
     }
 
+
     // Helper de visibilidade
     const isVisible = (item) => {
         if (!item) return false;
         if (isAdmin) return true;
         if (item.adminOnly) return false;
-        // Lógica de segregação por modalidade (extensivo, aprofundamento, etc)
+
+        if (userModality.includes('integral')) return true;
+
         if (item.requiredModality) {
             if (!userModality) return false; // Se tem requisito e usuário não tem modalidade, esconde
             const req = String(item.requiredModality).toLowerCase().trim();

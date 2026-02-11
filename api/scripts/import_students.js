@@ -25,6 +25,11 @@ async function importStudents() {
     let success = 0;
     let errors = 0;
 
+    // Defina aqui o email do aluno a partir do qual deseja começar (inclusivo)
+    // Deixe vazio para processar todos
+    const START_FROM_EMAIL = 'luiz.dp06@gmail.com'; 
+    let foundStart = !START_FROM_EMAIL; // Se vazio, já começa true
+
     console.log('Iniciando importação...');
 
     for await (const line of rl) {
@@ -72,6 +77,15 @@ async function importStudents() {
             modality: cols[headerMap.modality],
             phone: headerMap.phone !== -1 ? cols[headerMap.phone] : 'Não informado'
         };
+
+        if (!foundStart) {
+            if (row.email === START_FROM_EMAIL) {
+                foundStart = true;
+                console.log(`Encontrado ponto de partida: ${START_FROM_EMAIL}. Retomando processamento...`);
+            } else {
+                continue; 
+            }
+        }
 
         try {
             await processStudent(row);

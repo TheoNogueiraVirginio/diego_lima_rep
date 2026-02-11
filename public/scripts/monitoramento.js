@@ -287,26 +287,11 @@ function formatSeconds(sec) {
 function getLessonName(lessonId) {
   if (!window.cursoData) return null;
   
-  // Tenta achar direto pelo ID se houver mapa plano ou varrer a estrutura
-  // A estrutura é cursoData[modId].aulas -> array
-  // Cada aula pode ter subAulas
-  // Precisamos varrer tudo. Otimização: Cachear mapa na primeira vez.
-  
   if (!window._lessonMapCache) {
     window._lessonMapCache = {};
     Object.values(window.cursoData).forEach(mod => {
       if (mod.aulas) {
         mod.aulas.forEach((aula, idx) => {
-          // Aula Principal: ID é gerado como modId.aulaIdx+1
-           // Mas espere, o sistema usa vimeoId ou ID composto?
-           // O progressController usa lessonId enviado pelo frontend.
-           // No frontend (assistir.js) o ID é composto: `${modId}.${aulaIdx}` ou subAulaIdx.
-           // Vou assumir que o LessonId gravado no banco segue o padra "1.1", "1.1.2", etc.
-           
-           // A estrutura precisa bater com como é salvo.
-           // Vamos varrer gerando os IDs teóricos e ver se bate ou descobrindo o nome.
-           // Infelizmente o lessonId gravado é meio "opaco" sem ver o assistir.js a fundo.
-           // Mas vou tentar criar um mapeamento recursivo de nomes.
         });
       }
     });
@@ -360,9 +345,6 @@ async function fetchPaidStudents(q = '', modality = ''){
         return;
     }
 
-    // Renderiza usando a função separada (que já sabe lidar com o array)
-    // Mantém a ordenação atual se já houver clicado, ou ordena default? 
-    // Vamos chamar sortStudentsAndRender() para garantir ordenação consistente
     sortStudentsAndRender();
 
     debugContainer.textContent += `\nEncontrados ${students.length} alunos`;

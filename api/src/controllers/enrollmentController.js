@@ -404,23 +404,28 @@ export const getExistingEnrollment = async (req, res) => {
 
 //Verificação de Login
 
+
 export const verifyLogin = async (req, res) => {
     try {
         const { email, pass } = req.body;
+
+        if (!email) return res.status(400).json({ error: "E-mail é obrigatório." });
+        if (pass === undefined || pass === null) return res.status(400).json({ error: "Senha é obrigatória." });
+
         const user = await prisma.enrollment.findUnique({ where: { email: email }});
         if (!user) {
             return res.status(404).json({ error: "E-mail não encontrado." })
         };
 
         // Remove formatação do CPF antes de comparar
-        const passLimpo = pass.replace(/\D/g, '');
+        const passLimpo = String(pass).replace(/\D/g, '');
         if (user.cpf !== passLimpo) {
             return res.status(401).json({ error: "Senha incorreta." });
         };
                 
-           if (!['PAID','ADMIN'].includes(user.status)) {
-               return res.status(403).json({ error: "Seu pagamento ainda não foi confirmado." });
-           }
+        if (!user.status || !['PAID','ADMIN'].includes(user.status)) {
+            return res.status(403).json({ error: "Seu pagamento ainda não foi confirmado." });
+        }
 
         // Atualizar Último Acesso
         try {
@@ -453,13 +458,15 @@ export const verifyLogin = async (req, res) => {
             message: "Login bem-sucedido.",
             userId: user.id,
             userName: user.name,
-            status: user.status
+            status: user.status,
+            modality: user.modality // Retornar modalidade para o frontend usar
         });
     }
     catch (err) {
         console.error('[verifyLogin] Erro:', err.message);
-        res.status(500).json({ error: 'Erro ao verificar login' });
-        };
+        console.error(err.stack); // Log do stack trace
+        res.status(500).json({ error: 'Erro ao verificar login', details: err.message });
+    }
 };
 
 // Lista alunos com status PAID (para uso no painel administrativo)
