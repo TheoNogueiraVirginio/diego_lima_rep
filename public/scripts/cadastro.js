@@ -38,8 +38,14 @@ function applyCouponFrontend(amount, couponRaw) {
         return 799.00;
     } else if (cup === 'MARIANALIMA') {
         return Number((amount * 0.85).toFixed(2));
-    } else if (cup === 'ABUUU') {
-        return Number((amount * 0.05).toFixed(2));
+    } else if (cup === '50OFF') {
+        return Number((amount * 0.50).toFixed(2));
+    } else if (cup === '25OFF') {
+        return Number((amount * 0.75).toFixed(2));
+    } else if (cup === '15OFF') {
+        return Number((amount * 0.85).toFixed(2));
+    } else if (cup === '10OFF') {
+        return Number((amount * 0.90).toFixed(2));
     }
     return amount;
 }
@@ -290,7 +296,7 @@ document.querySelector('.checkout-form').addEventListener('submit', async (event
 
     // --- VALIDAÇÃO DO CUPOM ---
     const cupomDigitado = (dadosBasicos.coupon || '').trim().toUpperCase();
-    const validCoupons = ['MARIANALIMA', 'MARIALUIZA', 'ABUUU']; 
+    const validCoupons = ['MARIANALIMA', 'MARIALUIZA', '50OFF', '25OFF', '15OFF', '10OFF']; 
     if (cupomDigitado && !validCoupons.includes(cupomDigitado)) {
         alert("❌ Cupom inválido! Verifique-o e tente novamente.");
         return;

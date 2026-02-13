@@ -58,9 +58,19 @@ export const createEnrollment = async (req, res) => {
                 valorCobrado = 799.00; // Valor final fixo para ambas as modalidades
             } else if (cup === 'MARIANALIMA') {
                 console.log("[createEnrollment] Cupom aplicado: MARIANALIMA (15% OFF)");
-                valorCobrado = valorCobrado * 0.85; // Aplica 15% de desconto
-            } else if (cup === 'ABUUU') {
-                valorCobrado = valorCobrado * 0.05;
+                valorCobrado = valorCobrado * 0.85; 
+            } else if (cup === '50OFF') {
+                console.log("[createEnrollment] Cupom aplicado: 50OFF (50% OFF)");
+                valorCobrado = valorCobrado * 0.5;
+            } else if (cup === '25OFF') {
+                console.log("[createEnrollment] Cupom aplicado: 25OFF (25% OFF)");
+                valorCobrado = valorCobrado * 0.75;
+            } else if (cup === '15OFF') {
+                console.log("[createEnrollment] Cupom aplicado: 15OFF (15% OFF)");
+                valorCobrado = valorCobrado * 0.85;
+            } else if (cup === '10OFF') {
+                console.log("[createEnrollment] Cupom aplicado: 10OFF (10% OFF)");
+                valorCobrado = valorCobrado * 0.90;
             }
         }
         
