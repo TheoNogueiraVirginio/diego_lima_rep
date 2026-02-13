@@ -17,10 +17,15 @@ async function main() {
         process.exit(1);
     }
 
-    // 2. Buscar Alunos (Status PAID e NÃO ADMIN)
+    // 2. Buscar Alunos
+    // EMERGENCIAL: Enviando apenas para alunos especificos 
+    const TARGET_EMAILS = [
+        'giogouveia990@gmail.com',
+    ];
+
     const students = await prisma.enrollment.findMany({
         where: {
-            status: 'PAID' 
+            email: { in: TARGET_EMAILS }
         },
         select: {
             id: true,

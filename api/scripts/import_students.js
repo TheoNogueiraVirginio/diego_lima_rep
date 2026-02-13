@@ -27,13 +27,14 @@ async function importStudents() {
 
     // Defina aqui o email do aluno a partir do qual deseja começar (inclusivo)
     // Deixe vazio para processar todos
-    const START_FROM_EMAIL = 'luiz.dp06@gmail.com'; 
+    const START_FROM_EMAIL = 'Jlira0862@gmail.com'; 
     let foundStart = !START_FROM_EMAIL; // Se vazio, já começa true
 
     console.log('Iniciando importação...');
 
     for await (const line of rl) {
-        if (!line.trim()) continue;
+        // Ignora linhas vazias ou comentários (iniciados por # ou //)
+        if (!line.trim() || line.trim().startsWith('#') || line.trim().startsWith('//')) continue;
 
         // Tenta dividir por vírgula ou ponto e vírgula (ajuste básico)
         // Se sua planilha usar virgula como separador decimal, o CSV costuma usar ponto e vírgula

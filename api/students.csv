@@ -1,3 +1,5 @@
+//node scripts/send_credentials_email.js --send --resume-after "ALUNO"
+
 Carimbo de data/hora,Nome Completo: (Sem abreviações),CPF:,Email:,Curso:,Turma:
 02/02/2026 14:49:29,Maria Luiza Gomes Araújo ,70773140492,mariaaluizaga@gmail.com,Extensivo Presencial,Segunda
 02/02/2026 21:37:24,João Guilherme Pessoa Pinho Ramalho ,713.479.574-80 ,joaog.ramalho308@gmail.com ,Extensivo Presencial,Segunda
@@ -150,4 +152,12 @@ Carimbo de data/hora,Nome Completo: (Sem abreviações),CPF:,Email:,Curso:,Turma
 11/02/2026 09:32:15,Maria Luiza Arnaud Assis,09869713408,marialuiza.arnaudassis@gmail.com,Aprofundamento,Terça
 11/02/2026 09:36:00,Giovanna Gouveia Ferreira,70553338498,giogouveia990@gmail.com,Aprofundamento,Terça
 11/02/2026 09:39:00,Sophia Maria Silva Costa,10997493445,sophiam0901@gmail.com,Aprofundamento,Terça
-11/02/2026 13:04:00, Bernardo Romulo Santiago Dias,10726334421,bernardo13romulo@gmail.com,Aprofundamento,Terça
+11/02/2026 13:04:00,Bernardo Romulo Santiago Dias,10726334421,bernardo13romulo@gmail.com,Aprofundamento,Terça
+
+11/02/2026 18:33:00,João Vitor da Costa Lira,71196643440,Jlira0862@gmail.com,Aprofundamento,Terça
+11/02/2026 18:34:00,Gabriel Bessa Medeiros,15515035496,gbessamedeiros@gmail.com,Aprofundamento,Terca
+11/02/2026 18:34:00,Diego Silveira Rodrigues,10492523495,diegosrodrigues1976@gmail.com,Aprofundamento,Terca
+11/02/2026 18:37:00,Maria Alice Nogueira Neves,02467182266,mariaalice.neves.8anoa@gmail.com,Aprofundamento,Terca
+
+//Inserindo Maria Clara Ramalho França novamente pois estava com email errado:
+11/02/2026 18:47:00,Maria Clara Ramalho França,10563459425,claritaramalho3@gmail.com,Extensivo Presencial,Segunda
