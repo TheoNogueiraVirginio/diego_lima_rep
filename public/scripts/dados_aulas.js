@@ -13,7 +13,7 @@ const cursoData = {
                     listas: {
                         pe_extensivo: "Q_PE_E_IdentidadesImportantes.pdf",         
                         pe_aprofundamento: "Q_PE_A_IdentidadesImportantes.pdf",    
-                        extra: "extra_IdentidadesImportantes.pdf"          
+                        extra: "extra_IdentidadesImportantes.pdf", extra2: "extra_tecnica_IdentidadesImportantes.pdf"       
                     },
                     gabaritos: {
                         pe_extensivo: "G_PE_E_IdentidadesImportantes.pdf",  
@@ -71,8 +71,8 @@ const cursoData = {
                         pe_extensivo: "Teoria_DivisibilidadeMdcMmc.pdf",
                         pe_aprofundamento: "Teoria_Congruencia.pdf"
                     },
-                    listas: {pe_extensivo: "Q_PE_E_DivisibilidadeMdcMmc.pdf", pe_aprofundamento: "Q_PE_A_DivisibilidadeMdcMmc.pdf", extra: "Q_E_A_Congruencia.pdf"},
-                    gabaritos: { pe_extensivo: "G_PE_E_DivisibilidadeMdcMmc.pdf", pe_aprofundamento: "G_PE_A_DivisibilidadeMdcMmc.pdf", extra: "G_E_A_Congruencia.pdf" }
+                    listas: {pe_extensivo: "Q_PE_E_DivisibilidadeMdcMmc.pdf", pe_aprofundamento: "Q_PE_A_DivisibilidadeMdcMmc.pdf", extra: "Q_E_A_CongruenciaModular.pdf", extra2: "Q_Extra_DivisibilidadeMdcMmc.pdf", extra3: "Q_Extra2_DivisibilidadeMdcMmc.pdf"},
+                    gabaritos: { pe_extensivo: "G_PE_E_DivisibilidadeMdcMmc.pdf", pe_aprofundamento: "G_PE_A_DivisibilidadeMdcMmc.pdf", extra: "G_E_A_Congruencia.pdf", extra2: "G_Extra_DivisibilidadeMdcMmc.pdf", extra3: "G_Extra2_DivisibilidadeMdcMmc.pdf"}
                 },
                 hideMainInSidebar: true,
                 subAulas: [
@@ -126,7 +126,7 @@ const cursoData = {
                 vimeoId: "",
                 materiais: {
                     teoria: "Teoria_PontoIntFuncoes.pdf",
-                    listas: {pe_extensivo: "Q_PE_E_PontoIntFuncoes.pdf", pe_aprofundamento: "Q_PE_E_PontoIntFuncoes.pdf"},
+                    listas: {pe_extensivo: "Q_PE_E_PontoIntFuncoes.pdf", pe_aprofundamento: "Q_PE_A_PontoIntReta.pdf"},
                     gabaritos: { pe_extensivo: "G_PE_E_PontoIntFuncoes.pdf", pe_aprofundamento: "G_PE_A_PontoIntFuncoes.pdf" }
                 },
                 hideMainInSidebar: true,
@@ -176,7 +176,11 @@ const cursoData = {
             {
                  titulo: "Caderno Revisional",
                  vimeoId: "",
-                 materiais: {},
+                 materiais: {
+                    teoria: "",
+                    listas: {pe_extensivo: "", pe_aprofundamento: ""},
+                    gabaritos: { pe_extensivo: "Revisor_Resolucao_1.pdf", pe_aprofundamento: "Revisor_Resolucao_1.pdf" }
+                 },
                  subAulas: []
             }
         ]
