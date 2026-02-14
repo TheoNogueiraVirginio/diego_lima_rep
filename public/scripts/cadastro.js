@@ -11,7 +11,7 @@ const API_BASE_URL = '';
 let paymentMethodId = '';
 let intervaloVerificacao = null;
 
-// --- PREÇOS LOCAIS (mesmas regras do backend) ---
+// --- PREÇOS LOCAIS (me-smas regras do backend) ---
 const FRONT_PRECOS = {
     TIER_3: { COM: 1920.00, SEM: 1520.00 }
 };
@@ -266,7 +266,7 @@ document.querySelector('.checkout-form').addEventListener('submit', async (event
             alert('CPF inválido. Verifique o número e tente novamente.');
             cpfInput.focus();
             return;
-        }
+        }Q
     }
 
     // Formata visualmente o CPF (opcional)
