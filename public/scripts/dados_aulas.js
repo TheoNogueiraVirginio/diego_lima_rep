@@ -93,9 +93,9 @@ const cursoData = {
                     listas: {pe_extensivo: "Q_PE_E_Estatistica.pdf", pe_aprofundamento: "Q_PE_A_Estatistica.pdf"},
                     gabaritos: { pe_extensivo: "G_PE_E_Estatistica.pdf", pe_aprofundamento: "G_PE_A_Estatistica.pdf" }
                 },
-                hideMainInSidebar: true,
+                
                 subAulas: [
-                    { titulo: "Interpretação de gráficos e tabelas", vimeoId: "", duracao: 0 },
+                    { titulo: "Tabelas e Gráficos", vimeoId: "1162862805", duracao: 0 },
                     { titulo: "Medidas de tendências centrais", vimeoId: "1162863498", duracao: 53 },
                     {titulo: "Medidas de dispersão", vimeoId: "1162863498", duracao: 35},
                     {titulo: "Resolução de Questões Difíceis", vimeoId: "1162676792", duracao: 21, requiredModality: "extensivo" }
@@ -166,7 +166,7 @@ const cursoData = {
             
             {
                 titulo: "Proporcionalidade", 
-                vimeoId: "",
+                vimeoId: "1162889591",
                 materiais: {
                     teoria: "Teoria_Proporcionalidade.pdf",
                     listas: {pe_extensivo: "Q_PE_E_Proporcionalidade.pdf", pe_aprofundamento: "Q_PE_A_Proporcionalidade.pdf"},

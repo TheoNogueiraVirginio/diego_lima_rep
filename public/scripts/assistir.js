@@ -506,7 +506,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             finishBtn.disabled = true;
             finishBtn.textContent = 'Marcando...';
             try {
-                const body = { lessonId: idCombinado, status: 'COMPLETED', watchedSeconds: 0 };
+                const body = { lessonId: idCombinado, status: 'COMPLETED', watchedSeconds: lastReportedSeconds || 0 };
                 const res = await fetch('/api/progress/lesson', {
                     method: 'POST',
                     credentials: 'include',
