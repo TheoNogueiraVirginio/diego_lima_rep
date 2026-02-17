@@ -166,7 +166,7 @@ const cursoData = {
             
             {
                 titulo: "Proporcionalidade", 
-                vimeoId: "1162889591",
+                vimeoId: "1162889591", duracao: 37,
                 materiais: {
                     teoria: "Teoria_Proporcionalidade.pdf",
                     listas: {pe_extensivo: "Q_PE_E_Proporcionalidade.pdf", pe_aprofundamento: "Q_PE_A_Proporcionalidade.pdf"},

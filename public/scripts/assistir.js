@@ -318,15 +318,43 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    function setPlayerTo(vimeoId, title, newId) {
+    async function setPlayerTo(vimeoId, title, newId) {
         if (!playerIframe) return;
+        
+        // Reset progress tracking variables for the new video
+        lastReportedSeconds = 0;
+        lastSentRecordedSeconds = 0;
+        lastSentAt = 0;
+
         const vid = String(vimeoId || '').trim();
         idCombinado = newId;
+
         // update URL and title
         window.history.pushState({}, '', `assistir.html?id=${newId}`);
         if (title) tituloPrincipal.innerText = mod.tituloModulo + ' - ' + title;
 
-        // set iframe src and attributes
+        // Tenta reutilizar player via loadVideo (mais estável)
+        let loaded = false;
+        if (vimeoPlayer && typeof vimeoPlayer.loadVideo === 'function' && vid) {
+            try {
+                await vimeoPlayer.loadVideo(vid);
+                loaded = true;
+                // Ao carregar novo vídeo, é bom garantir que os listeners estão ativos ou re-anexar se necessário.
+                // Mas geralmente persistem. Se o vídeo começar a tocar, os eventos virão.
+            } catch (err) {
+                console.warn('Erro ao carregar vídeo via API, tentando recriar iframe...', err);
+            }
+        }
+
+        if (!loaded) {
+            recriaPlayer(vid, title);
+        }
+
+        updateFinishButtonFor(newId);
+    }
+
+    function recriaPlayer(vid, title) {
+        // set iframe src and attributes manually
         playerIframe.src = vid ? `https://player.vimeo.com/video/${vid}?badge=0&autopause=0&player_id=0&app_id=58479` : '';
         playerIframe.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share');
         playerIframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
@@ -334,18 +362,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // recreate vimeo player and listeners
         cleanupPlayer();
-        try {
-            // eslint-disable-next-line no-undef
-            if (typeof Vimeo !== 'undefined' && vid) {
-                vimeoPlayer = new Vimeo.Player(playerIframe);
-                attachPlayerListeners(vimeoPlayer);
-            }
-        } catch (e) {
-            console.warn('Vimeo Player not available', e);
-            vimeoPlayer = null;
+        
+        if (vid) {
+            // Pequeno delay para garantir que o iframe carregou o novo src antes de anexar o SDK
+            setTimeout(() => {
+                try {
+                    // eslint-disable-next-line no-undef
+                    if (typeof Vimeo !== 'undefined') {
+                        vimeoPlayer = new Vimeo.Player(playerIframe);
+                        attachPlayerListeners(vimeoPlayer);
+                    }
+                } catch (e) {
+                    console.warn('Erro ao instanciar Vimeo Player', e);
+                    vimeoPlayer = null;
+                }
+            }, 800);
         }
-
-        updateFinishButtonFor(newId);
     }
 
     // render sidebar: assunto principal + sub-aulas (se houver)

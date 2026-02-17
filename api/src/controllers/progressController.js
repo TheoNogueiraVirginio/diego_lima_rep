@@ -13,7 +13,18 @@ export const postLessonProgress = async (req, res) => {
 
     const existing = await prisma.lessonProgress.findFirst({ where: { enrollmentId, lessonId } });
     if (existing) {
-      const updated = await prisma.lessonProgress.update({ where: { id: existing.id }, data: { watchedSeconds, status, watchedAt: new Date() } });
+      const currentVal = Number(existing.watchedSeconds) || 0;
+      const newVal = Number(watchedSeconds) || 0;
+      const finalSeconds = Math.max(currentVal, newVal);
+      
+      const updated = await prisma.lessonProgress.update({ 
+        where: { id: existing.id }, 
+        data: { 
+            watchedSeconds: finalSeconds, 
+            status,
+            watchedAt: new Date() 
+        } 
+      });
       return res.json(updated);
     }
 
