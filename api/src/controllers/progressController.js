@@ -22,13 +22,23 @@ export const postLessonProgress = async (req, res) => {
         data: { 
             watchedSeconds: finalSeconds, 
             status,
+            studentName: req.enrollment.name,
             watchedAt: new Date() 
         } 
       });
       return res.json(updated);
     }
 
-    const created = await prisma.lessonProgress.create({ data: { enrollmentId, lessonId, watchedSeconds, status, watchedAt: new Date() } });
+    const created = await prisma.lessonProgress.create({ 
+        data: { 
+            enrollmentId, 
+            lessonId, 
+            watchedSeconds, 
+            status, 
+            studentName: req.enrollment.name, 
+            watchedAt: new Date() 
+        } 
+    });
     return res.status(201).json(created);
   } catch (err) {
     console.error('postLessonProgress error', err.message);

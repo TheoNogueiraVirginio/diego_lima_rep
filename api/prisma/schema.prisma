@@ -61,6 +61,7 @@ enum LessonStatus {
 
 model LessonProgress {
   id String @id @default(uuid())
+  studentName String?
   enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
   enrollmentId String
   lessonId String
