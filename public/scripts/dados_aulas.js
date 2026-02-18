@@ -159,6 +159,7 @@ const cursoData = {
                     {titulo: "Reta", vimeoId: "1162852980", duracao: 36},
                     {titulo: "Distância do Ponto à Reta", vimeoId: "1162853078", duracao: 15},
                     {titulo: "Retas Perpendiculares - o Porquê", vimeoId: "1162853173", duracao: 8},
+                    {titulo: "Resolução de Questões Difíceis", vimeoId: "1165433721", duracao: 25},
                 ]
             },
             
@@ -171,7 +172,11 @@ const cursoData = {
                     teoria: "Teoria_Proporcionalidade.pdf",
                     listas: {pe_extensivo: "Q_PE_E_Proporcionalidade.pdf", pe_aprofundamento: "Q_PE_A_Proporcionalidade.pdf"},
                     gabaritos: { pe_extensivo: "G_PE_E_Proporcionalidade.pdf", pe_aprofundamento: "G_PE_A_Proporcionalidade.pdf" }
-                }
+                },
+                subAulas: [
+                    {titulo: "Razões especiais", vimeoId: "1165434335", duracao: 40},
+                    {titulo: "Resolução de Questões Difíceis", vimeoId: "1165432926", duracao: 21},
+                ],
             },
             {
                  titulo: "Caderno Revisional",
