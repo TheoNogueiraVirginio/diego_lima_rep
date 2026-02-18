@@ -1,5 +1,5 @@
 import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib';
-import bucket from '../config/firebase.js'; // Importação direta e limpa!
+import bucket from '../config/firebase.js';
 
 export const serveWatermarkedPdf = async (req, res) => {
   try {
@@ -12,50 +12,64 @@ export const serveWatermarkedPdf = async (req, res) => {
     const nomeArquivo = `pdfs/${docId}`; 
     const fileRef = bucket.file(nomeArquivo);
 
-    // ... (o resto do código continua igual, a lógica não muda) ...
-    
-    // Vou repetir apenas o bloco de verificação e download para garantir
     const [exists] = await fileRef.exists();
     if (!exists) {
+      console.log(`Arquivo não encontrado: ${nomeArquivo}`);
       return res.status(404).json({ error: 'Documento não encontrado.' });
     }
 
     const [fileBuffer] = await fileRef.download();
 
-    // ... (restante da lógica de marca d'água igual) ...
-    
-    // Se quiser o código completo de novo, me avise, 
-    // mas basicamente só mudou a linha do 'import bucket' lá em cima.
-
-    // --- REPETINDO O FINAL PARA VOCÊ NÃO SE PERDER ---
     const pdfDoc = await PDFDocument.load(fileBuffer);
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const pages = pdfDoc.getPages();
-    
-    // (Lógica da marca d'água aqui...)
-    // ...
-    // ...
-    
-    // Mock rápido da marca d'água para este exemplo não ficar gigante:
-     const userName = req.enrollment?.name || 'Usuario';
-     for (const page of pages) {
-        const { width, height } = page.getSize();
-        page.drawText(userName, { x: 130, y: height/2 - 115, size: 45, font, color: rgb(0.5,0.5,0.5), opacity: 0.15, rotate: degrees(45) });
-     }
 
-    const userCpf = req.enrollment?.cpf || '000.000.000-00';
+    const userName = req.enrollment?.name || 'Usuario';
+    const userCpf = req.enrollment?.cpf || 'CPF não informado';
+    const watermarkUseName = `${userName}`;
+    const watermarkUseCpf = `CPF: ${userCpf}`;
+
+
     for (const page of pages) {
         const { width, height } = page.getSize();
-        page.drawText("CPF: " + userCpf, { x: 200, y: height/2 - 150, size: 40, font, color: rgb(0.5,0.5,0.5), opacity: 0.15, rotate: degrees(45) });
-     }
+        const fontSize = 50;
+        
+        // 1. Nome do aluno
+        const textWidthName = font.widthOfTextAtSize(watermarkUseName, fontSize);
+        page.drawText(watermarkUseName, {
+            x: (width / 2) - (textWidthName / 3), 
+            y: height / 3, 
+            size: fontSize,
+            font,
+            color: rgb(0.6, 0.6, 0.6),
+            opacity: 0.25,
+            rotate: degrees(45),
+        });
+
+        // 2. CPF do aluno (Logo abaixo, ajustado para a diagonal)
+        const textWidthCpf = font.widthOfTextAtSize(watermarkUseCpf, fontSize);
+        page.drawText(watermarkUseCpf, {
+            x: (width / 2) - (textWidthCpf / 3) + 35, // +X e -Y para mover "para baixo" na perpendicular de 45º
+            y: (height / 3) - 35,
+            size: fontSize,
+            font,
+            color: rgb(0.6, 0.6, 0.6),
+            opacity: 0.25,
+            rotate: degrees(45),
+        });
+    }
 
     const pdfBytes = await pdfDoc.save();
+
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="doc.pdf"`);
+    res.setHeader('Content-Disposition', `inline; filename="${docId}"`);
+    
     res.send(Buffer.from(pdfBytes));
 
   } catch (err) {
-    console.error('Erro:', err);
-    return res.status(500).json({ error: 'Erro interno.' });
+    console.error('Erro ao processar PDF:', err);
+    if (!res.headersSent) {
+      return res.status(500).send('Erro ao processar o documento.');
+    }
   }
 };
