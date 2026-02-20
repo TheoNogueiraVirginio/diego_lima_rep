@@ -1,9 +1,25 @@
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { readFile } from 'fs/promises';
 import path from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 import { signAccess, signRefresh, ACCESS_EXPIRES, REFRESH_EXPIRES } from '../utils/jwt.js';
 import { sendWelcomeEmail } from '../services/emailService.js';
 import prisma from '../db.js';
+
+async function countVimeoIds() {
+  try {
+    const dadosPath = path.resolve(__dirname, '../../../public/scripts/dados_aulas.js');
+    const content = await readFile(dadosPath, 'utf8');
+    const regex = /vimeoId:\s*["'](?!\s*["'])([^"']+)["']/g;
+    const matches = [...content.matchAll(regex)];
+    return matches.length;
+  } catch (e) {
+    console.error('Erro ao ler dados_aulas.js (enrollmentController):', e);
+    return 26; 
+  }
+}
 
 const client = new MercadoPagoConfig({
     accessToken: process.env.MP_ACCESS_TOKEN,
@@ -525,19 +541,8 @@ export const listPaidEnrollments = async (req, res) => {
         // Compute real lessons-watched percentage per student
         const ids = students.map(s => s.id);
 
-        // Determine total lessons from env or course_meta.json fallback
-        let totalLessons = Number(process.env.TOTAL_LESSONS || 0);
-        if (!totalLessons || totalLessons <= 0) {
-            try {
-                const metaPath = path.resolve(process.cwd(), 'data', 'course_meta.json');
-                const raw = await readFile(metaPath, 'utf8');
-                const meta = JSON.parse(raw);
-                if (meta && Number(meta.totalLessons)) totalLessons = Number(meta.totalLessons);
-            } catch (e) {
-                // fallback default
-                totalLessons = 26;
-            }
-        }
+        // Determine total lessons (dynamically)
+        const totalLessons = await countVimeoIds();
 
         let completedMap = {};
         if (ids.length > 0) {
@@ -584,17 +589,7 @@ export const enrollmentSummary = async (req, res) => {
                 const ids = paidStudents.map(s => s.id);
 
                 // Determine totalLessons
-                let totalLessons = Number(process.env.TOTAL_LESSONS || 0);
-                if (!totalLessons || totalLessons <= 0) {
-                    try {
-                        const metaPath = path.resolve(process.cwd(), 'data', 'course_meta.json');
-                        const raw = await readFile(metaPath, 'utf8');
-                        const meta = JSON.parse(raw);
-                        if (meta && Number(meta.totalLessons)) totalLessons = Number(meta.totalLessons);
-                    } catch (e) {
-                        totalLessons = 26;
-                    }
-                }
+                const totalLessons = await countVimeoIds();
 
                 let completedMap = {};
                 if (ids.length > 0) {

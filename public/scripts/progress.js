@@ -39,56 +39,9 @@ async function loadProgress() {
     } catch(e) { /* ignore */ }
 
     // 3. Recalculate LESSONS Percent if cursoData is available (Client-side Override)
-    // Regra: Espaço amostral = soma dos ASSUNTOS de cada módulo.
-    // Assunto concluído = TODAS as subaulas (se existirem) concluídas.
-    if (window.cursoData && data && data.lessons) {
-        let totalSubjects = 0;
-        let completedSubjects = 0;
-        
-        // Helper
-        const getKeyByValue = (object, value) => Object.keys(object).find(key => object[key] === value);
-
-        // Iterate modules
-        Object.values(window.cursoData).forEach(mod => {
-            if (!mod.aulas) return;
-            // Get module ID
-            const modId = mod.id || getKeyByValue(window.cursoData, mod);
-            
-            mod.aulas.forEach((subject, idx) => {
-                totalSubjects++;
-                
-                // Construct Subject ID
-                const subjectId = `${modId}.${idx + 1}`;
-                
-                // Identify parts to check
-                const partsToCheck = [];
-                const subs = subject.subAulas || subject.subaulas || [];
-                
-                if (subs.length > 0) {
-                    subs.forEach((sub, sIdx) => {
-                        partsToCheck.push(`${subjectId}.${sIdx + 1}`);
-                    });
-                } else {
-                     // If no subaulas, check subject itself
-                     partsToCheck.push(subjectId);
-                }
-                
-                // Verify all parts are completed
-                const allDone = partsToCheck.every(pid => completedLessons.includes(pid));
-                if (allDone && partsToCheck.length > 0) {
-                    completedSubjects++;
-                }
-            });
-        });
-
-        // Override data
-        if (totalSubjects > 0) {
-            data.lessons.percent = Math.round((completedSubjects / totalSubjects) * 100);
-            data.lessons.total = totalSubjects;
-            data.lessons.completed = completedSubjects;
-        }
-    }
-
+    // REMOVIDO: A lógica agora reside inteiramente no backend (progressController.js)
+    // que lê dados_aulas.js dinamicamente e calcula o percentual correto.
+    
     /* -------------------------------------------------------------
        UI UPDATES
     ------------------------------------------------------------- */

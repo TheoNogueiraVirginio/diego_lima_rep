@@ -3,6 +3,34 @@ import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../utils/jwt.js';
 import { readFile } from 'fs/promises';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Helper: Contar vimeoIds preenchidos diretamente do arquivo
+async function countVimeoIds() {
+  try {
+    // Resolve path relative to THIS file (api/src/controllers/progressController.js)
+    // Destination: api/../public/scripts/dados_aulas.js -> (root)/public/scripts/dados_aulas.js
+    const dadosPath = path.resolve(__dirname, '../../../public/scripts/dados_aulas.js');
+    const content = await readFile(dadosPath, 'utf8');
+    
+    // Regex para encontrar vimeoId: "alguma_coisa"
+    // Ignora vimeoId: "" ou vimeoId: " "
+    const regex = /vimeoId:\s*["'](?!\s*["'])([^"']+)["']/g;
+    
+    // matchAll retorna um iterador, convertendo para array para pegar o tamanho
+    const matches = [...content.matchAll(regex)];
+    return matches.length;
+  } catch (e) {
+    console.error('Erro ao ler dados_aulas.js:', e);
+    throw new Error('Impossible to calculate: dados_aulas.js unreachable');
+  }
+}
+
+
+
 
 // POST /api/progress/lesson
 export const postLessonProgress = async (req, res) => {
@@ -123,28 +151,20 @@ export const getSummary = async (req, res) => {
   try {
     const enrollmentId = req.enrollment.id;
 
-    let totalLessons = 26;
-    let totalExams = 26;
-    let totalModules = 4;
+    // Contagem simples via Regex
+    const totalLessons = await countVimeoIds();
+    const totalModules = 4;
+    let totalExams = Number(process.env.TOTAL_EXAMS || 26);
 
-    // Fallback: se não houver variáveis de ambiente, tente ler o arquivo de meta do curso
-    if (totalLessons <= 0 || totalModules <= 0) {
-      try {
-        const metaPath = path.resolve(process.cwd(), 'data', 'course_meta.json');
-        const raw = await readFile(metaPath, 'utf8');
-        const meta = JSON.parse(raw);
-        if (meta) {
-          if (totalLessons <= 0 && Number(meta.totalLessons)) totalLessons = Number(meta.totalLessons);
-          if (totalModules <= 0 && Number(meta.totalModules)) totalModules = Number(meta.totalModules);
-          if (totalExams <= 0 && Number(meta.totalExams)) totalExams = Number(meta.totalExams);
-        }
-      } catch (e) {
-        // ignore — manter valores atuais
-      }
-    }
-
-    const lessonsCompletedCount = await prisma.lessonProgress.count({ where: { enrollmentId, status: 'COMPLETED' } });
-    const lessonsPercent = totalLessons > 0 ? Math.round((lessonsCompletedCount / totalLessons) * 100) : 0;
+    // Buscar lições concluídas no banco
+    const items = await prisma.lessonProgress.findMany({ 
+        where: { enrollmentId, status: 'COMPLETED' }
+    });
+    
+    const lessonsCompletedCount = items.length;
+    
+    // Porcentagem simples
+    const lessonsPercent = totalLessons > 0 ? Math.min(100, Math.round((lessonsCompletedCount / totalLessons) * 100)) : 0;
 
     const examsTakenCount = await prisma.examAttempt.count({ where: { enrollmentId } });
     const examsPercent = totalExams > 0 ? Math.round((examsTakenCount / totalExams) * 100) : 0;
@@ -157,18 +177,18 @@ export const getSummary = async (req, res) => {
     // Build a modules array filling missing modules with zeros so frontend shows 0% naturally
     const modules = [];
     for (let i = 1; i <= totalModules; i++) {
-      const mp = moduleProgressRecords.find(m => String(m.moduleId) === String(i));
-      if (mp) {
-        modules.push({ moduleId: String(mp.moduleId), averageScore: Number(mp.averageScore || 0), examsTakenCount: mp.examsTakenCount });
-      } else {
-        modules.push({ moduleId: String(i), averageScore: 0, examsTakenCount: 0 });
-      }
+        const mp = moduleProgressRecords.find(m => String(m.moduleId) === String(i));
+        if (mp) {
+            modules.push({ moduleId: String(mp.moduleId), averageScore: Number(mp.averageScore || 0), examsTakenCount: mp.examsTakenCount });
+        } else {
+            modules.push({ moduleId: String(i), averageScore: 0, examsTakenCount: 0 });
+        }
     }
 
     return res.json({
-      lessons: { completed: lessonsCompletedCount, total: totalLessons, percent: lessonsPercent },
-      exams: { taken: examsTakenCount, total: totalExams, percent: examsPercent, averageScorePercent: averageScoreOverall },
-      modules
+        lessons: { completed: lessonsCompletedCount, total: totalLessons, percent: lessonsPercent },
+        exams: { taken: examsTakenCount, total: totalExams, percent: examsPercent, averageScorePercent: averageScoreOverall },
+        modules
     });
   } catch (err) {
     console.error('getSummary error', err.message);
@@ -188,28 +208,13 @@ export const getSummaryPublic = async (req, res) => {
         if (payload?.id) enrollmentId = payload.id;
       }
     } catch (e) {
-      // ignore token errors — treat as anonymous
       enrollmentId = null;
     }
 
-    let totalLessons = Number(process.env.TOTAL_LESSONS || 0);
-    let totalExams = Number(process.env.TOTAL_EXAMS || 0);
-    let totalModules = Number(process.env.TOTAL_MODULES || 4);
-
-    if (totalLessons <= 0 || totalModules <= 0) {
-      try {
-        const metaPath = path.resolve(process.cwd(), 'data', 'course_meta.json');
-        const raw = await readFile(metaPath, 'utf8');
-        const meta = JSON.parse(raw);
-        if (meta) {
-          if (totalLessons <= 0 && Number(meta.totalLessons)) totalLessons = Number(meta.totalLessons);
-          if (totalModules <= 0 && Number(meta.totalModules)) totalModules = Number(meta.totalModules);
-          if (totalExams <= 0 && Number(meta.totalExams)) totalExams = Number(meta.totalExams);
-        }
-      } catch (e) {
-        // ignore
-      }
-    }
+    // Carregar dados dinâmicos para saber o total correto mesmo sem login
+    const totalLessons = await countVimeoIds();
+    const totalModules = 4;
+    let totalExams = Number(process.env.TOTAL_EXAMS || 26);
 
     if (!enrollmentId) {
       // return zeros filled modules
@@ -231,4 +236,5 @@ export const getSummaryPublic = async (req, res) => {
     return res.status(500).json({ error: 'Internal error' });
   }
 };
+
 // Note: deleteLessonProgress removed. Admins can modify LessonProgress directly in the DB.
