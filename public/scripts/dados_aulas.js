@@ -190,17 +190,76 @@ const cursoData = {
             }
         ]
     },
+
+
     "2": { // ID do Módulo 2
         tituloModulo: "Módulo 2",
         aulas: [
-            {titulo: "Parábola e Função Quadrática", vimeoId: "11223344" },
-            {titulo: "Módulo e Função Modular", vimeoId: "55667788" },
-            {titulo: "Potência e Função Exponencial", vimeoId: "11223344" },
-            {titulo: "Logaritmos e Função Logarítmica", vimeoId: "55667788" },
-            {titulo: "Sequências, PA e PG", vimeoId: "11223344" },
+            {titulo: "Parábola e Função Quadrática", 
+                hideMainInSidebar: true,
+                materiais: {
+                    teoria: "",
+                    listas: {pe_extensivo: "", pe_aprofundamento: ""},
+                    gabaritos: { pe_extensivo: "", pe_aprofundamento: "" }
+                },
+                subAulas: [
+                    {titulo: "Parábola", vimeoId: "1162889696", duracao: 46},
+                    {titulo: "Função Quadrática", vimeoId: "1162889838", duracao: 34},
+                    {titulo: "Inequação do 2º Grau", vimeoId: "1162891063", duracao: 19},
+                    {titulo: "Inequação, Produto e Quociente", vimeoId: "1162891134", duracao: 10}
+                ]
+            },
+
+            {titulo: "Módulo e Função Modular", vimeoId: "" },
+
+            {titulo: "Potência e Função Exponencial",
+                hideMainInSidebar: true,
+                materiais: {
+                    teoria: "",
+                    listas: {pe_extensivo: "", pe_aprofundamento: ""},
+                    gabaritos: { pe_extensivo: "", pe_aprofundamento: "" }
+                },
+                subAulas: [
+                    {titulo: "Potência", vimeoId: "1162892218", duracao: 16},
+                    {titulo: "Função Exponencial", vimeoId: "1162892310", duracao: 27},
+                    {titulo: "Inequação Exponencial", vimeoId: "1162892588", duracao: 8},
+                ]
+            },
+
+            {titulo: "Logaritmos",
+                hideMainInSidebar: true,
+                materiais: {
+                    teoria: "",
+                    listas: {pe_extensivo: "", pe_aprofundamento: ""},
+                    gabaritos: { pe_extensivo: "", pe_aprofundamento: "" }
+                },
+                subAulas: [
+                    {titulo: "Logaritmos - Definição e Consequência", vimeoId: "1162893032", duracao: 23},
+                    {titulo: "Função Logarítmica", vimeoId: "1162893299", duracao: 28},
+                    {titulo: "Equação Logarítmica", vimeoId: "1162893259", duracao: 10},
+                    {titulo: "Inequação Logarítmica", vimeoId: "1162893411", duracao: 10},
+                ]
+            },
+
+            {titulo: "Sequências, PA e PG", 
+                hideMainInSidebar: true,
+                materiais: {
+                    teoria: "",
+                    listas: {pe_extensivo: "", pe_aprofundamento: ""},
+                    gabaritos: { pe_extensivo: "", pe_aprofundamento: "" }
+                },
+                subAulas: [
+                    {titulo: "Sequência Numérica", vimeoId: "1162893769", duracao: 30},
+                    {titulo: "Progressão Aritmética", vimeoId: "1162893835", duracao: 47},
+                    {titulo: "PA de Ordem Superior", vimeoId: "1162893944", duracao: 36},
+                    {titulo: "Soma dos termos de uma PA de 2 ordem", vimeoId: "1162894028", duracao: 32},
+                    {titulo: "Progressão Geométrica", vimeoId: "1162894146", duracao: 42},
+                ]
+             },
+
             {titulo: "Matemática Financeira", vimeoId: "55667788" },
-            {
-                 titulo: "Resolução do Caderno Revisional",
+            
+            {titulo: "Resolução do Caderno Revisional",
                  vimeoId: "",
                  materiais: {},
                  subAulas: []
