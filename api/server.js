@@ -71,6 +71,14 @@ app.get('/informes', (req, res) => {
     res.redirect('/informes.html');
 });
 
+app.get('/materiais', (req, res) => {
+    res.redirect('/materiais.html');
+});
+
+app.get('/monitoramento', (req, res) => {
+    res.redirect('/monitoramento.html');
+});
+
 
 // --- ROTAS PRIVADAS / 404 ---
 app.get('*', (req, res) => {
