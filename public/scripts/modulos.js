@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const userStatus = localStorage.getItem('userStatus');
             const isAdmin = (userStatus === 'ADMIN');
             
-            if (!isAdmin && ['3','4',5,6].includes(moduloId)) {
+            if (!isAdmin && ['3','4','5','6'].includes(moduloId)) {
                 // Exibir mensagem de bloqueio fake
                 showBlockModal();
                 return;
