@@ -490,7 +490,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                    const items = [];
 
                    // Se for ADMIN, mostrar tudo
-                   if (isAdmin) {
+                   if (isAdmin || modality === 'INTEGRAL') {
                          if (hasExtensivo) items.push({ label: 'Praticando ENEM (Extensivo)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtensivo)}` });
                          if (hasAprof) items.push({ label: 'Praticando ENEM (Aprofundamento)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasAprof)}` });
                          
@@ -646,8 +646,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                    };
 
                    if (isAdmin) {
-                        add('Teoria Divisibilidade', rawTeorico.pe_extensivo || rawTeorico.extensivo);
-                        add('Teoria Congruência Modular', rawTeorico.pe_aprofundamento || rawTeorico.aprofundamento);
+                        add('Teoria (Extensivo)', rawTeorico.pe_extensivo || rawTeorico.extensivo);
+                        add('Teoria (Aprofundamento)', rawTeorico.pe_aprofundamento || rawTeorico.aprofundamento);
                         // Suporte a extra se houver futuro
                         if (rawTeorico.extra) add('Teoria Extra', rawTeorico.extra);
                         
@@ -666,7 +666,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                        add('Teoria', extUrl);
                    }
 
-                   if (modality === 'APROFUNDAMENTO' && aprofUrl) {
+                   if ((modality === 'APROFUNDAMENTO' || modality === 'INTEGRAL') && aprofUrl) {
                        add('Teoria (Aprofundamento)', aprofUrl);
                    }
 

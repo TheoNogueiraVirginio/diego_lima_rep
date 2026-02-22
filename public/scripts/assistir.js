@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const userModUpper = userModality.toUpperCase();
 
             // Se for ADMIN, mostrar tudo
-            if (isAdmin) {
+            if (isAdmin || userModUpper === 'INTEGRAL') {
                 if (hasExtensivo) items.push({ label: 'Praticando ENEM (Extensivo)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtensivo)}` });
                 if (hasAprof) items.push({ label: 'Praticando ENEM (Aprofundamento)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasAprof)}` });
                 
