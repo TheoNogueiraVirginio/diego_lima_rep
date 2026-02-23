@@ -219,11 +219,22 @@
 
 .module-image {
     width: 100%;
-    height: clamp(80px, 8vw, 140px);
-    background: rgba(17,24,39,0.6);
+    height: 140px; /* Altura fixa original para não esticar o card */
+    background-size: 140%; /* Zoom na imagem de fundo para parecer maior */
+    background-position: center top; /* Foca mais no topo/centro */
+    background-repeat: no-repeat;
+    background-color: rgba(17,24,39,0.6);
     border-radius: 10px;
-    border: 1px dashed rgba(42,54,77,0.6);
+    margin-bottom: 0px; 
 }
+
+/* Define as imagens específicas para cada módulo baseado no ID */
+#modulo1 .module-image { background-image: url('/images/images_modulos/modulo1.png'); }
+#modulo2 .module-image { background-image: url('/images/images_modulos/modulo2.png'); }
+#modulo3 .module-image { background-image: url('/images/images_modulos/modulo3.png'); }
+#modulo4 .module-image { background-image: url('/images/images_modulos/modulo4.png'); }
+#modulo5 .module-image { background-image: url('/images/images_modulos/modulo5.png'); }
+#modulo6 .module-image { background-image: url('/images/images_modulos/modulo6.png'); }
 
 .module-body {
     display: flex;
