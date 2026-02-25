@@ -219,22 +219,25 @@
 
 .module-image {
     width: 100%;
-    height: 140px; /* Altura fixa original para não esticar o card */
-    background-size: 140%; /* Zoom na imagem de fundo para parecer maior */
-    background-position: center top; /* Foca mais no topo/centro */
+    height: 140px; 
+    background-size: 140%; 
+    background-position: center top;
     background-repeat: no-repeat;
     background-color: rgba(17,24,39,0.6);
     border-radius: 10px;
     margin-bottom: 0px; 
 }
 
-/* Define as imagens específicas para cada módulo baseado no ID */
+
 #modulo1 .module-image { background-image: url('/images/images_modulos/modulo1.png'); }
 #modulo2 .module-image { background-image: url('/images/images_modulos/modulo2.png'); }
 #modulo3 .module-image { background-image: url('/images/images_modulos/modulo3.png'); }
 #modulo4 .module-image { background-image: url('/images/images_modulos/modulo4.png'); }
+
+/* IMAGENS PARA MOD 5 E 6 AINDA INEXISTENTES
 #modulo5 .module-image { background-image: url('/images/images_modulos/modulo5.png'); }
 #modulo6 .module-image { background-image: url('/images/images_modulos/modulo6.png'); }
+*/
 
 .module-body {
     display: flex;
@@ -258,7 +261,8 @@
     margin-top: 10px; /* espaço entre título e descrição */
     text-align: left;
 }
-/* Responsividade: adapta colunas conforme largura */
+
+
 @media (max-width: 1024px) {
     .modulos {
         grid-template-columns: repeat(2, 1fr);
@@ -278,7 +282,7 @@
         padding-inline: 4%;
     }
     .modulo {
-        min-height: 0; /* remove min-height on small screens */
+        min-height: 0; 
     }
     .module-title {
         align-self: flex-start;
@@ -293,7 +297,7 @@
 
 /* ----------------- Floating badges (fundo dinâmico) ----------------- */
 #floating-badges {
-    position: absolute; /* será ajustado via JS para cobrir toda a largura da página */
+    position: absolute; /* Ajuste via JS para cobrir toda a largura da página */
     left: 0;
     width: 100%;
     pointer-events: none;

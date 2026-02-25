@@ -13,6 +13,8 @@ body {
 
     background-color: var(--color-bg);
     color: var(--color-text);
+
+    overflow-x: hidden; /* impedir scroll horizontal (bug) */
 }
 
 .logo {
@@ -82,12 +84,11 @@ body {
 
 /* Estado Ativo (Página Atual): Retângulo Roxo */
 .pgs a.active {
-    color: var(--color-primary);       /* Cor do texto */
-    border: 2px solid var(--color-primary); /* A borda (o retângulo) */
-    padding: 8px 16px;                     /* Espaço entre o texto e a borda */
-    border-radius: 8px;                    /* Cantos levemente arredondados (opcional) */
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary); 
+    padding: 8px 16px;
+    border-radius: 8px;
     
-    /* Efeito de brilho ao redor do retângulo */
     box-shadow: 0 0 18px rgba(45, 108, 223, 0.4), inset 0 0 10px rgba(45, 108, 223, 0.18);
 }
 
@@ -129,7 +130,7 @@ body {
         padding: 12px;
         gap: 10px;
         flex-direction: column;
-        align-items: stretch;
+        align-items: right;
         z-index: 30;
         box-shadow: 0 8px 30px rgba(16, 32, 64, 0.6);
     }
@@ -139,6 +140,7 @@ body {
     .navbar .pgs a {
         padding: 10px 12px;
         border-radius: 6px;
+        align-self: end;
     }
 
     .navbar.open .pgs {
