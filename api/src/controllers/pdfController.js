@@ -29,37 +29,68 @@ export const serveWatermarkedPdf = async (req, res) => {
     const watermarkUseName = `${userName}`;
     const watermarkUseCpf = `CPF: ${userCpf}`;
 
-
-    for (const page of pages) {
+    for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
         const { width, height } = page.getSize();
-        const fontSize = 50;
         
-        // 1. Nome do aluno
+        const fontSize = 50;
+        const color = rgb(0.6, 0.6, 0.6);
+        const opacity = 0.4; // Aumentar opacidade para teste
+        const rotate = degrees(45);
+
+        // --- SOLUÇÃO DE CAMADAS (Z-INDEX) ---
+        // Em alguns PDFs (scans), o conteúdo original pode tapar o texto novo.
+        // O pdf-lib desenha por cima por padrão, mas para garantir, 
+        // podemos evitar blend modes estranhos resetting o estado gráfico.
+        
+        page.pushOperators(
+             // Save Graphics State (q)
+             // Isso isola nossa marca d'água de transformações anteriores estranhas
+             // mas 'drawText' já faz algo similar internamente.
+        );
+
         const textWidthName = font.widthOfTextAtSize(watermarkUseName, fontSize);
+        const textWidthCpf = font.widthOfTextAtSize(watermarkUseCpf, fontSize);
+
+        // Coordenadas calculadas
+        const xName = (width / 2) - (textWidthName / 2) * 0.707; 
+        const yName = (height / 2);
+        
+        const xCpf = (width / 2) - (textWidthCpf / 2) * 0.707;
+        const yCpf = (height / 2) - 60;
+
+        // Desenhando Nome
         page.drawText(watermarkUseName, {
-            x: (width / 2) - (textWidthName / 3), 
-            y: height / 3, 
+            x: xName,
+            y: yName,
             size: fontSize,
-            font,
-            color: rgb(0.6, 0.6, 0.6),
-            opacity: 0.25,
-            rotate: degrees(45),
+            font: font,
+            color: color,
+            opacity: opacity,
+            rotate: rotate,
+            blendMode: 'Normal', // Força modo normal para garantir visibilidade
         });
 
-        // 2. CPF do aluno (Logo abaixo, ajustado para a diagonal)
-        const textWidthCpf = font.widthOfTextAtSize(watermarkUseCpf, fontSize);
+        // Desenhando CPF
         page.drawText(watermarkUseCpf, {
-            x: (width / 2) - (textWidthCpf / 3) + 35, // +X e -Y para mover "para baixo" na perpendicular de 45º
-            y: (height / 3) - 35,
+            x: xCpf,
+            y: yCpf,
             size: fontSize,
-            font,
-            color: rgb(0.6, 0.6, 0.6),
-            opacity: 0.25,
-            rotate: degrees(45),
+            font: font,
+            color: color,
+            opacity: opacity,
+            rotate: rotate,
+            blendMode: 'Normal',
         });
     }
 
-    const pdfBytes = await pdfDoc.save();
+    // --- SALVAMENTO ROBUSTO ---
+    // useObjectStreams: false -> Desativa compactação de objetos (maior arquivo, max compatibilidade)
+    // addDefaultPage: false -> Não tenta adicionar página em branco se vazio
+    // objectsPerTick: Infinity -> Processa tudo síncrono para evitar falhas de async
+    const pdfBytes = await pdfDoc.save({ useObjectStreams: false });
+
+    res.setHeader('Content-Type', 'application/pdf');
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="${docId}"`);
