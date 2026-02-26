@@ -25,9 +25,10 @@ async function importStudents() {
     let success = 0;
     let errors = 0;
 
+    //comando para importar: node api/scripts/import_students.js
     // Defina aqui o email do aluno a partir do qual deseja começar (inclusivo)
     // Deixe vazio para processar todos
-    const START_FROM_EMAIL = 'Jlira0862@gmail.com'; 
+    const START_FROM_EMAIL = 'gcaio5680@gmail.com'; 
     let foundStart = !START_FROM_EMAIL; // Se vazio, já começa true
 
     console.log('Iniciando importação...');

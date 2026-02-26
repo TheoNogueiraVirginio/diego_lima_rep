@@ -21,7 +21,7 @@ Carimbo de data/hora,Nome Completo: (Sem abreviações),CPF:,Email:,Curso:,Turma
 02/02/2026 21:54:38,Marina Porto Lucena ,711.752.204-69,marinalporto09@gmail.com,Extensivo Presencial,Segunda
 02/02/2026 21:55:39,Alexandre Luiz de Araújo Queiroz,07626416147,alexandre.luiz.aq@gmail.com,Extensivo Presencial,Segunda
 02/02/2026 21:55:44,Ana Sophia Gois de Almeida Cardoso ,11263508421,anasophiagcardoso@gmail.com,Extensivo Presencial,Segunda
-02/02/2026 22:01:28,Maria Júlia Formiga Queiroga Santos ,129.625.634-06 ,mariaa.juliaaformiga@gmail.comm,Extensivo Presencial,Segunda
+//02/02/2026 22:01:28,Maria Júlia Formiga Queiroga Santos ,129.625.634-06 ,mariaa.juliaaformiga@gmail.comm,Extensivo Presencial,Segunda
 02/02/2026 22:24:32,Analuz Ribeiro do Amaral Diniz,70020443463,ana.dzn322@gmail.com,Extensivo Presencial,Segunda
 02/02/2026 22:37:35,Rhykelmmy Mannoel Pereira de Andrade ,717.875.904.61,paper77077@gmail.com,Extensivo Presencial,Segunda
 02/02/2026 22:48:46,Keila Liziany Seabra da Silva ,10514264488,Keiliziany@gmail.com,Extensivo Presencial,Segunda
@@ -161,3 +161,12 @@ Carimbo de data/hora,Nome Completo: (Sem abreviações),CPF:,Email:,Curso:,Turma
 
 //Inserindo Maria Clara Ramalho França novamente pois estava com email errado:
 11/02/2026 18:47:00,Maria Clara Ramalho França,10563459425,claritaramalho3@gmail.com,Extensivo Presencial,Segunda
+
+//NOVOS ALUNOS + ALUNOS QUE ESTAVAM COM DADOS ERRADOS
+23/02/2026 16:51:00, Caio Victor Gomes Araújo Silva,06086147507,gcaio5680@gmail.com,Extensivo Presencial,Terça
+23/02/2026 17:01:00,Mariana Almeida Holanda Montenegro,71701811421,marialmeidahm@gmail.com,Extensivo Presencial,Desconhecido
+03/02/2026 12:51:48,Henrique Herrerias Brandão de Luna Sanchez ,71681550407,henriquetitextreme@gmail.com,Extensivo Presencial,Segunda
+24/02/2026 13:08:00,Anna Beattryz Gonçalves Abrantes,16430724476,beattryzabrantes02@gmail.com, Extensivo Presencial,Desconhecido
+24/02/2026 14:19:00,Matheus Magalhães,71707691401,matheus225magalhaes@gmail.com,Extensivo Presencial,Desconhecido
+//02/02/2026 22:01:28,Maria Júlia Formiga Queiroga Santos,          JÁ ESTAVA CADASTRADA, APENAS FIZ AJUSTE NOS DADOS
+25/02/2026 14:01:00,Renan Costa Caldas Lins,71272343456,renancaldaslins2015@gmail.com,Extensivo Presencial,Desconhecido
