@@ -71,8 +71,8 @@ const cursoData = {
                         pe_extensivo: "Teoria_DivisibilidadeMdcMmc.pdf",
                         pe_aprofundamento: "Teoria_Congruencia.pdf"
                     },
-                    listas: {pe_extensivo: "Q_PE_E_DivisibilidadeMdcMmc.pdf", pe_aprofundamento: "Q_PE_A_DivisibilidadeMdcMmc.pdf", extra: "Q_E_A_CongruenciaModular.pdf", extra2: "Q_Extra_DivisibilidadeMdcMmc.pdf", extra3: "Q_Extra2_DivisibilidadeMdcMmc.pdf"},
-                    gabaritos: { pe_extensivo: "G_PE_E_DivisibilidadeMdcMmc.pdf", pe_aprofundamento: "G_PE_A_DivisibilidadeMdcMmc.pdf", extra: "G_E_A_Congruencia.pdf", extra2: "G_Extra_DivisibilidadeMdcMmc.pdf", extra3: "G_Extra2_DivisibilidadeMdcMmc.pdf"}
+                    listas: {pe_extensivo: "Q_PE_E_DivisibilidadeMdcMmc.pdf", pe_aprofundamento: "Q_PE_A_DivisibilidadeMdcMmc.pdf", cong_mod: "Q_E_A_CongruenciaModular.pdf", extra: "extra_Q_DivisibilidadeMdcMmc.pdf", extra2: "extra_Q2_DivisibilidadeMdcMmc.pdf"},
+                    gabaritos: { pe_extensivo: "G_PE_E_DivisibilidadeMdcMmc.pdf", pe_aprofundamento: "G_PE_A_DivisibilidadeMdcMmc.pdf", cong_mod: "G_E_A_Congruencia.pdf", extra: "extra_G_DivisibilidadeMdcMmc.pdf", extra2: "extra_G2_DivisibilidadeMdcMmc.pdf"}
                 },
                 hideMainInSidebar: true,
                 subAulas: [

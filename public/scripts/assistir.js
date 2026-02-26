@@ -71,6 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const hasAprof = listas.pe_aprofundamento;
             const hasExtra = listas.extra;
             const hasExtra2 = listas.extra2;
+            const hasCongMod = listas.cong_mod;
             
             const items = [];
             const userModUpper = userModality.toUpperCase();
@@ -83,6 +84,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (!hasExtensivo && !hasAprof) {
                     items.push({ label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' });
                 }
+
+                if (hasCongMod) items.push({ label: 'Congruência Modular', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasCongMod)}` });
 
                 if (hasExtra) items.push({ label: 'Lista Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtra)}` });
                 else items.push({ label: 'Lista Extra', href: 'questoes.html?lista=lista-extra' });
@@ -107,6 +110,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Extensivo (e outros) vê apenas extensivo
                 if (hasExtensivo) items.push({ label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtensivo)}` });
                 else items.push({ label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' });
+            }
+
+            if (hasCongMod) {
+                items.push({ label: 'Congruência Modular', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasCongMod)}` });
             }
 
             // Lista Extra (sempre disponível)

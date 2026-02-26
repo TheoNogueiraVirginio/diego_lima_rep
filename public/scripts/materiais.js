@@ -486,6 +486,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                    const hasAprof = listas.pe_aprofundamento;
                    const hasExtra = listas.extra;
                    const hasExtra2 = listas.extra2;
+                   const hasCongMod = listas.cong_mod;
                    
                    const items = [];
 
@@ -499,6 +500,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                              items.push({ label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' });
                          }
 
+                         if (hasCongMod) items.push({ label: 'Congruência Modular', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasCongMod)}` });
+
                          if (hasExtra) items.push({ label: 'Lista Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtra)}` });
                          else items.push({ label: 'Lista Extra', href: 'questoes.html?lista=lista-extra' });
 
@@ -511,8 +514,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                    // SEPARAÇÃO SOLICITADA PARA ALUNOS
                    // Se o aluno for APROFUNDAMENTO, ele vê as duas opções separadas se existirem? 
                    // Ou se ele for EXTENSIVO ele vê só a extensiva?
-                   // Assumindo que:
-                   // APROFUNDAMENTO -> Vê Aprofundamento E Extensivo (como opções separadas)
+                   // Assumindo que aprofundamento -> Vê Aprofundamento E Extensivo (como opções separadas)
                    // EXTENSIVO -> Vê Extensivo
                    
                    if (modality === 'APROFUNDAMENTO') {
@@ -528,6 +530,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                        // Alunos EXTENSIVO ou outros
                        if (hasExtensivo) items.push({ label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtensivo)}` });
                        else items.push({ label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' });
+                   }
+
+                   // Congruencia Modular (Assumindo disponivel pra todos ou aprofundamento? 
+                   // A aula era requiredModality: "aprofundamento". Vamos assumir para todos por enquanto se estava em extra antes, ou seguir a logica, mas vou colocar para todos como lista extra)
+                   if (hasCongMod) {
+                        items.push({ label: 'Congruência Modular', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasCongMod)}` });
                    }
 
                    // Lista Extra (sempre disponível)
@@ -563,6 +571,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const items = [];
                         if (gabs.pe_extensivo) items.push({ label: 'Gabarito (E) - Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.pe_extensivo)}` });
                         if (gabs.pe_aprofundamento) items.push({ label: 'Gabarito (A) - Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.pe_aprofundamento)}` });
+                        if (gabs.cong_mod) items.push({ label: 'Gabarito - Congruência Modular', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.cong_mod)}` });
                         if (gabs.extra) items.push({ label: 'Gabarito Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.extra)}` });
                         if (gabs.extra2) items.push({ label: 'Gabarito Extra 2', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.extra2)}` });
                         
@@ -598,6 +607,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     } else {
                         // fallback
                         items.push({ label: 'Praticando ENEM', href: 'questoes.html?gabarito=praticando-enem' });
+                    }
+
+                    if (gabs.cong_mod) {
+                        items.push({ label: 'Gabarito - Congruência Modular', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.cong_mod)}` });
                     }
 
                     // Extra
