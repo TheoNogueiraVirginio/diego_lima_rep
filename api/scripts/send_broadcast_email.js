@@ -1,3 +1,6 @@
+//comando para enviar emails: node api/scripts/send_broadcast_email.js --send
+// Use --resume-after "Nome Completo" para continuar após um aluno específico (útil se o processo for interrompido no meio)
+
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -20,7 +23,13 @@ async function main() {
     // 2. Buscar Alunos
     // EMERGENCIAL: Enviando apenas para os novos alunos importados hoje (11/02)
     const TARGET_EMAILS = [
-        'giogouveia990@gmail.com',
+        'gcaio5680@gmail.com',
+        'marialmeidahm@gmail.com',
+        'henriquetitextreme@gmail.com',
+        'beattryzabrantes02@gmail.com',
+        'matheus225magalhaes@gmail.com',
+        'maria.juliaaformiga@gmail.com ',
+        'renancaldaslins2015@gmail.com',
     ];
 
     const students = await prisma.enrollment.findMany({
