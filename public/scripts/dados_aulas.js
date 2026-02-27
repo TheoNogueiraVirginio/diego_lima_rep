@@ -76,8 +76,8 @@ const cursoData = {
                 },
                 hideMainInSidebar: true,
                 subAulas: [
-                    { titulo: "Divisibilidade", vimeoId: "1161235737", duracao: 24 },
-                    { titulo: "MDC e MMC", vimeoId: "1161235060", duracao: 37 },
+                    {titulo: "Divisibilidade", vimeoId: "1161235737", duracao: 24 },
+                    {titulo: "MDC e MMC", vimeoId: "1161235060", duracao: 37 },
                     {titulo: "Congruência Modular", vimeoId: "1162319710", requiredModality: "aprofundamento", duracao: 37 },
                     {titulo: "Resolução de Questões Difíceis", vimeoId: "1162675712", requiredModality: "extensivo", duracao: 37 }
                 ]
@@ -96,7 +96,7 @@ const cursoData = {
                 
                 subAulas: [
                     { titulo: "Tabelas e Gráficos", vimeoId: "1162862805", duracao: 0 },
-                    { titulo: "Medidas de tendências centrais", vimeoId: "1162863498", duracao: 53 },
+                    { titulo: "Medidas de tendências centrais", vimeoId: "1162863042", duracao: 53 },
                     {titulo: "Medidas de dispersão", vimeoId: "1162863498", duracao: 35},
                     {titulo: "Resolução de Questões Difíceis", vimeoId: "1162676792", duracao: 21, requiredModality: "extensivo" }
                 ]
