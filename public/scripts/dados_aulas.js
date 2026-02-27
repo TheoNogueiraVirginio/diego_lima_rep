@@ -90,7 +90,7 @@ const cursoData = {
                 vimeoId: "",
                 materiais: {
                     teoria: "Teoria_Estatistica.pdf",
-                    listas: {pe_extensivo: "Q_PE_E_Estatistica.pdf", pe_aprofundamento: "Q_PE_A_Estatistica.pdf"},
+                    listas: {pe_extensivo: "Q_PE_E_Estatistica.pdf", pe_aprofundamento: "Q_PE_A_Estatistica.pdf", extra: "extra_Q_MedidasDeTendenciasCentraisEDeDispersão.pdf", extra2: "extra_Q2_MedidasDeTendenciasCentraisEDeDispersao.pdf"},
                     gabaritos: { pe_extensivo: "G_PE_E_Estatistica.pdf", pe_aprofundamento: "G_PE_A_Estatistica.pdf" }
                 },
                 
