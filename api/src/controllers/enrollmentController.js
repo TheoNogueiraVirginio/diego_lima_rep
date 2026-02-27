@@ -625,3 +625,52 @@ export const enrollmentSummary = async (req, res) => {
         return res.status(500).json({ error: 'Erro ao calcular resumo de inscrições', details: process.env.NODE_ENV !== 'production' ? String(err) : undefined });
     }
 };
+
+export const createEnrollmentByAdmin = async (req, res) => {
+    try {
+        // req.enrollment vem do middleware requireAuth
+        if (req.enrollment.status !== 'ADMIN') {
+             return res.status(403).json({ error: 'Apenas administradores podem realizar esta ação.' });
+        }
+
+        const { name, email, cpf, phone, modality } = req.body;
+
+        if (!name || !email || !cpf) {
+            return res.status(400).json({ error: 'Nome, Email e CPF são obrigatórios.' });
+        }
+        
+        const cleanCpf = String(cpf).replace(/\D/g, '');
+
+        const existing = await prisma.enrollment.findFirst({
+            where: {
+                OR: [
+                    { email: email },
+                    { cpf: cleanCpf }
+                ]
+            }
+        });
+
+        if (existing) {
+            return res.status(400).json({ error: 'Já existe um aluno com este Email ou CPF.' });
+        }
+
+        const newStudent = await prisma.enrollment.create({
+            data: {
+                name,
+                email,
+                cpf: cleanCpf,
+                phone: phone || '', // Phone cannot be null in schema
+                modality: modality || 'Extensivo',
+                amount: 0.0,
+                status: 'PAID',
+                birthDate: null,
+            }
+        });
+
+        return res.status(201).json({ success: true, student: newStudent });
+
+    } catch (error) {
+        console.error("[createEnrollmentByAdmin] Erro:", error);
+        return res.status(500).json({ error: 'Erro interno ao criar aluno.' });
+    }
+};

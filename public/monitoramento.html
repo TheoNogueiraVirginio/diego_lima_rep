@@ -75,6 +75,26 @@
             </table>
           </div>
         </div>
+
+        <div class="panel" style="margin-top: 20px;">
+          <div class="panel-header">Cadastrar Novo Aluno</div>
+          <form id="adminStudentForm" style="display: flex; flex-direction: column; gap: 10px;">
+              <input type="text" id="adminName" placeholder="Nome Completo" required style="padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03); background: rgba(255,255,255,0.01); color: inherit;">
+              <input type="email" id="adminEmail" placeholder="Email" required style="padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03); background: rgba(255,255,255,0.01); color: inherit;">
+              <input type="text" id="adminCpf" placeholder="CPF" required style="padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03); background: rgba(255,255,255,0.01); color: inherit;">
+              <select id="adminModality" style="padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03); background: rgba(255,255,255,0.01); color: inherit;">
+                <option value="Extensivo">Extensivo</option>
+                <option value="APROFUNDAMENTO">Aprofundamento</option>
+                <option value="COM_MATERIAL">Com Material</option>
+                <option value="SEM_MATERIAL">Sem Material</option>
+              </select>
+              <button type="submit" style="margin-top: 10px; padding: 10px; border-radius: 6px; border: none; background: var(--accent); color: #000; font-weight: bold; cursor: pointer;">Cadastrar Aluno</button>
+              <div id="adminMsg" style="margin-top: 5px; font-size: 14px;"></div>
+          </form>
+        </div>
+
+        </div>
+
       </div>
 
       <aside class="right-panel">

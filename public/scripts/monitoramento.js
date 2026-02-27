@@ -541,6 +541,61 @@ async function fetchAllCommentsForModal() {
     }
 }
 
+/* ADMIN STUDENT CREATION */
+document.addEventListener('DOMContentLoaded', () => {
+    const adminForm = document.getElementById('adminStudentForm');
+    if (adminForm) {
+        adminForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msgDiv = document.getElementById('adminMsg');
+            if (msgDiv) {
+                msgDiv.textContent = 'Processando...';
+                msgDiv.style.color = 'var(--muted)';
+            }
+            
+            const name = document.getElementById('adminName').value;
+            const email = document.getElementById('adminEmail').value;
+            const cpf = document.getElementById('adminCpf').value;
+            const modality = document.getElementById('adminModality').value;
+            
+            try {
+                const res = await fetch('/api/enrollment/admin/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, cpf, modality })
+                });
+                
+                const data = await res.json();
+                
+                if (!res.ok) {
+                    if (msgDiv) {
+                        msgDiv.textContent = data.error || 'Erro ao criar aluno';
+                        msgDiv.style.color = 'var(--danger)';
+                    }
+                } else {
+                    if (msgDiv) {
+                        msgDiv.textContent = 'Aluno cadastrado com sucesso!';
+                        msgDiv.style.color = 'var(--accent)';
+                    }
+                    adminForm.reset();
+                    // Atualiza a lista se estiver visível
+                    const searchInput = document.getElementById('studentSearch');
+                    const q = searchInput ? searchInput.value : '';
+                    // Helper getCourseValue está definido neste arquivo
+                    const mod = (typeof getCourseValue === 'function') ? getCourseValue() : '';
+                    if (typeof fetchPaidStudents === 'function') fetchPaidStudents(q, mod);
+                }
+            } catch (err) {
+                console.error(err);
+                if (msgDiv) {
+                    msgDiv.textContent = 'Erro de conexão/servidor.';
+                    msgDiv.style.color = 'var(--danger)';
+                }
+            }
+        });
+    }
+});
+
 // Helper para escape (reuso se já existir, senão define)
 if (typeof window.escapeHtml !== 'function') {
     window.escapeHtml = function(text) {
