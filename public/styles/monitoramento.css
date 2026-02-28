@@ -44,13 +44,18 @@ body{margin:0;background:linear-gradient(180deg,#0c0e18 0%, #0f1221 100%);color:
   background-repeat: no-repeat;
 }
 
+select option {
+    background-color: var(--panel);
+    color: #e6eef8;
+}
+
 /* Custom select replacement styles (options background same cinza translúcido) */
 .custom-select{position:relative;display:inline-flex;align-items:center;gap:8px;padding:8px;border-radius:6px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.03);color:inherit;cursor:pointer;min-width:160px}
 .custom-select:focus{outline:2px solid rgba(143,183,255,0.06)}
 .custom-select .cs-label{flex:1}
 .custom-select .cs-arrow{color:var(--muted);font-size:12px}
 .custom-select .cs-options{position:absolute;left:0;right:0;top:calc(100% + 6px);list-style:none;margin:0;padding:6px 0;border-radius:8px;background:#0d101b;border:1px solid rgba(255,255,255,0.08);box-shadow:0 6px 18px rgba(0,0,0,0.8);z-index:60;display:none;max-height:220px;overflow:auto}
-.custom-select .cs-options li{padding:8px 12px;cursor:pointer;color:inherit}
+.custom-select .cs-options li{background:var(--panel); padding:8px 12px;cursor:pointer;color:inherit}
 .custom-select .cs-options li:hover{background:rgba(255,255,255,0.02)}
 .custom-select.open .cs-options{display:block}
 
