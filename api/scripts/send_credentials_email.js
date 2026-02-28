@@ -20,7 +20,7 @@ async function main() {
     // 2. Buscar Alunos
     // EMERGENCIAL: Enviando apenas para alunos especificos 
     const TARGET_EMAILS = [
-        'thiagomedeiros130@gmail.com',
+        'rnobregasorrentino@gmail.com ',
     ];
 
     const students = await prisma.enrollment.findMany({
