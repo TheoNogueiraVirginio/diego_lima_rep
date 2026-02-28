@@ -131,3 +131,115 @@ canvas{width:100%!important}
 .close-btn:hover { color: white; }
 
 .modal-body { padding: 20px; overflow-y: auto; }
+
+/* Tabs in Cadastrar Aluno panel */
+.menu-tabs {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 5px;
+}
+
+.tab-button {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 5px 0;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.tab-button.active {
+  color: var(--accent);
+  border-bottom: 2px solid var(--accent);
+}
+
+.tab-button:hover {
+  color: #fff;
+}
+
+.tab-content {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Dropdown Menu Styles for Panel Header */
+.panel-title-dropdown {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  user-select: none;
+  font-size: 1.1rem;
+  color: #fff;
+  transition: opacity 0.2s;
+}
+
+.panel-title-dropdown:hover {
+  opacity: 0.8;
+}
+
+.dropdown-arrow {
+  font-size: 0.8em;
+  transition: transform 0.2s;
+  color: var(--muted);
+}
+
+.panel-title-dropdown.active .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 8px;
+  background: var(--panel);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  z-index: 1000;
+  min-width: 220px;
+  display: none;
+  flex-direction: column;
+  padding: 5px;
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+.dropdown-menu.show {
+  display: flex;
+}
+
+.dropdown-item {
+  padding: 10px 15px;
+  cursor: pointer;
+  color: var(--muted);
+  border-radius: 6px;
+  transition: all 0.2s;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dropdown-item:hover {
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+}
+
+.dropdown-item.active {
+  background: rgba(110, 231, 183, 0.1);
+  color: var(--accent);
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}

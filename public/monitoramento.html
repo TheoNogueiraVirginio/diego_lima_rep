@@ -77,20 +77,61 @@
         </div>
 
         <div class="panel" style="margin-top: 20px;">
-          <div class="panel-header">Cadastrar Novo Aluno</div>
-          <form id="adminStudentForm" style="display: flex; flex-direction: column; gap: 10px;">
-              <input type="text" id="adminName" placeholder="Nome Completo" required style="padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03); background: rgba(255,255,255,0.01); color: inherit;">
-              <input type="email" id="adminEmail" placeholder="Email" required style="padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03); background: rgba(255,255,255,0.01); color: inherit;">
-              <input type="text" id="adminCpf" placeholder="CPF" required style="padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03); background: rgba(255,255,255,0.01); color: inherit;">
-              <select id="adminModality" style="padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03); background: rgba(255,255,255,0.01); color: inherit;">
-                <option value="Extensivo">Extensivo</option>
-                <option value="APROFUNDAMENTO">Aprofundamento</option>
-                <option value="COM_MATERIAL">Com Material</option>
-                <option value="SEM_MATERIAL">Sem Material</option>
-              </select>
-              <button type="submit" style="margin-top: 10px; padding: 10px; border-radius: 6px; border: none; background: var(--accent); color: #000; font-weight: bold; cursor: pointer;">Cadastrar Aluno</button>
-              <div id="adminMsg" style="margin-top: 5px; font-size: 14px;"></div>
-          </form>
+          <!-- Dropdown Header -->
+          <div class="panel-header" style="position: relative;">
+            <div class="panel-title-dropdown" id="panelDropdownTrigger">
+                <span class="dropdown-arrow">▼</span>
+                <span id="panelTitleText">Cadastrar Novo Aluno</span>
+            </div>
+            
+            <div class="dropdown-menu" id="panelDropdownMenu">
+                <div class="dropdown-item active" data-value="cadastro">Cadastrar Novo Aluno</div>
+                <div class="dropdown-item" data-value="pdfs">Gerenciar PDFs</div>
+                <div class="dropdown-item" data-value="videos">Gerenciar Vídeos</div>
+                <div class="dropdown-item" data-value="outros">Outras Configurações</div>
+            </div>
+          </div>
+
+          <!-- Conteúdo: Cadastro -->
+          <div id="content-cadastro" class="panel-section">
+            <form id="adminStudentForm" style="display: flex; flex-direction: column; gap: 10px;">
+                <input type="text" id="adminName" placeholder="Nome Completo" required style="padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03); background: rgba(255,255,255,0.01); color: inherit;">
+                <input type="email" id="adminEmail" placeholder="Email" required style="padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03); background: rgba(255,255,255,0.01); color: inherit;">
+                <input type="text" id="adminCpf" placeholder="CPF" required style="padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03); background: rgba(255,255,255,0.01); color: inherit;">
+                <select id="adminModality" style="padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03); background: rgba(255,255,255,0.01); color: inherit;">
+                  <option value="Extensivo">Extensivo</option>
+                  <option value="APROFUNDAMENTO">Aprofundamento</option>
+                  <option value="COM_MATERIAL">Com Material</option>
+                  <option value="SEM_MATERIAL">Sem Material</option>
+                </select>
+                <button type="submit" style="margin-top: 10px; padding: 10px; border-radius: 6px; border: none; background: var(--accent); color: #000; font-weight: bold; cursor: pointer;">Cadastrar Aluno</button>
+                <div id="adminMsg" style="margin-top: 5px; font-size: 14px;"></div>
+            </form>
+          </div>
+
+          <!-- Conteúdo: PDFs -->
+          <div id="content-pdfs" class="panel-section" style="display: none;">
+              <div style="padding: 15px; border: 1px dashed var(--muted); border-radius: 6px; text-align: center; color: var(--muted);">
+                <p>Gerenciamento de PDFs</p>
+                <button style="margin-top: 10px; padding: 8px 16px; background: rgba(255,255,255,0.1); border: none; color: white; border-radius: 4px; cursor: pointer;">Upload Novo PDF</button>
+              </div>
+          </div>
+
+          <!-- Conteúdo: Vídeos -->
+          <div id="content-videos" class="panel-section" style="display: none;">
+              <div style="padding: 15px; border: 1px dashed var(--muted); border-radius: 6px; text-align: center; color: var(--muted);">
+                <p>Gerenciamento de Vídeos</p>
+                <button style="margin-top: 10px; padding: 8px 16px; background: rgba(255,255,255,0.1); border: none; color: white; border-radius: 4px; cursor: pointer;">Adicionar Vídeo</button>
+              </div>
+          </div>
+          
+          <!-- Conteúdo: Outros -->
+          <div id="content-outros" class="panel-section" style="display: none;">
+              <div style="padding: 15px; border: 1px dashed var(--muted); border-radius: 6px; text-align: center; color: var(--muted);">
+                <p>Outras Configurações</p>
+                <button style="margin-top: 10px; padding: 8px 16px; background: rgba(255,255,255,0.1); border: none; color: white; border-radius: 4px; cursor: pointer;">Editar Configurações</button>
+              </div>
+          </div>
         </div>
 
         </div>

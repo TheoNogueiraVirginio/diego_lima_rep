@@ -541,8 +541,69 @@ async function fetchAllCommentsForModal() {
     }
 }
 
-/* ADMIN STUDENT CREATION */
+/* ADMIN STUDENT CREATION & PANEL MANAGEMENT */
 document.addEventListener('DOMContentLoaded', () => {
+    // Dropdown functionality
+    const trigger = document.getElementById('panelDropdownTrigger');
+    const menu = document.getElementById('panelDropdownMenu');
+    const titleText = document.getElementById('panelTitleText');
+    const items = document.querySelectorAll('.dropdown-item');
+    
+    // Toggle dropdown
+    if (trigger && menu) {
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menu.classList.toggle('show');
+            trigger.classList.toggle('active');
+        });
+
+        // Close when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!trigger.contains(e.target) && !menu.contains(e.target)) {
+                menu.classList.remove('show');
+                trigger.classList.remove('active');
+            }
+        });
+    }
+
+    // Handle selection
+    if (items) {
+        items.forEach(item => {
+            item.addEventListener('click', (e) => {
+                const value = item.getAttribute('data-value');
+                const text = item.textContent;
+
+                // Update Title
+                if (titleText) titleText.textContent = text;
+                
+                // Update UI state
+                items.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                
+                // Hide all sections
+                const sections = ['content-cadastro', 'content-pdfs', 'content-videos', 'content-outros'];
+                sections.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
+
+                // Show selected section
+                const targetId = 'content-' + value;
+                const target = document.getElementById(targetId);
+                if (target) {
+                    target.style.display = (value === 'cadastro') ? 'block' : 'flex'; // maintain original display types
+                    if (value !== 'cadastro') target.style.flexDirection = 'column';
+                }
+
+                // Close menu
+                if (menu) {
+                    menu.classList.remove('show');
+                    if (trigger) trigger.classList.remove('active');
+                }
+            });
+        });
+    }
+
     const adminForm = document.getElementById('adminStudentForm');
     if (adminForm) {
         adminForm.addEventListener('submit', async (e) => {
@@ -607,4 +668,4 @@ if (typeof window.escapeHtml !== 'function') {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
     }
-}
+};
