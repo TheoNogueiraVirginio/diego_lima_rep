@@ -1,12 +1,8 @@
 import prisma from '../db.js';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../utils/jwt.js';
-import { readFile } from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
+// Imports fs/path/url removed
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 async function countVimeoIds() {
   try {

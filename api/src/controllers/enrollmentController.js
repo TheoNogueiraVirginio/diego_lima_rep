@@ -1,8 +1,5 @@
 import { MercadoPagoConfig, Payment } from 'mercadopago';
-import { readFile } from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Imports fs/path removed
 
 import { signAccess, signRefresh, ACCESS_EXPIRES, REFRESH_EXPIRES } from '../utils/jwt.js';
 import { sendWelcomeEmail } from '../services/emailService.js';
@@ -10,14 +7,18 @@ import prisma from '../db.js';
 
 async function countVimeoIds() {
   try {
-    const dadosPath = path.resolve(__dirname, '../../../public/scripts/dados_aulas.js');
-    const content = await readFile(dadosPath, 'utf8');
-    const regex = /vimeoId:\s*["'](?!\s*["'])([^"']+)["']/g;
-    const matches = [...content.matchAll(regex)];
-    return matches.length;
+     const count = await prisma.videoLesson.count({
+        where: {
+            AND: [
+                { vimeoId: { not: "" } },
+                { vimeoId: { not: null } }
+            ]
+        }
+    });
+    return count;
   } catch (e) {
-    console.error('Erro ao ler dados_aulas.js (enrollmentController):', e);
-    return 26; 
+    console.error('Erro ao contar aulas (enrollmentController):', e);
+    return 52; 
   }
 }
 
