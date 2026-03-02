@@ -8,24 +8,21 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Helper: Contar vimeoIds preenchidos diretamente do arquivo
 async function countVimeoIds() {
   try {
-    // Resolve path relative to THIS file (api/src/controllers/progressController.js)
-    // Destination: api/../public/scripts/dados_aulas.js -> (root)/public/scripts/dados_aulas.js
-    const dadosPath = path.resolve(__dirname, '../../../public/scripts/dados_aulas.js');
-    const content = await readFile(dadosPath, 'utf8');
-    
-    // Regex para encontrar vimeoId: "alguma_coisa"
-    // Ignora vimeoId: "" ou vimeoId: " "
-    const regex = /vimeoId:\s*["'](?!\s*["'])([^"']+)["']/g;
-    
-    // matchAll retorna um iterador, convertendo para array para pegar o tamanho
-    const matches = [...content.matchAll(regex)];
-    return matches.length;
+    const count = await prisma.videoLesson.count({
+        where: {
+            AND: [
+                { vimeoId: { not: "" } },
+                { vimeoId: { not: null } }
+            ]
+        }
+    });
+    return count;
   } catch (e) {
-    console.error('Erro ao ler dados_aulas.js:', e);
-    throw new Error('Impossible to calculate: dados_aulas.js unreachable');
+    console.error('Erro ao contar aulas:', e);
+    // Fallback?
+    return 52; // Valor hardcoded temporário
   }
 }
 

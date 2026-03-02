@@ -14,8 +14,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const assuntoNum = Number(idParts[1]) || 1;
     const subNum = idParts.length >= 3 ? Number(idParts[2]) : null;
 
-    const data = window.cursoData || {};
-    const mod = data && data[moduloNum];
+    let mod = null;
+    try {
+        const res = await fetch(`/api/courses/${moduloNum}`);
+        if(res.ok) mod = await res.json();
+    } catch(e) { console.error('Error fetching course data', e); }
+    
+    // Fallback?
+    if(!mod && window.cursoData) mod = window.cursoData[moduloNum];
     const tituloPrincipal = document.getElementById('class-title');
     const playerIframe = document.getElementById('video-player');
     const sidebarList = document.getElementById('upcoming-classes');

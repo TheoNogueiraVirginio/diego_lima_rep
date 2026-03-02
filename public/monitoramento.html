@@ -111,18 +111,94 @@
 
           <!-- Conteúdo: PDFs -->
           <div id="content-pdfs" class="panel-section" style="display: none;">
-              <div style="padding: 15px; border: 1px dashed var(--muted); border-radius: 6px; text-align: center; color: var(--muted);">
-                <p>Gerenciamento de PDFs</p>
-                <button style="margin-top: 10px; padding: 8px 16px; background: rgba(255,255,255,0.1); border: none; color: white; border-radius: 4px; cursor: pointer;">Upload Novo PDF</button>
+              <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                <select id="pdf-module-select" class="admin-select">
+                    <option value="">Selecione Módulo</option>
+                    <option value="1">Módulo 1</option>
+                    <option value="2">Módulo 2</option>
+                    <option value="3">Módulo 3</option>
+                    <option value="4">Módulo 4</option>
+                </select>
+                <select id="pdf-subject-select" class="admin-select" disabled>
+                    <option value="">Selecione Assunto</option>
+                </select>
+              </div>
+
+              <div id="pdf-list" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px;">
+                  <!-- Lista de PDFs existentes -->
+              </div>
+
+              <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                <h4>Adicionar Novo PDF</h4>
+                <form id="pdf-add-form" style="display: flex; flex-direction: column; gap: 8px;">
+                    <select id="pdf-category" class="admin-select" required>
+                        <option value="teoria">Teoria</option>
+                        <option value="lista">Lista</option>
+                        <option value="gabarito">Gabarito</option>
+                    </select>
+                    <select id="pdf-modality" class="admin-select">
+                        <option value="">Geral (Sem modalidade)</option>
+                        <option value="pe_extensivo">Extensivo</option>
+                        <option value="pe_aprofundamento">Aprofundamento</option>
+                        <option value="extra">Extra</option>
+                    </select>
+                    <input type="text" id="pdf-filename" placeholder="Nome do Arquivo (URL/Path)" class="admin-input" required>
+                    <input type="text" id="pdf-title" placeholder="Título Opcional" class="admin-input">
+                    <button type="submit" class="admin-btn">Adicionar PDF</button>
+                </form>
               </div>
           </div>
 
           <!-- Conteúdo: Vídeos -->
           <div id="content-videos" class="panel-section" style="display: none;">
-              <div style="padding: 15px; border: 1px dashed var(--muted); border-radius: 6px; text-align: center; color: var(--muted);">
-                <p>Gerenciamento de Vídeos</p>
-                <button style="margin-top: 10px; padding: 8px 16px; background: rgba(255,255,255,0.1); border: none; color: white; border-radius: 4px; cursor: pointer;">Adicionar Vídeo</button>
-              </div>
+              <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                <select id="video-module-select" class="admin-select">
+                    <option value="">Selecione Módulo</option>
+                    <option value="1">Módulo 1</option>
+                    <option value="2">Módulo 2</option>
+                    <option value="3">Módulo 3</option>
+                    <option value="4">Módulo 4</option>
+                </select>
+                <select id="video-subject-select" class="admin-select" disabled>
+                    <option value="">Selecione Assunto</option>
+                </select>
+                <select id="video-lesson-select" class="admin-select" disabled>
+                    <option value="">Selecione Aula</option>
+                    <option value="new">+ Nova Aula</option>
+                </select>
+            </div>
+
+            <form id="video-edit-form" style="display: none; flex-direction: column; gap: 10px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;">
+                <input type="hidden" id="video-id">
+                <input type="hidden" id="video-subject-order"> <!-- Para novas aulas -->
+                <input type="hidden" id="video-subject-name"> <!-- Para novas aulas -->
+                
+                <div class="form-group">
+                    <label>Título da Aula</label>
+                    <input type="text" id="video-title" placeholder="Título" class="admin-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Vimeo ID</label>
+                    <input type="text" id="video-vimeo" placeholder="Vimeo ID" class="admin-input">
+                </div>
+                <div class="form-group">
+                    <label>Duração (min)</label>
+                    <input type="number" id="video-duration" placeholder="Duração" class="admin-input">
+                </div>
+                <div class="form-group">
+                    <label>Modalidade Exigida</label>
+                    <select id="video-modality" class="admin-select">
+                        <option value="">Sem Restrição (Todas)</option>
+                        <option value="extensivo">Extensivo</option>
+                        <option value="aprofundamento">Aprofundamento</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" id="btn-cancel-video" class="admin-btn secondary">Cancelar</button>
+                    <button type="submit" class="admin-btn">Salvar Alterações</button>
+                </div>
+            </form>
           </div>
           
           <!-- Conteúdo: Outros -->

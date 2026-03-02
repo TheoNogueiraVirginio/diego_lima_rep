@@ -8,7 +8,8 @@ import enrollmentRoutes from "./src/routes/enrollmentRoutes.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import progressRoutes from "./src/routes/progressRoutes.js";
 import noticeRoutes from "./src/routes/noticeRoutes.js";
-import pdfRoutes from "./src/routes/pdfRoutes.js";
+import PdfRoutes from "./src/routes/pdfRoutes.js";
+import courseRoutes from "./src/routes/courseRoutes.js";
 import materiaisRoutes from './src/routes/materialRoutes.js';
 import commentRoutes from './src/routes/commentRoutes.js';
 
@@ -40,7 +41,8 @@ app.use("/api/enrollment", enrollmentRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/avisos", noticeRoutes);
-app.use("/api/pdf", pdfRoutes);
+app.use("/api/pdf", PdfRoutes);
+app.use("/api/courses", courseRoutes);
 app.use("/api/comments", commentRoutes);
 
 

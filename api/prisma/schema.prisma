@@ -138,3 +138,34 @@ model Notice {
 
 
 
+
+model VideoLesson {
+  id               String   @id @default(uuid())
+  module           Int
+  subjectOrder     Int
+  subjectName      String
+  lessonOrder      Int
+  title            String
+  vimeoId          String?
+  duration         Int?
+  requiredModality String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([module, subjectOrder])
+}
+
+model PdfMaterial {
+  id           String   @id @default(uuid())
+  module       Int
+  subjectOrder Int
+  subjectName  String
+  category     String
+  modality     String?
+  filename     String
+  title        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([module, subjectOrder])
+}

@@ -87,7 +87,7 @@ const cursoData = {
             
             {   
                 titulo: "Estatística", 
-                vimeoId: "", hideMainInSidebar: true,
+                vimeoId: "",
                 materiais: {
                     teoria: "Teoria_Estatistica.pdf",
                     listas: {pe_extensivo: "Q_PE_E_Estatistica.pdf", pe_aprofundamento: "Q_PE_A_Estatistica.pdf", extra: "extra_Q_MedidasDeTendenciasCentraisEDeDispersão.pdf", extra2: "extra_Q2_MedidasDeTendenciasCentraisEDeDispersao.pdf"},
@@ -306,4 +306,4 @@ const cursoData = {
 
 
 
-window.cursoData = cursoData;
+module.exports = cursoData;

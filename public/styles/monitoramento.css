@@ -248,3 +248,36 @@ canvas{width:100%!important}
   from { opacity: 0; transform: translateY(-5px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Admin Panel Styles */
+.admin-input, .admin-select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: white;
+}
+.admin-btn {
+    padding: 10px 20px;
+    background: var(--accent, #00d4ff);
+    color: rgb(15, 23, 42);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+.admin-btn.secondary {
+    background: rgba(255,255,255,0.1);
+    color: white;
+}
+.form-group {
+    margin-bottom: 12px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--muted, #9ca3af);
+    font-size: 0.9em;
+}

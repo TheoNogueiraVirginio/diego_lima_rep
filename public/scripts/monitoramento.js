@@ -669,3 +669,305 @@ if (typeof window.escapeHtml !== 'function') {
         .replace(/'/g, "&#039;");
     }
 };
+
+/* --- Admin - Gerenciamento de Vídeos e PDFs --- */
+document.addEventListener('input', (e) => {
+    // Dropdown change in Admin Module selection
+    if(e.target.id === 'video-module-select') {
+        const modId = e.target.value;
+        if(modId) loadAdminModuleVideos(modId);
+    }
+    if(e.target.id === 'video-subject-select') {
+        const idx = e.target.selectedIndex;
+        const subjectOrder = e.target.options[idx].dataset.subjectOrder;
+        if(subjectOrder) loadAdminLessons(subjectOrder);
+    }
+    if(e.target.id === 'video-lesson-select') {
+        const val = e.target.value;
+        if(val === 'new') setupNewLessonForm();
+        else if(val) fillLessonForm(val);
+    }
+});
+
+let currentModuleData = null;
+
+async function loadAdminModuleVideos(modId) {
+    try {
+        const res = await fetch(`/api/courses/${modId}`);
+        if(!res.ok) throw new Error('Erro ao carregar módulo');
+        const data = await res.json();
+        currentModuleData = data;
+        
+        const subjSelect = document.getElementById('video-subject-select');
+        subjSelect.innerHTML = '<option value="">Selecione Assunto</option>';
+        subjSelect.disabled = false;
+        
+        document.getElementById('video-lesson-select').innerHTML = '<option value="">Selecione Aula</option>';
+        document.getElementById('video-lesson-select').disabled = true;
+        document.getElementById('video-edit-form').style.display = 'none';
+
+        // data.aulas is array of subjects
+        // Subject might have Main Video (lessonOrder 0) and SubVideos
+        // Or just subvideos
+        // If subject has main video, it is "Subject Name"
+        
+        // We will list Subjects here. 
+        // ID_Assunto logic: Use subjectOrder from data?
+        // Our controller returned array sorted by order.
+        // But the data structure from controller is:
+        // { tituloModulo: '...', aulas: [ { titulo: '...', subAulas: [], ... } ] }
+        // We need to map back to subjectOrder.
+        // Wait, currentModuleData.aulas is an array. The index+1 is roughly subjectOrder if strict.
+        // But better if backend returns subjectOrder.
+        
+        // Let's assume index+1 (1-based) is subjectOrder for now as we grouped them sorted.
+        data.aulas.forEach((subj, idx) => {
+            const opt = document.createElement('option');
+            const order = idx + 1; 
+            opt.value = order;
+            opt.dataset.subjectOrder = order;
+            opt.textContent = `${order}. ${subj.titulo}`;
+            subjSelect.appendChild(opt);
+        });
+
+    } catch (e) {
+        console.error(e);
+        alert('Erro ao carregar dados do módulo.');
+    }
+}
+
+function loadAdminLessons(subjectOrder) {
+    if(!currentModuleData) return;
+    // index is subjectOrder - 1
+    const subj = currentModuleData.aulas[subjectOrder - 1];
+    
+    const lessonSelect = document.getElementById('video-lesson-select');
+    lessonSelect.innerHTML = '<option value="">Selecione Aula</option><option value="new">+ Nova Aula</option>';
+    lessonSelect.disabled = false;
+
+    // Add main video if exists (it's the subject itself in our model logic)
+    // Or if vimeoId isn't empty
+    if(subj.vimeoId) {
+        const opt = document.createElement('option');
+        opt.value = subj.dbId || 'main'; // Use DB ID if available
+        opt.textContent = `${subj.titulo} (Aula Principal)`;
+        lessonSelect.appendChild(opt);
+    }
+
+    if(subj.subAulas && subj.subAulas.length > 0) {
+        subj.subAulas.forEach(sub => {
+            const opt = document.createElement('option');
+            opt.value = sub.dbId; // Use DB ID
+            opt.textContent = sub.titulo;
+            lessonSelect.appendChild(opt);
+        });
+    }
+}
+
+function fillLessonForm(val) {
+    const form = document.getElementById('video-edit-form');
+    form.style.display = 'flex';
+    
+    // Find selected data
+    const subjOrder = document.getElementById('video-subject-select').value;
+    const subj = currentModuleData.aulas[subjOrder - 1];
+
+    // Check if val is main video ID (dbId) or 'main'
+    // We compare with subj.dbId string
+    if(val === (subj.dbId || 'main')) {
+        document.getElementById('video-id').value = subj.dbId || '';
+        document.getElementById('video-title').value = subj.titulo;
+        document.getElementById('video-vimeo').value = subj.vimeoId;
+        document.getElementById('video-duration').value = subj.duracao;
+    } else {
+        // Sub Lesson
+        // sub.id is composite, sub.dbId is UUID. val is dbId.
+        const sub = subj.subAulas.find(s => s.dbId === val);
+        if(sub) {
+            document.getElementById('video-id').value = sub.dbId;
+            document.getElementById('video-title').value = sub.titulo;
+            document.getElementById('video-vimeo').value = sub.vimeoId;
+            document.getElementById('video-duration').value = sub.duracao;
+            document.getElementById('video-modality').value = sub.requiredModality || '';
+        }
+    }
+}
+
+function setupNewLessonForm() {
+    const form = document.getElementById('video-edit-form');
+    form.style.display = 'flex';
+    form.reset();
+    document.getElementById('video-id').value = '';
+    
+    const subjOrder = document.getElementById('video-subject-select').value;
+    const subj = currentModuleData.aulas[subjOrder - 1];
+    
+    document.getElementById('video-subject-order').value = subjOrder;
+    document.getElementById('video-subject-name').value = subj.titulo;
+}
+
+// Form Submit Handler
+document.getElementById('video-edit-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('video-id').value;
+    
+    const payload = {
+        title: document.getElementById('video-title').value,
+        vimeoId: document.getElementById('video-vimeo').value,
+        duration: parseInt(document.getElementById('video-duration').value) || 0,
+        requiredModality: document.getElementById('video-modality').value
+    };
+
+    if (id && !id.startsWith('main_')) {
+        // Update existing
+        const res = await fetch(`/api/courses/lessons/${id}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        if(res.ok) alert('Atualizado com sucesso!');
+    } else {
+        // Create new
+         const module = document.getElementById('video-module-select').value;
+         const subjectOrder = document.getElementById('video-subject-order').value;
+         const subjectName = document.getElementById('video-subject-name').value;
+         
+         const newPayload = { ...payload, module: parseInt(module), subjectOrder: parseInt(subjectOrder), subjectName, lessonOrder: 99 }; // 99 or auto
+         
+         const res = await fetch('/api/courses/lessons', {
+            method: 'POST',
+             headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(newPayload)
+         });
+         if(res.ok) alert('Criado com sucesso!');
+    }
+    
+    // Refresh
+    const modId = document.getElementById('video-module-select').value;
+    loadAdminModuleVideos(modId);
+});
+
+
+/* --- PDF Management --- */
+document.addEventListener('input', (e) => {
+    if(e.target.id === 'pdf-module-select') {
+        const modId = e.target.value;
+        if(modId) loadAdminModulePdfs(modId);
+    }
+    if(e.target.id === 'pdf-subject-select') {
+        const idx = e.target.selectedIndex;
+        const subjectOrder = e.target.options[idx].dataset.subjectOrder;
+        if(subjectOrder) renderPdfList(subjectOrder);
+    }
+});
+
+let currentPdfModuleData = null; // Can reuse currentModuleData if fetches cover both
+
+async function loadAdminModulePdfs(modId) {
+    try {
+        const res = await fetch(`/api/courses/${modId}`); // Reusing same endpoint which returns both videos and materials structure
+        if(!res.ok) throw new Error('Erro ao carregar dados');
+        const data = await res.json();
+        currentPdfModuleData = data;
+
+        const subjSelect = document.getElementById('pdf-subject-select');
+        subjSelect.innerHTML = '<option value="">Selecione Assunto</option>';
+        subjSelect.disabled = false;
+        
+        data.aulas.forEach((subj, idx) => {
+            const opt = document.createElement('option');
+            const order = idx + 1; 
+            opt.value = order;
+            opt.dataset.subjectOrder = order;
+            opt.textContent = `${order}. ${subj.titulo}`;
+            subjSelect.appendChild(opt);
+        });
+
+    } catch (e) {
+        console.error(e);
+        alert('Erro ao carregar módulo PDF.');
+    }
+}
+
+function renderPdfList(subjectOrder) {
+    if(!currentPdfModuleData) return;
+    const subj = currentPdfModuleData.aulas[subjectOrder - 1];
+    const container = document.getElementById('pdf-list');
+    container.innerHTML = '';
+    
+    // Helper to render section
+    const renderSection = (title, items) => {
+        if(!items || Object.keys(items).length === 0) return;
+        const div = document.createElement('div');
+        div.innerHTML = `<h5>${title}</h5>`;
+        
+        if (typeof items === 'string') {
+             div.innerHTML += `<div style="font-size:0.9em; padding-left:10px;">${items} <button class="delete-pdf-btn" data-type="teoria" data-modality="default" style="font-size:0.8em; color:red; border:none; background:none; cursor:pointer;">[X]</button></div>`;
+        } else {
+            Object.entries(items).forEach(([k, v]) => {
+                div.innerHTML += `<div style="font-size:0.9em; padding-left:10px;">${k}: <a href="${v}" target="_blank" style="color:#6ee7b7">${v}</a> <button class="delete-pdf-btn" data-cat="${title}" data-mod="${k}" style="font-size:0.8em; color:red; border:none; background:none; cursor:pointer; margin-left:5px;">[X]</button></div>`;
+            });
+        }
+        container.appendChild(div);
+    };
+
+    if (subj.materiais) {
+        renderSection('Teoria', subj.materiais.teoria);
+        renderSection('Listas', subj.materiais.listas);
+        renderSection('Gabaritos', subj.materiais.gabaritos);
+    } else {
+        container.innerHTML = '<p>Nenhum material encontrado.</p>';
+    }
+}
+
+// Handler for adding new PDF
+document.getElementById('pdf-add-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const modId = document.getElementById('pdf-module-select').value;
+    const subjOrderIdx = document.getElementById('pdf-subject-select').value;
+    const subjOrder = subjOrderIdx; // Using value as order
+    
+    // We need subjectName
+    if(!currentPdfModuleData) return;
+    const subj = currentPdfModuleData.aulas[subjOrder - 1];
+    const subjectName = subj.titulo;
+
+    const category = document.getElementById('pdf-category').value;
+    const modality = document.getElementById('pdf-modality').value;
+    const filename = document.getElementById('pdf-filename').value;
+    const title = document.getElementById('pdf-title').value;
+
+    try {
+        const res = await fetch('/api/courses/pdfs', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                module: parseInt(modId),
+                subjectOrder: parseInt(subjOrder),
+                subjectName,
+                category,
+                modality: modality || 'default',
+                filename,
+                title
+            })
+        });
+
+        if(res.ok) {
+            alert('PDF adicionado com sucesso!');
+            // Refresh list
+            loadAdminModulePdfs(modId).then(() => {
+                 document.getElementById('pdf-subject-select').value = subjOrder;
+                 renderPdfList(subjOrder);
+            });
+            e.target.reset();
+        } else {
+            alert('Erro ao adicionar PDF.');
+        }
+
+    } catch (err) {
+        console.error(err);
+        alert('Erro de servidor.');
+    }
+});
+

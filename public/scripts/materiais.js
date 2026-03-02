@@ -70,8 +70,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // const params = new URLSearchParams(window.location.search); // Já declarado acima
     // const moduloId = params.get('id') || '1'; // Já declarado acima
 
-    const data = window.cursoData || {};
-    const mod = data[moduloId];
+    let mod = null;
+    try {
+        const res = await fetch(`/api/courses/${moduloId}`);
+        if(res.ok) mod = await res.json();
+    } catch(e) { console.error('Failed to load course data', e); }
+    
+    // Legacy fallback
+    if(!mod && window.cursoData) {
+        mod = window.cursoData[moduloId];
+    }
 
     const titleEl = document.getElementById('modulo-title');
     const descEl = document.getElementById('modulo-desc');
