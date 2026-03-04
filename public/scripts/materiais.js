@@ -220,14 +220,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else {
                     // Novo caso: Objeto com múltiplas chaves (pe_extensivo, pe_aprofundamento, etc.)
                     // Verifica se há pelo menos alguma chave relevante
-                    if (rawTeorico.pe_extensivo || rawTeorico.pe_aprofundamento || rawTeorico.extensivo || rawTeorico.aprofundamento) {
+                    if (rawTeorico.pe_extensivo || rawTeorico.pe_aprofundamento || rawTeorico.extensivo || rawTeorico.aprofundamento || rawTeorico.default) {
                          // Se for ADMIN ou APROFUNDAMENTO, mostra modal com opções
                          if (isAdmin || userModality.includes('aprofundamento') || userModality.includes('integral')) {
                               hasComplexTeoria = true;
                          } else {
                               // Outros alunos abrem direto a versão extensivo (ou equivalente padrão)
 
-                              teoricoUrl = rawTeorico.pe_extensivo || rawTeorico.extensivo;
+                              teoricoUrl = rawTeorico.pe_extensivo || rawTeorico.extensivo || rawTeorico.default;
                          }
                     }
                 }
@@ -671,6 +671,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         add('Teoria (Aprofundamento)', rawTeorico.pe_aprofundamento || rawTeorico.aprofundamento);
                         // Suporte a extra se houver futuro
                         if (rawTeorico.extra) add('Teoria Extra', rawTeorico.extra);
+                        if (rawTeorico.default) add('Teoria', rawTeorico.default);
                         
                         if (items.length > 0) openModal('Material Teórico', items);
                         return;
@@ -678,7 +679,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                    // Alunos
                    // Extensivo sempre disponível se existir
-                   const extUrl = rawTeorico.pe_extensivo || rawTeorico.extensivo;
+                   const extUrl = rawTeorico.pe_extensivo || rawTeorico.extensivo || rawTeorico.default;
                    const aprofUrl = rawTeorico.pe_aprofundamento || rawTeorico.aprofundamento;
 
                    // Todos veem extensivo (base) - ou discute-se se aprofundamento substitui
