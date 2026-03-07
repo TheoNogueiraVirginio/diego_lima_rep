@@ -2,7 +2,7 @@ import { MercadoPagoConfig, Payment } from 'mercadopago';
 // Imports fs/path removed
 
 import { signAccess, signRefresh, ACCESS_EXPIRES, REFRESH_EXPIRES } from '../utils/jwt.js';
-import { sendWelcomeEmail } from '../services/emailService.js';
+import { sendWelcomeEmail, sendCredentialsEmail } from '../services/emailService.js';
 import prisma from '../db.js';
 
 async function countVimeoIds() {
@@ -667,6 +667,12 @@ export const createEnrollmentByAdmin = async (req, res) => {
                 birthDate: null,
             }
         });
+
+        // Enviar emails: primeiro Boas-vindas, depois Credenciais
+        // Não awaitamos para não bloquear o retorno da requisição, ou awaitamos se quisermos garantir envio?
+        // Como é admin, melhor esperar para garantir que foi enviado.
+        await sendWelcomeEmail(email, name);
+        await sendCredentialsEmail(email, name, cleanCpf);
 
         return res.status(201).json({ success: true, student: newStudent });
 
