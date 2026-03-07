@@ -5,7 +5,9 @@ export const serveWatermarkedPdf = async (req, res) => {
   try {
     const { docId } = req.params;
 
-    if (!docId || !/^[a-zA-Z0-9._-]+$/.test(docId)) {
+    // Permite caracteres alfanuméricos, ponto, traço, sublinhado e caracteres Unicode (acentos, cedilha, etc)
+    // Exclui barras para evitar path traversal
+    if (!docId || docId.includes('/') || docId.includes('\\')) {
       return res.status(400).json({ error: 'ID de documento inválido.' });
     }
 
