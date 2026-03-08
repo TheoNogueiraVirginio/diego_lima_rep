@@ -925,12 +925,14 @@ document.getElementById('pdf-add-form').addEventListener('submit', async (e) => 
     e.preventDefault();
     
     const modId = document.getElementById('pdf-module-select').value;
-    const subjOrderIdx = document.getElementById('pdf-subject-select').value;
-    const subjOrder = subjOrderIdx; // Using value as order
+    const subjOrderIdx = parseInt(document.getElementById('pdf-subject-select').value);
     
-    // We need subjectName
+    // We need subjectName and REAL subjectOrder
     if(!currentPdfModuleData) return;
-    const subj = currentPdfModuleData.aulas[subjOrder - 1];
+    const subj = currentPdfModuleData.aulas[subjOrderIdx - 1];
+    
+    // Use real subjectOrder from DB object, fallback to index
+    const subjectOrder = subj.subjectOrder || subjOrderIdx;
     const subjectName = subj.titulo;
 
     const category = document.getElementById('pdf-category').value;
@@ -944,7 +946,7 @@ document.getElementById('pdf-add-form').addEventListener('submit', async (e) => 
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 module: parseInt(modId),
-                subjectOrder: parseInt(subjOrder),
+                subjectOrder: parseInt(subjectOrder),
                 subjectName,
                 category,
                 modality: modality || 'default',
@@ -957,8 +959,8 @@ document.getElementById('pdf-add-form').addEventListener('submit', async (e) => 
             alert('PDF adicionado com sucesso!');
             // Refresh list
             loadAdminModulePdfs(modId).then(() => {
-                 document.getElementById('pdf-subject-select').value = subjOrder;
-                 renderPdfList(subjOrder);
+                 document.getElementById('pdf-subject-select').value = subjOrderIdx;
+                 renderPdfList(subjOrderIdx);
             });
             e.target.reset();
         } else {

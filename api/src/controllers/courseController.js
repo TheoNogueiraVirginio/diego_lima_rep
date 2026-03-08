@@ -34,6 +34,7 @@ export const getLessonsByModule = async (req, res) => {
         const getSubject = (order, name) => {
             if (!subjects[order]) {
                 subjects[order] = {
+                    subjectOrder: parseInt(order),
                     titulo: name,
                     vimeoId: "", // Default empty
                     duracao: 0,

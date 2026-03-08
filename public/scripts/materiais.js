@@ -495,6 +495,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                    const hasExtra = listas.extra;
                    const hasExtra2 = listas.extra2;
                    const hasCongMod = listas.cong_mod;
+                   const hasDefault = listas.default;
                    
                    const items = [];
 
@@ -502,9 +503,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                    if (isAdmin || modality === 'INTEGRAL') {
                          if (hasExtensivo) items.push({ label: 'Praticando ENEM (Extensivo)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtensivo)}` });
                          if (hasAprof) items.push({ label: 'Praticando ENEM (Aprofundamento)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasAprof)}` });
+                         if (hasDefault) items.push({ label: 'Praticando ENEM (Geral)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasDefault)}` });
                          
                          // Se não tiver nenhum dos dois cadastrado, fallback
-                         if (!hasExtensivo && !hasAprof) {
+                         if (!hasExtensivo && !hasAprof && !hasDefault) {
                              items.push({ label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' });
                          }
 
@@ -528,6 +530,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                    if (modality === 'APROFUNDAMENTO') {
                        if (hasAprof) {
                            items.push({ label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasAprof)}` });
+                       } else if (hasDefault) {
+                           items.push({ label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasDefault)}` });
                        } else {
                            // Fallback genérico se aluno Aprofundamento não tem PDF Aprofundamento cadastrado
                            // Se não há aprofundamento, tentamos dar algo genérico
@@ -537,6 +541,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                    } else {
                        // Alunos EXTENSIVO ou outros
                        if (hasExtensivo) items.push({ label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtensivo)}` });
+                       else if (hasDefault) items.push({ label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasDefault)}` });
                        else items.push({ label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' });
                    }
 
@@ -579,6 +584,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const items = [];
                         if (gabs.pe_extensivo) items.push({ label: 'Gabarito (E) - Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.pe_extensivo)}` });
                         if (gabs.pe_aprofundamento) items.push({ label: 'Gabarito (A) - Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.pe_aprofundamento)}` });
+                        if (gabs.default) items.push({ label: 'Gabarito (Geral)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.default)}` });
+
                         if (gabs.cong_mod) items.push({ label: 'Gabarito - Congruência Modular', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.cong_mod)}` });
                         if (gabs.extra) items.push({ label: 'Gabarito Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.extra)}` });
                         if (gabs.extra2) items.push({ label: 'Gabarito Extra 2', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.extra2)}` });
@@ -602,11 +609,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                             label = 'Praticando ENEM (Aprof.)';
                         } else if (gabs.pe_extensivo) {
                             mainLink = `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.pe_extensivo)}`;
+                        } else if (gabs.default) {
+                            mainLink = `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.default)}`;
                         }
                     } else {
                         // Extensivo e outros
                         if (gabs.pe_extensivo) {
                             mainLink = `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.pe_extensivo)}`;
+                        } else if (gabs.default) {
+                            mainLink = `/pdf-viewer/viewer.html?doc=${encodeURIComponent(gabs.default)}`;
                         }
                     }
 
