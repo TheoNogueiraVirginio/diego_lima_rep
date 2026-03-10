@@ -681,3 +681,40 @@ export const createEnrollmentByAdmin = async (req, res) => {
         return res.status(500).json({ error: 'Erro interno ao criar aluno.' });
     }
 };
+export const updateStudentModality = async (req, res) => {
+    try {
+        console.log("[updateStudentModality] Iniciando atualização de modalidade...");
+        if (!req.enrollment || req.enrollment.status !== 'ADMIN') {
+            return res.status(403).json({ error: 'Apenas administradores podem realizar esta ação.' });
+        }
+
+        const { cpf, modality } = req.body;
+
+        if (!cpf || !modality) {
+            return res.status(400).json({ error: 'CPF e Nova Modalidade são obrigatórios.' });
+        }
+
+        const cleanCpf = String(cpf).replace(/\D/g, '');
+
+        const student = await prisma.enrollment.findUnique({
+            where: { cpf: cleanCpf }
+        });
+
+        if (!student) {
+            return res.status(404).json({ error: 'Aluno não encontrado com este CPF.' });
+        }
+
+        const updatedStudent = await prisma.enrollment.update({
+            where: { cpf: cleanCpf },
+            data: { modality }
+        });
+
+        console.log(`[updateStudentModality] Modalidade do aluno ${student.name} (${cleanCpf}) alterada para ${modality}.`);
+
+        return res.json({ success: true, message: 'Modalidade atualizada com sucesso.', student: updatedStudent });
+
+    } catch (error) {
+        console.error('[updateStudentModality] Erro:', error);
+        return res.status(500).json({ error: 'Erro ao atualizar modalidade.', details: error.message });
+    }
+};

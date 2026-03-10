@@ -605,6 +605,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const adminForm = document.getElementById('adminStudentForm');
+    const updateModeCheckbox = document.getElementById('adminUpdateMode');
+    const nameInput = document.getElementById('adminName');
+    const emailInput = document.getElementById('adminEmail');
+    const submitBtn = document.getElementById('adminSubmitBtn');
+
+    if (updateModeCheckbox) {
+        updateModeCheckbox.addEventListener('change', (e) => {
+            const isUpdate = e.target.checked;
+            if (isUpdate) {
+                if(nameInput) {
+                    nameInput.style.display = 'none';
+                    nameInput.removeAttribute('required');
+                }
+                if(emailInput) {
+                    emailInput.style.display = 'none';
+                    emailInput.removeAttribute('required');
+                }
+                if(submitBtn) submitBtn.textContent = 'Atualizar Modalidade';
+            } else {
+                if(nameInput) {
+                    nameInput.style.display = 'block';
+                    nameInput.setAttribute('required', 'true');
+                }
+                if(emailInput) {
+                    emailInput.style.display = 'block';
+                    emailInput.setAttribute('required', 'true');
+                }
+                if(submitBtn) submitBtn.textContent = 'Cadastrar Aluno';
+            }
+        });
+    }
+
     if (adminForm) {
         adminForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -614,35 +646,58 @@ document.addEventListener('DOMContentLoaded', () => {
                 msgDiv.style.color = 'var(--muted)';
             }
             
-            const name = document.getElementById('adminName').value;
-            const email = document.getElementById('adminEmail').value;
-            const cpf = document.getElementById('adminCpf').value;
-            const modality = document.getElementById('adminModality').value;
+            const isUpdate = updateModeCheckbox ? updateModeCheckbox.checked : false;
+            const cpfEl = document.getElementById('adminCpf');
+            const modEl = document.getElementById('adminModality');
             
+            const cpf = cpfEl ? cpfEl.value : '';
+            const modality = modEl ? modEl.value : '';
+            
+            let url = '/api/enrollment/admin/create';
+            let method = 'POST';
+            let body = {};
+
+            if (isUpdate) {
+                url = '/api/enrollment/admin/modality'; 
+                method = 'PUT';
+                body = { cpf, modality };
+            } else {
+                const name = document.getElementById('adminName').value;
+                const email = document.getElementById('adminEmail').value;
+                body = { name, email, cpf, modality };
+            }
+
             try {
-                const res = await fetch('/api/enrollment/admin/create', {
-                    method: 'POST',
+                const res = await fetch(url, {
+                    method: method,
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, cpf, modality })
+                    body: JSON.stringify(body)
                 });
                 
                 const data = await res.json();
                 
                 if (!res.ok) {
                     if (msgDiv) {
-                        msgDiv.textContent = data.error || 'Erro ao criar aluno';
+                        msgDiv.textContent = data.error || 'Erro ao processar solicitação';
                         msgDiv.style.color = 'var(--danger)';
                     }
                 } else {
                     if (msgDiv) {
-                        msgDiv.textContent = 'Aluno cadastrado com sucesso!';
+                        msgDiv.textContent = isUpdate ? 'Modalidade atualizada com sucesso!' : 'Aluno cadastrado com sucesso!';
                         msgDiv.style.color = 'var(--accent)';
                     }
                     adminForm.reset();
+                    
+                    // Reset checkbox logic manually if needed
+                    if (updateModeCheckbox && updateModeCheckbox.checked) {
+                         updateModeCheckbox.checked = false; 
+                         // Trigger change to restore inputs
+                         updateModeCheckbox.dispatchEvent(new Event('change'));
+                    }
+
                     // Atualiza a lista se estiver visível
                     const searchInput = document.getElementById('studentSearch');
                     const q = searchInput ? searchInput.value : '';
-                    // Helper getCourseValue está definido neste arquivo
                     const mod = (typeof getCourseValue === 'function') ? getCourseValue() : '';
                     if (typeof fetchPaidStudents === 'function') fetchPaidStudents(q, mod);
                 }
