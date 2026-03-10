@@ -927,31 +927,15 @@ document.getElementById('pdf-add-form').addEventListener('submit', async (e) => 
     e.preventDefault();
     
     const modId = document.getElementById('pdf-module-select').value;
-    const subjectSelectVal = document.getElementById('pdf-subject-select').value;
-    
-    if(!modId) {
-        alert('Por favor, selecione um módulo primeiro.');
-        return;
-    }
-    if(!subjectSelectVal) {
-        alert('Por favor, selecione um assunto primeiro.');
-        return;
-    }
-
-    const subjOrderIdx = parseInt(subjectSelectVal);
+    const subjOrderIdx = parseInt(document.getElementById('pdf-subject-select').value);
     
     // We need subjectName and REAL subjectOrder
     if(!currentPdfModuleData) return;
     const subj = currentPdfModuleData.aulas[subjOrderIdx - 1];
     
-    if(!subj) {
-        alert('Erro ao identificar o assunto selecionado.');
-        return;
-    }
-    
     // Use real subjectOrder from DB object, fallback to index
     const subjectOrder = subj.subjectOrder || subjOrderIdx;
-    const subjectName = subj.titulo || ("Assunto " + subjectOrder);
+    const subjectName = subj.titulo;
 
     const category = document.getElementById('pdf-category').value;
     const modality = document.getElementById('pdf-modality').value;
@@ -974,16 +958,15 @@ document.getElementById('pdf-add-form').addEventListener('submit', async (e) => 
         });
 
         if(res.ok) {
-            alert('PDF adicionado ou atualizado com sucesso!');
+            alert('PDF adicionado com sucesso!');
             // Refresh list
             loadAdminModulePdfs(modId).then(() => {
-                 document.getElementById('pdf-subject-select').value = subjectSelectVal;
-                 renderPdfList(subjectSelectVal);
+                 document.getElementById('pdf-subject-select').value = subjOrderIdx;
+                 renderPdfList(subjOrderIdx);
             });
             e.target.reset();
         } else {
-            const errData = await res.json().catch(()=>({}));
-            alert('Erro ao adicionar PDF: ' + (errData.error || 'Erro desconhecido.'));
+            alert('Erro ao adicionar PDF.');
         }
 
     } catch (err) {
