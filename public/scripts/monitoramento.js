@@ -901,13 +901,15 @@ function renderPdfList(subjectOrder) {
         const div = document.createElement('div');
         div.innerHTML = `<h5>${title}</h5>`;
         
-        if (typeof items === 'string') {
-             div.innerHTML += `<div style="font-size:0.9em; padding-left:10px;">${items} <button class="delete-pdf-btn" data-type="teoria" data-modality="default" style="font-size:0.8em; color:red; border:none; background:none; cursor:pointer;">[X]</button></div>`;
-        } else {
-            Object.entries(items).forEach(([k, v]) => {
-                div.innerHTML += `<div style="font-size:0.9em; padding-left:10px;">${k}: <a href="${v}" target="_blank" style="color:#6ee7b7">${v}</a> <button class="delete-pdf-btn" data-cat="${title}" data-mod="${k}" style="font-size:0.8em; color:red; border:none; background:none; cursor:pointer; margin-left:5px;">[X]</button></div>`;
-            });
-        }
+        Object.entries(items).forEach(([k, v]) => {
+            // v is { id, filename, title }
+            const displayTitle = v.title || v.filename.split('/').pop();
+            div.innerHTML += `<div style="font-size:0.9em; padding-left:10px; margin-bottom: 4px;">
+                <span style="color:var(--muted); font-size:0.85em;">[${k}]</span> 
+                <a href="${v.filename}" target="_blank" style="color:#6ee7b7">${escapeHtml(displayTitle)}</a> 
+                <button class="delete-pdf-btn" data-id="${v.id}" style="font-size:0.8em; color:red; border:none; background:none; cursor:pointer; margin-left:5px;">[X]</button>
+            </div>`;
+        });
         container.appendChild(div);
     };
 
@@ -925,15 +927,31 @@ document.getElementById('pdf-add-form').addEventListener('submit', async (e) => 
     e.preventDefault();
     
     const modId = document.getElementById('pdf-module-select').value;
-    const subjOrderIdx = parseInt(document.getElementById('pdf-subject-select').value);
+    const subjectSelectVal = document.getElementById('pdf-subject-select').value;
+    
+    if(!modId) {
+        alert('Por favor, selecione um módulo primeiro.');
+        return;
+    }
+    if(!subjectSelectVal) {
+        alert('Por favor, selecione um assunto primeiro.');
+        return;
+    }
+
+    const subjOrderIdx = parseInt(subjectSelectVal);
     
     // We need subjectName and REAL subjectOrder
     if(!currentPdfModuleData) return;
     const subj = currentPdfModuleData.aulas[subjOrderIdx - 1];
     
+    if(!subj) {
+        alert('Erro ao identificar o assunto selecionado.');
+        return;
+    }
+    
     // Use real subjectOrder from DB object, fallback to index
     const subjectOrder = subj.subjectOrder || subjOrderIdx;
-    const subjectName = subj.titulo;
+    const subjectName = subj.titulo || ("Assunto " + subjectOrder);
 
     const category = document.getElementById('pdf-category').value;
     const modality = document.getElementById('pdf-modality').value;
@@ -956,15 +974,16 @@ document.getElementById('pdf-add-form').addEventListener('submit', async (e) => 
         });
 
         if(res.ok) {
-            alert('PDF adicionado com sucesso!');
+            alert('PDF adicionado ou atualizado com sucesso!');
             // Refresh list
             loadAdminModulePdfs(modId).then(() => {
-                 document.getElementById('pdf-subject-select').value = subjOrderIdx;
-                 renderPdfList(subjOrderIdx);
+                 document.getElementById('pdf-subject-select').value = subjectSelectVal;
+                 renderPdfList(subjectSelectVal);
             });
             e.target.reset();
         } else {
-            alert('Erro ao adicionar PDF.');
+            const errData = await res.json().catch(()=>({}));
+            alert('Erro ao adicionar PDF: ' + (errData.error || 'Erro desconhecido.'));
         }
 
     } catch (err) {
@@ -972,4 +991,30 @@ document.getElementById('pdf-add-form').addEventListener('submit', async (e) => 
         alert('Erro de servidor.');
     }
 });
+
+// Delete PDF Handler
+document.getElementById('pdf-list').addEventListener('click', async (e) => {
+    if(e.target.classList.contains('delete-pdf-btn')) {
+        if(!confirm('Tem certeza que deseja excluir este PDF?')) return;
+        const id = e.target.getAttribute('data-id');
+        try {
+            const res = await fetch(`/api/courses/pdfs/${id}`, { method: 'DELETE' });
+            if(res.ok) {
+                // Refresh
+                const modId = document.getElementById('pdf-module-select').value;
+                const subjOrderIdx = parseInt(document.getElementById('pdf-subject-select').value);
+                loadAdminModulePdfs(modId).then(() => {
+                    document.getElementById('pdf-subject-select').value = subjOrderIdx;
+                    renderPdfList(subjOrderIdx);
+                });
+            } else {
+                alert('Erro ao excluir PDF');
+            }
+        } catch(err) {
+            console.error(err);
+            alert('Erro de conexão');
+        }
+    }
+});
+
 

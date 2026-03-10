@@ -72,37 +72,24 @@ export const getLessonsByModule = async (req, res) => {
 
         // Process Materials
         materials.forEach(m => {
-            const subj = getSubject(m.subjectOrder, m.subjectName); // Should exist if lessons exist, but handle if pdf only
+            const subj = getSubject(m.subjectOrder, m.subjectName);
             
-            // Map flat list to nested structure: materials[category][modality] = filename
+            // Map flat list to nested structure: materials[category][modality] = { id, filename, title }
             if (m.category === 'teoria') {
-                if (m.modality) {
-                     // If existing is string, convert to object? 
-                     // The logic provided in dados_aulas was chaotic (string or object). We standardize to object if possible?
-                     // Or just keep simple.
-                     if (typeof subj.materiais.teoria === 'string') {
-                         subj.materiais.teoria = { default: subj.materiais.teoria };
-                     }
-                     if (!subj.materiais.teoria || typeof subj.materiais.teoria !== 'object') {
-                         subj.materiais.teoria = {};
-                     }
-                     subj.materiais.teoria[m.modality] = m.filename;
-                } else {
-                     // No modality
-                     // If currently object, add to default?
-                     if (typeof subj.materiais.teoria === 'object') {
-                         subj.materiais.teoria['default'] = m.filename;
-                     } else {
-                         subj.materiais.teoria = m.filename;
-                     }
+                if (!subj.materiais.teoria || typeof subj.materiais.teoria !== 'object') {
+                    subj.materiais.teoria = {};
                 }
+                const modKey = m.modality || 'default';
+                // Store object with ID and filename
+                subj.materiais.teoria[modKey] = { id: m.id, filename: m.filename, title: m.title };
+
             } else if (['lista', 'gabarito'].includes(m.category)) {
                 // Map category 'lista' -> 'listas', 'gabarito' -> 'gabaritos'
                 const key = m.category === 'lista' ? 'listas' : 'gabaritos';
                 if (!subj.materiais[key]) subj.materiais[key] = {};
                 
                 const modKey = m.modality || 'default';
-                subj.materiais[key][modKey] = m.filename;
+                subj.materiais[key][modKey] = { id: m.id, filename: m.filename, title: m.title };
             }
         });
 
@@ -160,21 +147,67 @@ export const createPdf = async (req, res) => {
     try {
         const { module, subjectOrder, subjectName, category, modality, filename, title } = req.body;
         
-        await prisma.pdfMaterial.create({
-            data: {
-                module: parseInt(module),
-                subjectOrder: parseInt(subjectOrder),
-                subjectName,
-                category,
-                modality,
-                filename,
-                title
+        if (!module || !subjectOrder || !category || !filename) {
+            return res.status(400).json({ error: 'Missing required fields (module, subjectOrder, category, filename)' });
+        }
+
+        if (!['teoria', 'lista', 'gabarito'].includes(category)) {
+             return res.status(400).json({ error: 'Invalid category. Must be one of: teoria, lista, gabarito' });
+        }
+
+        const data = {
+            module: parseInt(module),
+            subjectOrder: parseInt(subjectOrder),
+            subjectName,
+            category,
+            modality: modality || 'default',
+            filename,
+            title
+        };
+
+        // Check for existing material in this specific slot (same module, subject, category, modality)
+        // This prevents duplicate entries for the same "slot", updating the existing one instead.
+        const existing = await prisma.pdfMaterial.findFirst({
+            where: {
+                module: data.module,
+                subjectOrder: data.subjectOrder,
+                category: data.category,
+                modality: data.modality
             }
         });
+
+        let result;
+        if (existing) {
+            result = await prisma.pdfMaterial.update({
+                where: { id: existing.id },
+                data: {
+                    filename: data.filename,
+                    title: data.title,
+                    subjectName: data.subjectName // Update name ensuring consistency
+                }
+            });
+        } else {
+            result = await prisma.pdfMaterial.create({
+                data
+            });
+        }
         
-        res.status(201).json({ message: 'Success' });
+        res.status(201).json(result);
+    } catch (e) {
+        console.error('Error creating PDF:', e);
+        res.status(500).json({ error: 'Failed to save PDF' });
+    }
+};
+
+export const deletePdf = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await prisma.pdfMaterial.delete({
+            where: { id }
+        });
+        res.json({ message: 'Deleted successfully' });
     } catch (e) {
         console.error(e);
-        res.status(500).json({ error: 'Failed to create PDF' });
+        res.status(500).json({ error: 'Failed to delete PDF' });
     }
 };
