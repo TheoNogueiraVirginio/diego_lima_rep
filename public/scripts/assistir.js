@@ -84,19 +84,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Se for ADMIN, mostrar tudo
             if (isAdmin || userModUpper === 'INTEGRAL') {
-                if (hasExtensivo) items.push({ label: 'Praticando ENEM (Extensivo)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtensivo)}` });
-                if (hasAprof) items.push({ label: 'Praticando ENEM (Aprofundamento)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasAprof)}` });
+                if (hasExtensivo) items.push({ label: 'Praticando ENEM (Extensivo)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtensivo === "string" ? hasExtensivo : hasExtensivo.filename)}` });
+                if (hasAprof) items.push({ label: 'Praticando ENEM (Aprofundamento)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasAprof === "string" ? hasAprof : hasAprof.filename)}` });
                 
                 if (!hasExtensivo && !hasAprof) {
                     items.push({ label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' });
                 }
 
-                if (hasCongMod) items.push({ label: 'Congruência Modular', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasCongMod)}` });
+                if (hasCongMod) items.push({ label: 'Congruência Modular', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasCongMod === "string" ? hasCongMod : hasCongMod.filename)}` });
 
-                if (hasExtra) items.push({ label: 'Lista Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtra)}` });
+                if (hasExtra) items.push({ label: 'Lista Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtra === "string" ? hasExtra : hasExtra.filename)}` });
                 else items.push({ label: 'Lista Extra', href: 'questoes.html?lista=lista-extra' });
 
-                if (hasExtra2) items.push({ label: 'Lista Extra 2', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtra2)}` });
+                if (hasExtra2) items.push({ label: 'Lista Extra 2', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtra2 === "string" ? hasExtra2 : hasExtra2.filename)}` });
 
                 openModal('Para Praticar', items);
                 return;
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (userModUpper === 'APROFUNDAMENTO') { 
                 // Aprofundamento vê APENAS o PDF de aprofundamento (se existir).
                 if (hasAprof) {
-                    items.push({ label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasAprof)}` });
+                    items.push({ label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasAprof === "string" ? hasAprof : hasAprof.filename)}` });
                 } else {
                     // Fallback se não tiver lista específica cadastrada
                     items.push({ label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' });
@@ -114,23 +114,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             } else { 
                 // Extensivo (e outros) vê apenas extensivo
-                if (hasExtensivo) items.push({ label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtensivo)}` });
+                if (hasExtensivo) items.push({ label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtensivo === "string" ? hasExtensivo : hasExtensivo.filename)}` });
                 else items.push({ label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' });
             }
 
             if (hasCongMod) {
-                items.push({ label: 'Congruência Modular', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasCongMod)}` });
+                items.push({ label: 'Congruência Modular', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasCongMod === "string" ? hasCongMod : hasCongMod.filename)}` });
             }
 
             // Lista Extra (sempre disponível)
             if (hasExtra) {
-                items.push({ label: 'Lista Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtra)}` });
+                items.push({ label: 'Lista Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtra === "string" ? hasExtra : hasExtra.filename)}` });
             } else {
                 items.push({ label: 'Lista Extra', href: 'questoes.html?lista=lista-extra' });
             }
 
             if (hasExtra2) {
-                items.push({ label: 'Lista Extra 2', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(hasExtra2)}` });
+                items.push({ label: 'Lista Extra 2', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtra2 === "string" ? hasExtra2 : hasExtra2.filename)}` });
             }
 
             openModal('Para Praticar', items);
