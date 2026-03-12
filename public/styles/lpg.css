@@ -197,6 +197,11 @@ h4 {
     text-shadow: 0 0 8px var(--color-lime-green);
 }
 
+/* --- 4X NOTA MÁXIMA 2025 ---*/
+.invisible-fix {
+    border-bottom: 2px solid var(--color-lime-green);
+}
+
 /* --- NOVO: CSS PARA SEÇÃO 2022 (ANTÔNIO NETO) --- */
 #highlight-2022 {
     background-color: var(--bg-purple-dark);
@@ -424,7 +429,7 @@ footer {
 }
 
 .footer-logo-text span {
-    display: block;
+    display: flex;
     font-size: 0.9rem;
     font-weight: 600;
     letter-spacing: 3px;
@@ -436,7 +441,6 @@ footer {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
 }
 
 .footer-brand-row {
