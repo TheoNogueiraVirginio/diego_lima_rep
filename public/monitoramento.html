@@ -88,6 +88,7 @@
                 <div class="dropdown-item active" data-value="cadastro">Cadastrar Novo Aluno</div>
                 <div class="dropdown-item" data-value="pdfs">Gerenciar PDFs</div>
                 <div class="dropdown-item" data-value="videos">Gerenciar Vídeos</div>
+                <div class="dropdown-item" data-value="cupons">Gerenciar Cupons</div>
                 <div class="dropdown-item" data-value="outros">Outras Configurações</div>
             </div>
           </div>
@@ -209,6 +210,35 @@
                     <button type="submit" class="admin-btn">Salvar Alterações</button>
                 </div>
             </form>
+          </div>
+
+          <!-- Conteúdo: Cupons -->
+          <div id="content-cupons" class="panel-section" style="display: none;">
+              <form id="coupon-add-form" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                  <h4>Criar Novo Cupom</h4>
+                  <div style="display: flex; gap: 10px; align-items: center;">
+                      <input type="text" id="coupon-code" placeholder="Código do Cupom" class="admin-input" required style="flex: 1; text-transform: uppercase;">
+                      <input type="number" id="coupon-discount" placeholder="Desconto (%)" class="admin-input" required min="1" max="100" style="width: 120px;">
+                      <button type="submit" class="admin-btn">Criar</button>
+                  </div>
+                  <div id="coupon-msg" style="font-size: 14px; margin-top: 5px;"></div>
+              </form>
+              
+              <h4>Cupons Existentes</h4>
+              <div class="table-container" style="max-height: 250px; overflow-y: auto;">
+                <table class="students-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Desconto</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="coupons-list">
+                        <!-- JS preenche -->
+                    </tbody>
+                </table>
+              </div>
           </div>
           
           <!-- Conteúdo: Outros -->

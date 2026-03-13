@@ -581,7 +581,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.classList.add('active');
                 
                 // Hide all sections
-                const sections = ['content-cadastro', 'content-pdfs', 'content-videos', 'content-outros'];
+                const sections = ['content-cadastro', 'content-pdfs', 'content-videos', 'content-cupons', 'content-outros'];
                 sections.forEach(id => {
                     const el = document.getElementById(id);
                     if (el) el.style.display = 'none';
@@ -1056,3 +1056,126 @@ document.getElementById('pdf-list').addEventListener('click', async (e) => {
 });
 
 
+
+// ---- COUPON MANAGEMENT ----
+const couponAddForm = document.getElementById('coupon-add-form');
+const couponsList = document.getElementById('coupons-list');
+const couponMsg = document.getElementById('coupon-msg');
+
+async function loadCoupons() {
+    try {
+        const res = await fetch('/api/coupons', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}` // Adjust as needed
+            }
+        });
+        if (!res.ok) throw new Error('Falha ao carregar cupons');
+        const coupons = await res.json();
+        
+        if (!couponsList) return;
+        couponsList.innerHTML = '';
+        
+        if (coupons.length === 0) {
+            couponsList.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:15px; color:var(--muted);">Nenhum cupom cadastrado.</td></tr>';
+            return;
+        }
+
+        coupons.forEach(c => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="font-weight:bold; color:var(--accent);">${c.code}</td>
+                <td>${c.discount}%</td>
+                <td>
+                    <button class="delete-coupon-btn admin-btn secondary" data-id="${c.id}" style="padding:4px 8px; font-size:0.8em; background: rgba(255,0,0,0.1); border:1px solid rgba(255,0,0,0.3); color:#ff4d4d;">Apagar</button>
+                </td>
+            `;
+            couponsList.appendChild(tr);
+        });
+
+        // Add event listeners to delete buttons
+        document.querySelectorAll('.delete-coupon-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const id = e.target.getAttribute('data-id');
+                if(confirm('Tem certeza que deseja apagar este cupom?')) {
+                    await deleteCoupon(id);
+                }
+            });
+        });
+
+    } catch (err) {
+        console.error(err);
+        if (couponsList) couponsList.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:15px; color:#ff4d4d;">Erro ao carregar cupons.</td></tr>';
+    }
+}
+
+async function deleteCoupon(id) {
+    try {
+        const res = await fetch(`/api/coupons/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}` // Adjust as needed
+            }
+        });
+        if (res.ok) {
+            loadCoupons();
+        } else {
+            alert('Erro ao apagar cupom.');
+        }
+    } catch (err) {
+        console.error('Erro:', err);
+        alert('Erro de conexão ao apagar cupom.');
+    }
+}
+
+if (couponAddForm) {
+    couponAddForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const codeInput = document.getElementById('coupon-code');
+        const discountInput = document.getElementById('coupon-discount');
+        
+        try {
+            if (couponMsg) {
+                couponMsg.textContent = 'Criando...';
+                couponMsg.style.color = 'var(--muted)';
+            }
+
+            const res = await fetch('/api/coupons', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}` // Adjust as needed
+                },
+                body: JSON.stringify({
+                    code: codeInput.value,
+                    discount: discountInput.value
+                })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                if (couponMsg) {
+                    couponMsg.textContent = data.message || 'Cupom criado!';
+                    couponMsg.style.color = '#4ade80';
+                }
+                codeInput.value = '';
+                discountInput.value = '';
+                loadCoupons();
+                
+                setTimeout(() => { if (couponMsg) couponMsg.textContent = ''; }, 3000);
+            } else {
+                if (couponMsg) {
+                    couponMsg.textContent = data.error || 'Erro ao criar cupom.';
+                    couponMsg.style.color = '#ff4d4d';
+                }
+            }
+        } catch (err) {
+            console.error('Erro:', err);
+            if (couponMsg) {
+                couponMsg.textContent = 'Erro de conexão ao criar cupom.';
+                couponMsg.style.color = '#ff4d4d';
+            }
+        }
+    });
+}
+loadCoupons();
