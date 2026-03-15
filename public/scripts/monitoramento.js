@@ -760,6 +760,9 @@ async function loadAdminModuleVideos(modId) {
         document.getElementById('video-lesson-select').innerHTML = '<option value="">Selecione Aula</option>';
         document.getElementById('video-lesson-select').disabled = true;
         document.getElementById('video-edit-form').style.display = 'none';
+        
+        try { document.getElementById('video-reorder-container').style.display = 'none'; } catch(e) {}
+        try { document.getElementById('btn-reorder-videos').style.display = 'none'; } catch(e) {}
 
         // data.aulas is array of subjects
         // Subject might have Main Video (lessonOrder 0) and SubVideos
@@ -799,6 +802,16 @@ function loadAdminLessons(subjectOrder) {
     const lessonSelect = document.getElementById('video-lesson-select');
     lessonSelect.innerHTML = '<option value="">Selecione Aula</option><option value="new">+ Nova Aula</option>';
     lessonSelect.disabled = false;
+    
+    const reorderBtn = document.getElementById('btn-reorder-videos');
+    if (reorderBtn) {
+        if (subj.subAulas && subj.subAulas.length > 1) {
+            reorderBtn.style.display = 'inline-block';
+        } else {
+            reorderBtn.style.display = 'none';
+        }
+    }
+    document.getElementById('video-reorder-container').style.display = 'none';
 
     // Add main video if exists (it's the subject itself in our model logic)
     // Or if vimeoId isn't empty
@@ -822,6 +835,7 @@ function loadAdminLessons(subjectOrder) {
 function fillLessonForm(val) {
     const form = document.getElementById('video-edit-form');
     form.style.display = 'flex';
+    document.getElementById('video-reorder-container').style.display = 'none';
     
     // Find selected data
     const subjOrder = document.getElementById('video-subject-select').value;
@@ -851,6 +865,7 @@ function fillLessonForm(val) {
 function setupNewLessonForm() {
     const form = document.getElementById('video-edit-form');
     form.style.display = 'flex';
+    document.getElementById('video-reorder-container').style.display = 'none';
     form.reset();
     document.getElementById('video-id').value = '';
     
@@ -860,6 +875,138 @@ function setupNewLessonForm() {
     document.getElementById('video-subject-order').value = subjOrder;
     document.getElementById('video-subject-name').value = subj.titulo;
 }
+
+// Reorder functionality
+const reorderList = document.getElementById('video-reorder-list');
+document.getElementById('btn-reorder-videos').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('video-edit-form').style.display = 'none';
+    document.getElementById('video-reorder-container').style.display = 'flex';
+    
+    reorderList.innerHTML = '';
+    
+    const subjOrder = document.getElementById('video-subject-select').value;
+    const subj = currentModuleData.aulas[subjOrder - 1];
+    
+    if (subj.subAulas) {
+        subj.subAulas.forEach((sub, idx) => {
+            const div = document.createElement('div');
+            div.className = 'reorder-item';
+            div.style.padding = '10px';
+            div.style.background = 'rgba(255,255,255,0.1)';
+            div.style.border = '1px solid #444';
+            div.style.borderRadius = '5px';
+            div.style.cursor = 'grab';
+            div.style.display = 'flex';
+            div.style.alignItems = 'center';
+            div.style.gap = '10px';
+            
+            // drag handle icon
+            const span = document.createElement('span');
+            span.innerHTML = '☰';
+            span.style.color = '#ccc';
+            
+            const title = document.createElement('span');
+            title.textContent = sub.titulo;
+            
+            div.appendChild(span);
+            div.appendChild(title);
+            
+            div.dataset.dbId = sub.dbId;
+            div.draggable = true;
+            
+            div.addEventListener('dragstart', handleDragStart);
+            div.addEventListener('dragover', handleDragOver);
+            div.addEventListener('drop', handleDrop);
+            div.addEventListener('dragenter', handleDragEnter);
+            div.addEventListener('dragleave', handleDragLeave);
+            
+            reorderList.appendChild(div);
+        });
+    }
+});
+
+let dragSrcEl = null;
+
+function handleDragStart(e) {
+    dragSrcEl = this;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.innerHTML);
+    e.dataTransfer.setData('text/plain', this.dataset.dbId);
+    this.style.opacity = '0.4';
+}
+
+function handleDragOver(e) {
+    if (e.preventDefault) {
+        e.preventDefault();
+    }
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+
+function handleDragEnter(e) {
+    this.style.border = '2px dashed #6ee7b7';
+}
+
+function handleDragLeave(e) {
+    this.style.border = '1px solid #444';
+}
+
+function handleDrop(e) {
+    if (e.stopPropagation) {
+        e.stopPropagation();
+    }
+    if (dragSrcEl !== this) {
+        const list = document.getElementById('video-reorder-list');
+        const items = Array.from(list.children);
+        const srcIdx = items.indexOf(dragSrcEl);
+        const targetIdx = items.indexOf(this);
+        
+        if (srcIdx < targetIdx) {
+            this.after(dragSrcEl);
+        } else {
+            this.before(dragSrcEl);
+        }
+    }
+    dragSrcEl.style.opacity = '1';
+    this.style.border = '1px solid #444';
+    return false;
+}
+
+document.getElementById('btn-save-video-order').addEventListener('click', async (e) => {
+    e.preventDefault();
+    const btn = e.target;
+    btn.disabled = true;
+    btn.textContent = 'Salvando...';
+    
+    const items = reorderList.querySelectorAll('.reorder-item');
+    const orderData = Array.from(items).map((item, idx) => ({
+        id: item.dataset.dbId,
+        lessonOrder: idx + 1 // Sub-lessons start at 1
+    }));
+    
+    try {
+        const res = await fetch('/api/courses/lessons/reorder', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ videos: orderData })
+        });
+        
+        if (res.ok) {
+            alert('Ordem atualizada com sucesso!');
+            const modId = document.getElementById('video-module-select').value;
+            loadAdminModuleVideos(modId);
+            document.getElementById('video-reorder-container').style.display = 'none';
+        } else {
+            const data = await res.json();
+            alert('Erro: ' + data.error);
+        }
+    } catch (err) {
+        alert('Erro ao salvar nova ordem');
+    }
+    btn.disabled = false;
+    btn.textContent = 'Salvar Ordem';
+});
 
 // Form Submit Handler
 document.getElementById('video-edit-form').addEventListener('submit', async (e) => {

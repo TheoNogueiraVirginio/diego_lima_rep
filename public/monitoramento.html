@@ -177,6 +177,13 @@
                     <option value="">Selecione Aula</option>
                     <option value="new">+ Nova Aula</option>
                 </select>
+                <button id="btn-reorder-videos" class="admin-btn" style="display: none;">Reorganizar Aulas</button>
+            </div>
+
+            <div id="video-reorder-container" style="display: none; flex-direction: column; gap: 10px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <h4 style="margin-top: 0; color: #fff;">Arraste para reorganizar as sub-aulas</h4>
+                <div id="video-reorder-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                <button id="btn-save-video-order" class="admin-btn" style="margin-top: 10px; background-color: #2e8b57;">Salvar Ordem</button>
             </div>
 
             <form id="video-edit-form" style="display: none; flex-direction: column; gap: 10px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;">

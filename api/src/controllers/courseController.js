@@ -114,6 +114,28 @@ export const getLessonsByModule = async (req, res) => {
     }
 };
 
+export const reorderLessons = async (req, res) => {
+    try {
+        const { videos } = req.body;
+        if (!Array.isArray(videos)) {
+            return res.status(400).json({ error: 'Invalid payload' });
+        }
+
+        const updates = videos.map(v => 
+            prisma.videoLesson.update({
+                where: { id: v.id },
+                data: { lessonOrder: v.lessonOrder }
+            })
+        );
+        
+        await prisma.$transaction(updates);
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Error reordering lessons:', e);
+        res.status(500).json({ error: e.message });
+    }
+};
+
 export const updateLesson = async (req, res) => {
     // Admin Only
     try {
