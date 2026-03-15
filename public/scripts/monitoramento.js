@@ -1229,9 +1229,11 @@ async function loadCoupons() {
 
         coupons.forEach(c => {
             const tr = document.createElement('tr');
+            const isFixed = c.type === 'FIXED_PRICE';
+            const displayDiscount = isFixed ? `R$ ${c.discount.toFixed(2)}` : `${c.discount}%`;
             tr.innerHTML = `
                 <td style="font-weight:bold; color:var(--accent);">${c.code}</td>
-                <td>${c.discount}%</td>
+                <td>${displayDiscount}</td>
                 <td>
                     <button class="delete-coupon-btn admin-btn secondary" data-id="${c.id}" style="padding:4px 8px; font-size:0.8em; background: rgba(255,0,0,0.1); border:1px solid rgba(255,0,0,0.3); color:#ff4d4d;">Apagar</button>
                 </td>
@@ -1278,6 +1280,7 @@ if (couponAddForm) {
     couponAddForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const codeInput = document.getElementById('coupon-code');
+        const typeInput = document.getElementById('coupon-type');
         const discountInput = document.getElementById('coupon-discount');
         
         try {
@@ -1294,6 +1297,7 @@ if (couponAddForm) {
                 },
                 body: JSON.stringify({
                     code: codeInput.value,
+                    type: typeInput ? typeInput.value : 'PERCENTAGE',
                     discount: discountInput.value
                 })
             });

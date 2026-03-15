@@ -174,5 +174,6 @@ model Coupon {
   id        String   @id @default(uuid())
   code      String   @unique
   discount  Float
+  type      String   @default("PERCENTAGE") // "PERCENTAGE" ou "FIXED_PRICE"
   createdAt DateTime @default(now())
 }

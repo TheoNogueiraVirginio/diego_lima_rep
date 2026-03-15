@@ -69,25 +69,21 @@ export const createEnrollment = async (req, res) => {
                 .replace(/[^A-Za-z0-9]/g, '')
                 .toUpperCase();
 
-            // aceitar somente "MARIALUIZA" (sem variante com S)
-            if (cup === 'MARIALUIZA') {
-                console.log("[createEnrollment] Cupom aplicado: MariaLuiza (preço fixo R$799.00)");
-                valorCobrado = 799.00; // Valor final fixo para ambas as modalidades
-            } else if (cup === 'MARIANALIMA') {
-                console.log("[createEnrollment] Cupom aplicado: MARIANALIMA (15% OFF)");
-                valorCobrado = valorCobrado * 0.85; 
-            } else if (cup === '50OFF') {
-                console.log("[createEnrollment] Cupom aplicado: 50OFF (50% OFF)");
-                valorCobrado = valorCobrado * 0.5;
-            } else if (cup === '25OFF') {
-                console.log("[createEnrollment] Cupom aplicado: 25OFF (25% OFF)");
-                valorCobrado = valorCobrado * 0.75;
-            } else if (cup === '15OFF') {
-                console.log("[createEnrollment] Cupom aplicado: 15OFF (15% OFF)");
-                valorCobrado = valorCobrado * 0.85;
-            } else if (cup === '10OFF') {
-                console.log("[createEnrollment] Cupom aplicado: 10OFF (10% OFF)");
-                valorCobrado = valorCobrado * 0.90;
+            // Buscar cupom no banco
+            const dbCoupon = await prisma.coupon.findUnique({
+                where: { code: cup }
+            });
+
+            if (dbCoupon) {
+                if (dbCoupon.type === 'FIXED_PRICE') {
+                    console.log(`[createEnrollment] Cupom aplicado: ${dbCoupon.code} (preço fixo R$${dbCoupon.discount.toFixed(2)})`);
+                    valorCobrado = dbCoupon.discount;
+                } else {
+                    console.log(`[createEnrollment] Cupom aplicado: ${dbCoupon.code} (${dbCoupon.discount}% OFF)`);
+                    valorCobrado = valorCobrado * (1 - dbCoupon.discount / 100);
+                }
+            } else {
+                console.log(`[createEnrollment] Cupom inválido fornecido: ${cup}`);
             }
         }
         

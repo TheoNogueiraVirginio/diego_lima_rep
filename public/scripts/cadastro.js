@@ -31,26 +31,25 @@ function normalizeCoupon(code) {
     return cup;
 }
 
-function applyCouponFrontend(amount, couponRaw) {
+async function fetchCouponData(couponRaw) {
     const cup = normalizeCoupon(couponRaw);
-    if (!cup) return amount;
-    if (cup === 'MARIALUIZA') {
-        return 799.00;
-    } else if (cup === 'MARIANALIMA') {
-        return Number((amount * 0.85).toFixed(2));
-    } else if (cup === '50OFF') {
-        return Number((amount * 0.50).toFixed(2));
-    } else if (cup === '25OFF') {
-        return Number((amount * 0.75).toFixed(2));
-    } else if (cup === '15OFF') {
-        return Number((amount * 0.85).toFixed(2));
-    } else if (cup === '10OFF') {
-        return Number((amount * 0.90).toFixed(2));
+    if (!cup) return null;
+    try {
+        const response = await fetch(`/api/coupons/validate/${cup}`);
+        if (response.ok) {
+            const data = await response.json();
+            if (data.valid && data.coupon) {
+                return data.coupon;
+            }
+        }
+    } catch (e) {
+        console.error("Erro ao validar cupom", e);
     }
-    return amount;
+    return null;
 }
 
-function updateCouponPreview() {
+let couponTimeout;
+async function updateCouponPreview() {
     try {
         const feedback = document.getElementById('coupon-feedback');
         if (!feedback) return;
@@ -66,7 +65,7 @@ function updateCouponPreview() {
         const pagamento = pagamentoEl ? pagamentoEl.value : 'pix';
 
         let base = calcularPrecoFrontend(modality);
-        let final = applyCouponFrontend(base, cup);
+        let final = base;
 
         // Se não houver cupom digitado, limpa mensagem
         if (!cup) {
@@ -74,11 +73,25 @@ function updateCouponPreview() {
             return;
         }
 
-        const perParcel = parcelas > 0 ? Number((final / parcelas).toFixed(2)) : final;
+        // debounce p/ evitar muitas requisições
+        clearTimeout(couponTimeout);
+        couponTimeout = setTimeout(async () => {
+            const couponData = await fetchCouponData(cup);
+            if (couponData) {
+                if (couponData.type === 'FIXED_PRICE') {
+                    final = couponData.discount;
+                } else {
+                    final = Number((base * (1 - couponData.discount / 100)).toFixed(2));
+                }
+                const perParcel = parcelas > 0 ? Number((final / parcelas).toFixed(2)) : final;
+                
+                feedback.innerHTML = `Valor com cupom: <strong style="color:var(--highlight);">R$ ${final.toFixed(2)}</strong>` +
+                    (pagamento === 'cartao' ? ` — ${parcelas}x de R$ ${perParcel.toFixed(2)}` : '');
+            } else {
+                feedback.innerHTML = `<span style="color:red;">Cupom inválido</span>`;
+            }
+        }, 500);
 
-        // Mensagem simples e direta
-        feedback.innerHTML = `Valor com cupom: <strong>R$ ${final.toFixed(2)}</strong>` +
-            (pagamento === 'cartao' ? ` — ${parcelas}x de R$ ${perParcel.toFixed(2)}` : '');
     } catch (e) {
         console.warn('Erro ao atualizar preview do cupom:', e.message || e);
     }
@@ -266,7 +279,7 @@ document.querySelector('.checkout-form').addEventListener('submit', async (event
             alert('CPF inválido. Verifique o número e tente novamente.');
             cpfInput.focus();
             return;
-        }Q
+        }
     }
 
     // Formata visualmente o CPF (opcional)
@@ -296,10 +309,22 @@ document.querySelector('.checkout-form').addEventListener('submit', async (event
 
     // --- VALIDAÇÃO DO CUPOM ---
     const cupomDigitado = (dadosBasicos.coupon || '').trim().toUpperCase();
-    const validCoupons = ['MARIANALIMA', 'MARIALUIZA', '50OFF', '25OFF', '15OFF', '10OFF']; 
-    if (cupomDigitado && !validCoupons.includes(cupomDigitado)) {
-        alert("❌ Cupom inválido! Verifique-o e tente novamente.");
-        return;
+    if (cupomDigitado) {
+        const btnSubmit = document.querySelector('.btn-submit');
+        const originalText = btnSubmit ? btnSubmit.innerText : 'GERAR PAGAMENTO';
+        if (btnSubmit) btnSubmit.innerText = "VALIDANDO CUPOM...";
+
+        const couponData = await fetchCouponData(cupomDigitado);
+        if (!couponData) {
+            alert("❌ Cupom inválido! Verifique-o e tente novamente.");
+            if (btnSubmit) {
+                btnSubmit.innerText = originalText;
+                btnSubmit.disabled = false;
+            }
+            return;
+        }
+
+        if (btnSubmit) btnSubmit.innerText = originalText;
     }
 
     // Limpa intervalo anterior se existir
