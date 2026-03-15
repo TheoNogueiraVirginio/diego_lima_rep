@@ -558,7 +558,7 @@ export const listPaidEnrollments = async (req, res) => {
 
         const studentsWithProgress = students.map(s => {
             const completed = completedMap[String(s.id)] || 0;
-            const lessonsPercent = totalLessons > 0 ? Math.round((completed / totalLessons) * 100) : 0;
+            const lessonsPercent = totalLessons > 0 ? Math.min(100, Math.round((completed / totalLessons) * 100)) : 0;
             return Object.assign({}, s, { lessonsCompleted: completed, lessonsPercent });
         });
 
@@ -605,7 +605,7 @@ export const enrollmentSummary = async (req, res) => {
                 // Compute per-student percent and average
                 const percents = ids.map(id => {
                     const completed = completedMap[String(id)] || 0;
-                    return totalLessons > 0 ? Math.round((completed / totalLessons) * 100) : 0;
+                    return totalLessons > 0 ? Math.min(100, Math.round((completed / totalLessons) * 100)) : 0;
                 });
 
                 const sum = percents.reduce((a, b) => a + b, 0);

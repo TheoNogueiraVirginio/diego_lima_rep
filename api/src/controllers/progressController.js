@@ -149,18 +149,26 @@ export const getSummary = async (req, res) => {
     const totalModules = 4;
     let totalExams = Number(process.env.TOTAL_EXAMS || 26);
 
-    // Buscar lições concluídas no banco
+// Buscar lições concluídas no banco de forma única
     const items = await prisma.lessonProgress.findMany({ 
-        where: { enrollmentId, status: 'COMPLETED' }
+        where: { enrollmentId, status: 'COMPLETED' },
+        distinct: ['lessonId'],
+        select: { lessonId: true }
     });
     
     const lessonsCompletedCount = items.length;
     
     // Porcentagem simples
     const lessonsPercent = totalLessons > 0 ? Math.min(100, Math.round((lessonsCompletedCount / totalLessons) * 100)) : 0;
+    
+    const uniqueExams = await prisma.examAttempt.findMany({ 
+        where: { enrollmentId },
+        distinct: ['examId'],
+        select: { examId: true }
+    });
+    const examsTakenCount = uniqueExams.length;
 
-    const examsTakenCount = await prisma.examAttempt.count({ where: { enrollmentId } });
-    const examsPercent = totalExams > 0 ? Math.round((examsTakenCount / totalExams) * 100) : 0;
+    const examsPercent = totalExams > 0 ? Math.min(100, Math.round((examsTakenCount / totalExams) * 100)) : 0;
 
     const attempts = await prisma.examAttempt.findMany({ where: { enrollmentId } });
     const averageScoreOverall = attempts.length ? Math.round((attempts.reduce((s, a) => s + (a.score / a.maxScore), 0) / attempts.length) * 100) : 0;
