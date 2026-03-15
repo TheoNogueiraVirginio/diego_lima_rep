@@ -219,9 +219,10 @@
 
 .module-image {
     width: 100%;
-    height: 140px; 
-    background-size: 140%; 
-    background-position: center top;
+    height: auto;
+    aspect-ratio: 1024 / 454;
+    background-size: cover; 
+    background-position: center;
     background-repeat: no-repeat;
     background-color: rgba(17,24,39,0.6);
     border-radius: 10px;
