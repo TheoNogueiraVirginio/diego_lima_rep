@@ -1109,6 +1109,7 @@ function renderPdfList(subjectOrder) {
             div.innerHTML += `<div style="font-size:0.9em; padding-left:10px; margin-bottom: 4px;">
                 <span style="color:var(--muted); font-size:0.85em;">[${k}]</span> 
                 <a href="${v.filename}" target="_blank" style="color:#6ee7b7">${escapeHtml(displayTitle)}</a> 
+                <button class="edit-pdf-btn" data-id="${v.id}" data-filename="${v.filename}" data-title="${v.title || ''}" style="font-size:0.8em; color:#facc15; border:none; background:none; cursor:pointer; margin-left:5px;">[Editar]</button>
                 <button class="delete-pdf-btn" data-id="${v.id}" style="font-size:0.8em; color:red; border:none; background:none; cursor:pointer; margin-left:5px;">[X]</button>
             </div>`;
         });
@@ -1177,8 +1178,43 @@ document.getElementById('pdf-add-form').addEventListener('submit', async (e) => 
     }
 });
 
-// Delete PDF Handler
+// Delete/Edit PDF Handler
 document.getElementById('pdf-list').addEventListener('click', async (e) => {
+    if(e.target.classList.contains('edit-pdf-btn')) {
+        const id = e.target.getAttribute('data-id');
+        const oldFilename = e.target.getAttribute('data-filename');
+        const oldTitle = e.target.getAttribute('data-title') || '';
+        
+        const filename = prompt('Digite o novo caminho/URL do PDF:', oldFilename);
+        if (filename === null) return; // Cancelled
+        
+        const title = prompt('Digite o novo título (opcional):', oldTitle);
+        if (title === null) return; // Cancelled
+        
+        try {
+            const res = await fetch(`/api/courses/pdfs/${id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ filename, title })
+            });
+
+            if(res.ok) {
+                // Refresh
+                const modId = document.getElementById('pdf-module-select').value;
+                const subjOrderIdx = parseInt(document.getElementById('pdf-subject-select').value);
+                loadAdminModulePdfs(modId).then(() => {
+                    document.getElementById('pdf-subject-select').value = subjOrderIdx;
+                    renderPdfList(subjOrderIdx);
+                });
+            } else {
+                alert('Erro ao atualizar PDF');
+            }
+        } catch(err) {
+            console.error(err);
+            alert('Erro de conexão');
+        }
+    }
+
     if(e.target.classList.contains('delete-pdf-btn')) {
         if(!confirm('Tem certeza que deseja excluir este PDF?')) return;
         const id = e.target.getAttribute('data-id');

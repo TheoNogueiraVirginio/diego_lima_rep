@@ -233,3 +233,19 @@ export const deletePdf = async (req, res) => {
         res.status(500).json({ error: 'Failed to delete PDF' });
     }
 };
+
+export const updatePdf = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { filename, title } = req.body;
+        
+        const updated = await prisma.pdfMaterial.update({
+            where: { id },
+            data: { filename, title }
+        });
+        res.json(updated);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Failed to update PDF' });
+    }
+};

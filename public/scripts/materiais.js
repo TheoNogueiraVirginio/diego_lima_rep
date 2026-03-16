@@ -234,8 +234,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
+        const matListas = (aula.materiais && aula.materiais.listas) || {};
+        const hasAnyListas = Object.keys(matListas).length > 0;
+
+        const matGabs = (aula.materiais && aula.materiais.gabaritos) || {};
+        const hasAnyGabaritos = Object.keys(matGabs).length > 0;
+
         // incluir miniatura para aulas de equações (se identificadas pelo título)
-        const isEquacoes = /Equa[cç]o/i.test(aula.titulo) || /Equações?/i.test(aula.titulo) || aula.titulo.includes('Equações');
+        const tituloAula = aula.titulo || '';
+        const isEquacoes = /Equa[cç]o/i.test(tituloAula) || /Equações?/i.test(tituloAula) || tituloAula.includes('Equações');
 
         card.innerHTML = `
             <button class="assunto-header" aria-expanded="false">
@@ -259,15 +266,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </li>
                     `}
                     <li style="${(teoricoUrl || hasComplexTeoria) ? '' : 'display:none'}">
-                        <a href="${teoricoUrl ? `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof teoricoUrl === "string" ? teoricoUrl : teoricoUrl.filename)}` : '#'}" target="_blank" class="${hasComplexTeoria ? 'btn-complex-teoria' : ''}">
+                        <a href="${teoricoUrl ? `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof teoricoUrl === "string" ? teoricoUrl : teoricoUrl.filename)}` : '#'}" target="_blank" class="btn-teoria ${hasComplexTeoria ? 'btn-complex-teoria' : ''}">
                             <div class="item-thumb" data-src="/images/images_modulos/image_pdf.png"></div>
                             <div class="item-info">
-                                <span class="item-title">Material Teórico</span>
+                                <span class="item-title">${typeof teoricoUrl === "object" && teoricoUrl !== null && teoricoUrl.title && teoricoUrl.title.trim() !== '' ? teoricoUrl.title : 'Material Teórico'}</span>
                                 <span class="item-sub">Ler Resumo</span>
                             </div>
                         </a>
                     </li>
-                    <li>
+                    <li style="${hasAnyListas ? '' : 'display:none'}">
                         <a href="#" class="btn-lista">
                             <div class="item-thumb" data-src="/images/images_modulos/image_listaExercicios.png"></div>
                             <div class="item-info">
@@ -276,7 +283,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             </div>
                         </a>
                     </li>
-                    <li>
+                    <li style="${hasAnyGabaritos ? '' : 'display:none'}">
                         <a href="#" class="btn-gabarito">
                             <div class="item-thumb" data-src="/images/images_modulos/image_gabarito.png"></div>
                             <div class="item-info">
@@ -469,17 +476,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    document.querySelectorAll('.assunto-content .item-title').forEach(el => {
-        const text = (el.textContent || '').trim().toLowerCase();
-        const anchor = el.closest('a');
-        if (!anchor) return;
+    document.querySelectorAll('.assunto-content a').forEach(anchor => {
         // determinar qual assunto esse item pertence (usar index do card)
-        const card = el.closest('.assunto-card');
+        const card = anchor.closest('.assunto-card');
+        if (!card) return;
         const cards = Array.from(document.querySelectorAll('.assunto-card'));
         const cardIndex = cards.indexOf(card);
         const aula = (mod && mod.aulas && mod.aulas[cardIndex]) || {};
         
-        if (text.includes('lista') || text.includes('praticar')){
+        if (anchor.classList.contains('btn-lista')){
             anchor.addEventListener('click', (e) => {
                 e.preventDefault();
                 
@@ -499,75 +504,58 @@ document.addEventListener('DOMContentLoaded', async () => {
                    
                    const items = [];
 
+                   const getLabel = (obj, defaultLabel) => {
+                       return (obj && typeof obj === 'object' && obj.title && obj.title.trim() !== '') ? obj.title : defaultLabel;
+                   };
+
                    // Se for ADMIN, mostrar tudo
                    if (isAdmin || modality === 'INTEGRAL') {
-                         if (hasExtensivo) items.push({ label: 'Praticando ENEM (Extensivo)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtensivo === "string" ? hasExtensivo : hasExtensivo.filename)}` });
-                         if (hasAprof) items.push({ label: 'Praticando ENEM (Aprofundamento)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasAprof === "string" ? hasAprof : hasAprof.filename)}` });
-                         if (hasDefault) items.push({ label: 'Praticando ENEM (Geral)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasDefault === "string" ? hasDefault : hasDefault.filename)}` });
-                         
-                         // Se não tiver nenhum dos dois cadastrado, fallback
-                         if (!hasExtensivo && !hasAprof && !hasDefault) {
-                             items.push({ label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' });
-                         }
+                         if (hasExtensivo) items.push({ label: getLabel(hasExtensivo, 'Praticando ENEM (Extensivo)'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtensivo === "string" ? hasExtensivo : hasExtensivo.filename)}` });
+                         if (hasAprof) items.push({ label: getLabel(hasAprof, 'Praticando ENEM (Aprofundamento)'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasAprof === "string" ? hasAprof : hasAprof.filename)}` });
+                         if (hasDefault) items.push({ label: getLabel(hasDefault, 'Praticando ENEM (Geral)'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasDefault === "string" ? hasDefault : hasDefault.filename)}` });
 
-                         if (hasCongMod) items.push({ label: 'Congruência Modular', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasCongMod === "string" ? hasCongMod : hasCongMod.filename)}` });
+                         if (hasCongMod) items.push({ label: getLabel(hasCongMod, 'Congruência Modular'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasCongMod === "string" ? hasCongMod : hasCongMod.filename)}` });
 
-                         if (hasExtra) items.push({ label: 'Lista Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtra === "string" ? hasExtra : hasExtra.filename)}` });
-                         else items.push({ label: 'Lista Extra', href: 'questoes.html?lista=lista-extra' });
+                         if (hasExtra) items.push({ label: getLabel(hasExtra, 'Lista Extra'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtra === "string" ? hasExtra : hasExtra.filename)}` });
 
-                         if (hasExtra2) items.push({ label: 'Lista Extra 2', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtra2 === "string" ? hasExtra2 : hasExtra2.filename)}` });
+                         if (hasExtra2) items.push({ label: getLabel(hasExtra2, 'Lista Extra 2'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtra2 === "string" ? hasExtra2 : hasExtra2.filename)}` });
 
-                         openModal('Para Praticar', items);
+                         if (items.length > 0) openModal('Para Praticar', items);
                          return;
                    }
 
                    // SEPARAÇÃO SOLICITADA PARA ALUNOS
-                   // Se o aluno for APROFUNDAMENTO, ele vê as duas opções separadas se existirem? 
-                   // Ou se ele for EXTENSIVO ele vê só a extensiva?
-                   // Assumindo que aprofundamento -> Vê Aprofundamento E Extensivo (como opções separadas)
-                   // EXTENSIVO -> Vê Extensivo
-                   
                    if (modality === 'APROFUNDAMENTO') {
                        if (hasAprof) {
-                           items.push({ label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasAprof === "string" ? hasAprof : hasAprof.filename)}` });
+                           items.push({ label: getLabel(hasAprof, 'Praticando ENEM (Aprof.)'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasAprof === "string" ? hasAprof : hasAprof.filename)}` });
                        } else if (hasDefault) {
-                           items.push({ label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasDefault === "string" ? hasDefault : hasDefault.filename)}` });
-                       } else {
-                           // Fallback genérico se aluno Aprofundamento não tem PDF Aprofundamento cadastrado
-                           // Se não há aprofundamento, tentamos dar algo genérico
-                           items.push({ label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' });
-                       }
-
+                           items.push({ label: getLabel(hasDefault, 'Praticando ENEM'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasDefault === "string" ? hasDefault : hasDefault.filename)}` });
+                       } 
                    } else {
                        // Alunos EXTENSIVO ou outros
-                       if (hasExtensivo) items.push({ label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtensivo === "string" ? hasExtensivo : hasExtensivo.filename)}` });
-                       else if (hasDefault) items.push({ label: 'Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasDefault === "string" ? hasDefault : hasDefault.filename)}` });
-                       else items.push({ label: 'Praticando ENEM', href: 'questoes.html?lista=praticando-enem' });
+                       if (hasExtensivo) items.push({ label: getLabel(hasExtensivo, 'Praticando ENEM'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtensivo === "string" ? hasExtensivo : hasExtensivo.filename)}` });
+                       else if (hasDefault) items.push({ label: getLabel(hasDefault, 'Praticando ENEM'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasDefault === "string" ? hasDefault : hasDefault.filename)}` });
                    }
 
-                   // Congruencia Modular (Assumindo disponivel pra todos ou aprofundamento? 
-                   // A aula era requiredModality: "aprofundamento". Vamos assumir para todos por enquanto se estava em extra antes, ou seguir a logica, mas vou colocar para todos como lista extra)
                    if (hasCongMod) {
-                        items.push({ label: 'Congruência Modular', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasCongMod === "string" ? hasCongMod : hasCongMod.filename)}` });
+                        items.push({ label: getLabel(hasCongMod, 'Congruência Modular'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasCongMod === "string" ? hasCongMod : hasCongMod.filename)}` });
                    }
 
                    // Lista Extra (sempre disponível)
                    if (hasExtra) {
-                       items.push({ label: 'Lista Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtra === "string" ? hasExtra : hasExtra.filename)}` });
-                   } else {
-                       items.push({ label: 'Lista Extra', href: 'questoes.html?lista=lista-extra' });
+                       items.push({ label: getLabel(hasExtra, 'Lista Extra'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtra === "string" ? hasExtra : hasExtra.filename)}` });
                    }
 
                    // Lista Extra 2
                    if (hasExtra2) {
-                       items.push({ label: 'Lista Extra 2', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtra2 === "string" ? hasExtra2 : hasExtra2.filename)}` });
+                       items.push({ label: getLabel(hasExtra2, 'Lista Extra 2'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtra2 === "string" ? hasExtra2 : hasExtra2.filename)}` });
                    }
 
-                   openModal('Para Praticar', items);
+                   if (items.length > 0) openModal('Para Praticar', items);
                 })();
             });
         }
-        if (text.includes('gabarit')){
+        if (anchor.classList.contains('btn-gabarito')){
             anchor.addEventListener('click', (e) => {
                 e.preventDefault();
 
@@ -579,22 +567,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     const gabs = (aula.materiais && aula.materiais.gabaritos) || {};
 
+                    const getLabel = (obj, defaultLabel) => {
+                       return (obj && typeof obj === 'object' && obj.title && obj.title.trim() !== '') ? obj.title : defaultLabel;
+                    };
+
                     // Admin vê tudo que estiver disponível
                     if (isAdmin) {
                         const items = [];
-                        if (gabs.pe_extensivo) items.push({ label: 'Gabarito (E) - Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.pe_extensivo === "string" ? gabs.pe_extensivo : gabs.pe_extensivo.filename)}` });
-                        if (gabs.pe_aprofundamento) items.push({ label: 'Gabarito (A) - Praticando ENEM', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.pe_aprofundamento === "string" ? gabs.pe_aprofundamento : gabs.pe_aprofundamento.filename)}` });
-                        if (gabs.default) items.push({ label: 'Gabarito (Geral)', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.default === "string" ? gabs.default : gabs.default.filename)}` });
+                        if (gabs.pe_extensivo) items.push({ label: getLabel(gabs.pe_extensivo, 'Gabarito (E) - Praticando ENEM'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.pe_extensivo === "string" ? gabs.pe_extensivo : gabs.pe_extensivo.filename)}` });
+                        if (gabs.pe_aprofundamento) items.push({ label: getLabel(gabs.pe_aprofundamento, 'Gabarito (A) - Praticando ENEM'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.pe_aprofundamento === "string" ? gabs.pe_aprofundamento : gabs.pe_aprofundamento.filename)}` });
+                        if (gabs.default) items.push({ label: getLabel(gabs.default, 'Gabarito (Geral)'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.default === "string" ? gabs.default : gabs.default.filename)}` });
 
-                        if (gabs.cong_mod) items.push({ label: 'Gabarito - Congruência Modular', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.cong_mod === "string" ? gabs.cong_mod : gabs.cong_mod.filename)}` });
-                        if (gabs.extra) items.push({ label: 'Gabarito Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.extra === "string" ? gabs.extra : gabs.extra.filename)}` });
-                        if (gabs.extra2) items.push({ label: 'Gabarito Extra 2', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.extra2 === "string" ? gabs.extra2 : gabs.extra2.filename)}` });
+                        if (gabs.cong_mod) items.push({ label: getLabel(gabs.cong_mod, 'Gabarito - Congruência Modular'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.cong_mod === "string" ? gabs.cong_mod : gabs.cong_mod.filename)}` });
+                        if (gabs.extra) items.push({ label: getLabel(gabs.extra, 'Gabarito Extra'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.extra === "string" ? gabs.extra : gabs.extra.filename)}` });
+                        if (gabs.extra2) items.push({ label: getLabel(gabs.extra2, 'Gabarito Extra 2'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.extra2 === "string" ? gabs.extra2 : gabs.extra2.filename)}` });
                         
-                        // Fallback caso não tenha nada cadastrado
-                        if (items.length === 0){
-                             items.push({ label: 'Lista extra', href: 'questoes.html?gabarito=lista-extra' });
-                        }
-                        openModal('Gabaritos', items);
+                        if (items.length > 0) openModal('Gabaritos', items);
                         return;
                     }
 
@@ -606,49 +594,48 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (modality === 'APROFUNDAMENTO'){
                         if (gabs.pe_aprofundamento) {
                             mainLink = `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.pe_aprofundamento === "string" ? gabs.pe_aprofundamento : gabs.pe_aprofundamento.filename)}`;
-                            label = 'Praticando ENEM (Aprof.)';
+                            label = getLabel(gabs.pe_aprofundamento, 'Praticando ENEM (Aprof.)');
                         } else if (gabs.pe_extensivo) {
                             mainLink = `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.pe_extensivo === "string" ? gabs.pe_extensivo : gabs.pe_extensivo.filename)}`;
+                            label = getLabel(gabs.pe_extensivo, 'Praticando ENEM');
                         } else if (gabs.default) {
                             mainLink = `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.default === "string" ? gabs.default : gabs.default.filename)}`;
+                            label = getLabel(gabs.default, 'Praticando ENEM (Geral)');
                         }
                     } else {
                         // Extensivo e outros
                         if (gabs.pe_extensivo) {
                             mainLink = `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.pe_extensivo === "string" ? gabs.pe_extensivo : gabs.pe_extensivo.filename)}`;
+                            label = getLabel(gabs.pe_extensivo, 'Praticando ENEM');
                         } else if (gabs.default) {
                             mainLink = `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.default === "string" ? gabs.default : gabs.default.filename)}`;
+                            label = getLabel(gabs.default, 'Praticando ENEM (Geral)');
                         }
                     }
 
                     if (mainLink) {
                         items.push({ label: label, href: mainLink });
-                    } else {
-                        // fallback
-                        items.push({ label: 'Praticando ENEM', href: 'questoes.html?gabarito=praticando-enem' });
                     }
 
                     if (gabs.cong_mod) {
-                        items.push({ label: 'Gabarito - Congruência Modular', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.cong_mod === "string" ? gabs.cong_mod : gabs.cong_mod.filename)}` });
+                        items.push({ label: getLabel(gabs.cong_mod, 'Gabarito - Congruência Modular'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.cong_mod === "string" ? gabs.cong_mod : gabs.cong_mod.filename)}` });
                     }
 
                     // Extra
                     if (gabs.extra) {
-                         items.push({ label: 'Gabarito Extra', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.extra === "string" ? gabs.extra : gabs.extra.filename)}` });
-                    } else {
-                         items.push({ label: 'Lista extra', href: 'questoes.html?gabarito=lista-extra' });
+                         items.push({ label: getLabel(gabs.extra, 'Gabarito Extra'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.extra === "string" ? gabs.extra : gabs.extra.filename)}` });
                     }
 
                     if (gabs.extra2) {
-                         items.push({ label: 'Gabarito Extra 2', href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.extra2 === "string" ? gabs.extra2 : gabs.extra2.filename)}` });
+                         items.push({ label: getLabel(gabs.extra2, 'Gabarito Extra 2'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.extra2 === "string" ? gabs.extra2 : gabs.extra2.filename)}` });
                     }
 
-                    openModal('Gabaritos', items);
+                    if (items.length > 0) openModal('Gabaritos', items);
                 })();
             });
         }
         
-        if (text.includes('material teórico') || text.includes('ler resumo')) {
+        if (anchor.classList.contains('btn-teoria')) {
             anchor.addEventListener('click', (e) => {
                 e.preventDefault();
 
@@ -674,7 +661,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                    // Helper para adicionar item
                    const add = (label, url) => {
-                       if (url) items.push({ label, href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof url === "string" ? url : url.filename)}` });
+                       if (url) {
+                            const actualLabel = (url && typeof url === 'object' && url.title && url.title.trim() !== '') ? url.title : label;
+                            items.push({ label: actualLabel, href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof url === "string" ? url : url.filename)}` });
+                       }
                    };
 
                    if (isAdmin) {
