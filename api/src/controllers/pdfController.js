@@ -5,11 +5,7 @@ export const serveWatermarkedPdf = async (req, res) => {
   try {
     const { docId } = req.params;
 
-    // Permite caracteres alfanuméricos, ponto, traço, sublinhado e caracteres Unicode (acentos, cedilha, etc)
-    // Exclui barras para evitar path traversal
-    if (!docId || docId.includes('/') || docId.includes('\\')) {
-      return res.status(400).json({ error: 'ID de documento inválido.' });
-    }
+    
 
     const nomeArquivo = `pdfs/${docId}`; 
     const fileRef = bucket.file(nomeArquivo);
