@@ -5,9 +5,14 @@ export const serveWatermarkedPdf = async (req, res) => {
   try {
     const { docId } = req.params;
 
-    
+    // Permite caracteres alfanuméricos, ponto, traço, sublinhado, barras e caracteres Unicode
+    // Exclui barras invertidas e pontos duplos para evitar path traversal
+    if (!docId || docId.includes('\\') || docId.includes('..')) {
+      return res.status(400).json({ error: 'ID de documento inválido.' });
+    }
 
-    const nomeArquivo = `pdfs/${docId}`; 
+    const cleanDocId = docId.replace(/^\/+/, '');
+    const nomeArquivo = `pdfs/${cleanDocId}`; 
     const fileRef = bucket.file(nomeArquivo);
 
     const [exists] = await fileRef.exists();
@@ -88,10 +93,9 @@ export const serveWatermarkedPdf = async (req, res) => {
     // objectsPerTick: Infinity -> Processa tudo síncrono para evitar falhas de async
     const pdfBytes = await pdfDoc.save({ useObjectStreams: false });
 
+    const fileNameForHeader = docId.split('/').pop();
     res.setHeader('Content-Type', 'application/pdf');
-
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="${docId}"`);
+    res.setHeader('Content-Disposition', `inline; filename="${fileNameForHeader}"`);
     
     res.send(Buffer.from(pdfBytes));
 
