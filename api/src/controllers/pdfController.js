@@ -11,14 +11,24 @@ export const serveWatermarkedPdf = async (req, res) => {
       return res.status(400).json({ error: 'ID de documento inválido.' });
     }
 
-    const cleanDocId = docId.replace(/^\/+/, '');
-    const nomeArquivo = `pdfs/${cleanDocId}`; 
-    const fileRef = bucket.file(nomeArquivo);
+    let cleanDocId = docId.replace(/^\/+/, '');
+    let nomeArquivo = `pdfs/${cleanDocId}`; 
+    let fileRef = bucket.file(nomeArquivo);
 
-    const [exists] = await fileRef.exists();
+    let [exists] = await fileRef.exists();
     if (!exists) {
-      console.log(`Arquivo não encontrado: ${nomeArquivo}`);
-      return res.status(404).json({ error: 'Documento não encontrado.' });
+      // Tentar converter "Módulo X" para "Modulo_X" caso tenha sido salvo com acento e espaço
+      const alternateDocId = cleanDocId.replace(/M[oó]dulo\s+(\d+)/gi, 'Modulo_$1');
+      if (alternateDocId !== cleanDocId) {
+        nomeArquivo = `pdfs/${alternateDocId}`;
+        fileRef = bucket.file(nomeArquivo);
+        [exists] = await fileRef.exists();
+      }
+      
+      if (!exists) {
+        console.log(`Arquivo não encontrado: ${nomeArquivo} (tentou também ${cleanDocId})`);
+        return res.status(404).json({ error: 'Documento não encontrado.' });
+      }
     }
 
     const [fileBuffer] = await fileRef.download();
