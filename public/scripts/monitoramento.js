@@ -1104,14 +1104,16 @@ function renderPdfList(subjectOrder) {
         div.innerHTML = `<h5>${title}</h5>`;
         
         Object.entries(items).forEach(([k, v]) => {
-            // v is { id, filename, title }
-            const displayTitle = v.title || v.filename.split('/').pop();
-            div.innerHTML += `<div style="font-size:0.9em; padding-left:10px; margin-bottom: 4px;">
-                <span style="color:var(--muted); font-size:0.85em;">[${k}]</span> 
-                <a href="${v.filename}" target="_blank" style="color:#6ee7b7">${escapeHtml(displayTitle)}</a> 
-                <button class="edit-pdf-btn" data-id="${v.id}" data-filename="${v.filename}" data-title="${v.title || ''}" style="font-size:0.8em; color:#facc15; border:none; background:none; cursor:pointer; margin-left:5px;">[Editar]</button>
-                <button class="delete-pdf-btn" data-id="${v.id}" style="font-size:0.8em; color:red; border:none; background:none; cursor:pointer; margin-left:5px;">[X]</button>
-            </div>`;
+            const list = Array.isArray(v) ? v : [v];
+            list.forEach(val => {
+                const displayTitle = val.title || val.filename.split('/').pop();
+                div.innerHTML += `<div style="font-size:0.9em; padding-left:10px; margin-bottom: 4px;">
+                    <span style="color:var(--muted); font-size:0.85em;">[${k}]</span> 
+                    <a href="${val.filename}" target="_blank" style="color:#6ee7b7">${escapeHtml(displayTitle)}</a> 
+                    <button class="edit-pdf-btn" data-id="${val.id}" data-filename="${val.filename}" data-title="${val.title || ''}" style="font-size:0.8em; color:#facc15; border:none; background:none; cursor:pointer; margin-left:5px;">[Editar]</button>
+                    <button class="delete-pdf-btn" data-id="${val.id}" style="font-size:0.8em; color:red; border:none; background:none; cursor:pointer; margin-left:5px;">[X]</button>
+                </div>`;
+            });
         });
         container.appendChild(div);
     };

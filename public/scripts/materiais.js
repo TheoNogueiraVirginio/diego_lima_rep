@@ -508,17 +508,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                        return (obj && typeof obj === 'object' && obj.title && obj.title.trim() !== '') ? obj.title : defaultLabel;
                    };
 
+                   const addItems = (data, defaultLabel) => {
+                       if (!data) return;
+                       const arr = Array.isArray(data) ? data : [data];
+                       arr.forEach((obj, idx) => {
+                           let lbl = getLabel(obj, defaultLabel);
+                           if (arr.length > 1 && (!obj || typeof obj !== 'object' || !obj.title || obj.title.trim() === '')) {
+                               lbl = `${defaultLabel} - ${idx + 1}`;
+                           }
+                           const filename = typeof obj === "string" ? obj : obj.filename;
+                           if (filename) items.push({ label: lbl, href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(filename)}` });
+                       });
+                   };
+
                    // Se for ADMIN, mostrar tudo
                    if (isAdmin || modality === 'INTEGRAL') {
-                         if (hasExtensivo) items.push({ label: getLabel(hasExtensivo, 'Praticando ENEM (Extensivo)'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtensivo === "string" ? hasExtensivo : hasExtensivo.filename)}` });
-                         if (hasAprof) items.push({ label: getLabel(hasAprof, 'Praticando ENEM (Aprofundamento)'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasAprof === "string" ? hasAprof : hasAprof.filename)}` });
-                         if (hasDefault) items.push({ label: getLabel(hasDefault, 'Praticando ENEM (Geral)'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasDefault === "string" ? hasDefault : hasDefault.filename)}` });
-
-                         if (hasCongMod) items.push({ label: getLabel(hasCongMod, 'Congruência Modular'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasCongMod === "string" ? hasCongMod : hasCongMod.filename)}` });
-
-                         if (hasExtra) items.push({ label: getLabel(hasExtra, 'Lista Extra'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtra === "string" ? hasExtra : hasExtra.filename)}` });
-
-                         if (hasExtra2) items.push({ label: getLabel(hasExtra2, 'Lista Extra 2'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtra2 === "string" ? hasExtra2 : hasExtra2.filename)}` });
+                         addItems(hasExtensivo, 'Praticando ENEM (Extensivo)');
+                         addItems(hasAprof, 'Praticando ENEM (Aprofundamento)');
+                         addItems(hasDefault, 'Praticando ENEM (Geral)');
+                         addItems(hasCongMod, 'Congruência Modular');
+                         addItems(hasExtra, 'Lista Extra');
+                         addItems(hasExtra2, 'Lista Extra 2');
 
                          if (items.length > 0) openModal('Para Praticar', items);
                          return;
@@ -526,30 +536,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                    // SEPARAÇÃO SOLICITADA PARA ALUNOS
                    if (modality === 'APROFUNDAMENTO') {
-                       if (hasAprof) {
-                           items.push({ label: getLabel(hasAprof, 'Praticando ENEM (Aprof.)'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasAprof === "string" ? hasAprof : hasAprof.filename)}` });
-                       } else if (hasDefault) {
-                           items.push({ label: getLabel(hasDefault, 'Praticando ENEM'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasDefault === "string" ? hasDefault : hasDefault.filename)}` });
-                       } 
+                       if (hasAprof) addItems(hasAprof, 'Praticando ENEM (Aprof.)');
+                       else if (hasDefault) addItems(hasDefault, 'Praticando ENEM');
                    } else {
                        // Alunos EXTENSIVO ou outros
-                       if (hasExtensivo) items.push({ label: getLabel(hasExtensivo, 'Praticando ENEM'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtensivo === "string" ? hasExtensivo : hasExtensivo.filename)}` });
-                       else if (hasDefault) items.push({ label: getLabel(hasDefault, 'Praticando ENEM'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasDefault === "string" ? hasDefault : hasDefault.filename)}` });
+                       if (hasExtensivo) addItems(hasExtensivo, 'Praticando ENEM');
+                       else if (hasDefault) addItems(hasDefault, 'Praticando ENEM');
                    }
 
-                   if (hasCongMod) {
-                        items.push({ label: getLabel(hasCongMod, 'Congruência Modular'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasCongMod === "string" ? hasCongMod : hasCongMod.filename)}` });
-                   }
-
-                   // Lista Extra (sempre disponível)
-                   if (hasExtra) {
-                       items.push({ label: getLabel(hasExtra, 'Lista Extra'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtra === "string" ? hasExtra : hasExtra.filename)}` });
-                   }
-
-                   // Lista Extra 2
-                   if (hasExtra2) {
-                       items.push({ label: getLabel(hasExtra2, 'Lista Extra 2'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof hasExtra2 === "string" ? hasExtra2 : hasExtra2.filename)}` });
-                   }
+                   addItems(hasCongMod, 'Congruência Modular');
+                   addItems(hasExtra, 'Lista Extra');
+                   addItems(hasExtra2, 'Lista Extra 2');
 
                    if (items.length > 0) openModal('Para Praticar', items);
                 })();
@@ -571,64 +568,46 @@ document.addEventListener('DOMContentLoaded', async () => {
                        return (obj && typeof obj === 'object' && obj.title && obj.title.trim() !== '') ? obj.title : defaultLabel;
                     };
 
+                    const items = [];
+                    const addItems = (data, defaultLabel) => {
+                       if (!data) return;
+                       const arr = Array.isArray(data) ? data : [data];
+                       arr.forEach((obj, idx) => {
+                           let lbl = getLabel(obj, defaultLabel);
+                           if (arr.length > 1 && (!obj || typeof obj !== 'object' || !obj.title || obj.title.trim() === '')) {
+                               lbl = `${defaultLabel} - ${idx + 1}`;
+                           }
+                           const filename = typeof obj === "string" ? obj : obj.filename;
+                           if (filename) items.push({ label: lbl, href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(filename)}` });
+                       });
+                    };
+
                     // Admin vê tudo que estiver disponível
                     if (isAdmin) {
-                        const items = [];
-                        if (gabs.pe_extensivo) items.push({ label: getLabel(gabs.pe_extensivo, 'Gabarito (E) - Praticando ENEM'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.pe_extensivo === "string" ? gabs.pe_extensivo : gabs.pe_extensivo.filename)}` });
-                        if (gabs.pe_aprofundamento) items.push({ label: getLabel(gabs.pe_aprofundamento, 'Gabarito (A) - Praticando ENEM'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.pe_aprofundamento === "string" ? gabs.pe_aprofundamento : gabs.pe_aprofundamento.filename)}` });
-                        if (gabs.default) items.push({ label: getLabel(gabs.default, 'Gabarito (Geral)'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.default === "string" ? gabs.default : gabs.default.filename)}` });
-
-                        if (gabs.cong_mod) items.push({ label: getLabel(gabs.cong_mod, 'Gabarito - Congruência Modular'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.cong_mod === "string" ? gabs.cong_mod : gabs.cong_mod.filename)}` });
-                        if (gabs.extra) items.push({ label: getLabel(gabs.extra, 'Gabarito Extra'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.extra === "string" ? gabs.extra : gabs.extra.filename)}` });
-                        if (gabs.extra2) items.push({ label: getLabel(gabs.extra2, 'Gabarito Extra 2'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.extra2 === "string" ? gabs.extra2 : gabs.extra2.filename)}` });
+                        addItems(gabs.pe_extensivo, 'Gabarito (E) - Praticando ENEM');
+                        addItems(gabs.pe_aprofundamento, 'Gabarito (A) - Praticando ENEM');
+                        addItems(gabs.default, 'Gabarito (Geral)');
+                        addItems(gabs.cong_mod, 'Gabarito - Congruência Modular');
+                        addItems(gabs.extra, 'Gabarito Extra');
+                        addItems(gabs.extra2, 'Gabarito Extra 2');
                         
                         if (items.length > 0) openModal('Gabaritos', items);
                         return;
                     }
 
-                    const items = [];
                     // Lógica para Aluno
-                    let mainLink = null;
-                    let label = 'Praticando ENEM';
-
                     if (modality === 'APROFUNDAMENTO'){
-                        if (gabs.pe_aprofundamento) {
-                            mainLink = `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.pe_aprofundamento === "string" ? gabs.pe_aprofundamento : gabs.pe_aprofundamento.filename)}`;
-                            label = getLabel(gabs.pe_aprofundamento, 'Praticando ENEM (Aprof.)');
-                        } else if (gabs.pe_extensivo) {
-                            mainLink = `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.pe_extensivo === "string" ? gabs.pe_extensivo : gabs.pe_extensivo.filename)}`;
-                            label = getLabel(gabs.pe_extensivo, 'Praticando ENEM');
-                        } else if (gabs.default) {
-                            mainLink = `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.default === "string" ? gabs.default : gabs.default.filename)}`;
-                            label = getLabel(gabs.default, 'Praticando ENEM (Geral)');
-                        }
+                        if (gabs.pe_aprofundamento) addItems(gabs.pe_aprofundamento, 'Praticando ENEM (Aprof.)');
+                        else if (gabs.pe_extensivo) addItems(gabs.pe_extensivo, 'Praticando ENEM');
+                        else if (gabs.default) addItems(gabs.default, 'Praticando ENEM (Geral)');
                     } else {
-                        // Extensivo e outros
-                        if (gabs.pe_extensivo) {
-                            mainLink = `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.pe_extensivo === "string" ? gabs.pe_extensivo : gabs.pe_extensivo.filename)}`;
-                            label = getLabel(gabs.pe_extensivo, 'Praticando ENEM');
-                        } else if (gabs.default) {
-                            mainLink = `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.default === "string" ? gabs.default : gabs.default.filename)}`;
-                            label = getLabel(gabs.default, 'Praticando ENEM (Geral)');
-                        }
+                        if (gabs.pe_extensivo) addItems(gabs.pe_extensivo, 'Praticando ENEM');
+                        else if (gabs.default) addItems(gabs.default, 'Praticando ENEM (Geral)');
                     }
 
-                    if (mainLink) {
-                        items.push({ label: label, href: mainLink });
-                    }
-
-                    if (gabs.cong_mod) {
-                        items.push({ label: getLabel(gabs.cong_mod, 'Gabarito - Congruência Modular'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.cong_mod === "string" ? gabs.cong_mod : gabs.cong_mod.filename)}` });
-                    }
-
-                    // Extra
-                    if (gabs.extra) {
-                         items.push({ label: getLabel(gabs.extra, 'Gabarito Extra'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.extra === "string" ? gabs.extra : gabs.extra.filename)}` });
-                    }
-
-                    if (gabs.extra2) {
-                         items.push({ label: getLabel(gabs.extra2, 'Gabarito Extra 2'), href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof gabs.extra2 === "string" ? gabs.extra2 : gabs.extra2.filename)}` });
-                    }
+                    addItems(gabs.cong_mod, 'Gabarito - Congruência Modular');
+                    addItems(gabs.extra, 'Gabarito Extra');
+                    addItems(gabs.extra2, 'Gabarito Extra 2');
 
                     if (items.length > 0) openModal('Gabaritos', items);
                 })();

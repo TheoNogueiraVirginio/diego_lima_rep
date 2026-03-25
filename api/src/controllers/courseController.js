@@ -75,21 +75,22 @@ export const getLessonsByModule = async (req, res) => {
             const subj = getSubject(m.subjectOrder, m.subjectName);
             
             // Map flat list to nested structure: materials[category][modality] = { id, filename, title }
+            // Map flat list to nested structure: materials[category][modality] = [ { id, filename, title }, ... ]
             if (m.category === 'teoria') {
                 if (!subj.materiais.teoria || typeof subj.materiais.teoria !== 'object') {
                     subj.materiais.teoria = {};
                 }
                 const modKey = m.modality || 'default';
-                // Store object with ID and filename
-                subj.materiais.teoria[modKey] = { id: m.id, filename: m.filename, title: m.title };
+                if (!Array.isArray(subj.materiais.teoria[modKey])) subj.materiais.teoria[modKey] = [];
+                subj.materiais.teoria[modKey].push({ id: m.id, filename: m.filename, title: m.title });
 
             } else if (['lista', 'gabarito'].includes(m.category)) {
-                // Map category 'lista' -> 'listas', 'gabarito' -> 'gabaritos'
                 const key = m.category === 'lista' ? 'listas' : 'gabaritos';
                 if (!subj.materiais[key]) subj.materiais[key] = {};
                 
                 const modKey = m.modality || 'default';
-                subj.materiais[key][modKey] = { id: m.id, filename: m.filename, title: m.title };
+                if (!Array.isArray(subj.materiais[key][modKey])) subj.materiais[key][modKey] = [];
+                subj.materiais[key][modKey].push({ id: m.id, filename: m.filename, title: m.title });
             }
         });
 
@@ -187,32 +188,10 @@ export const createPdf = async (req, res) => {
             title
         };
 
-        // Check for existing material in this specific slot (same module, subject, category, modality)
-        // This prevents duplicate entries for the same "slot", updating the existing one instead.
-        const existing = await prisma.pdfMaterial.findFirst({
-            where: {
-                module: data.module,
-                subjectOrder: data.subjectOrder,
-                category: data.category,
-                modality: data.modality
-            }
+        // Allow multiple PDFs per category and modality
+        const result = await prisma.pdfMaterial.create({
+            data
         });
-
-        let result;
-        if (existing) {
-            result = await prisma.pdfMaterial.update({
-                where: { id: existing.id },
-                data: {
-                    filename: data.filename,
-                    title: data.title,
-                    subjectName: data.subjectName // Update name ensuring consistency
-                }
-            });
-        } else {
-            result = await prisma.pdfMaterial.create({
-                data
-            });
-        }
         
         res.status(201).json(result);
     } catch (e) {
