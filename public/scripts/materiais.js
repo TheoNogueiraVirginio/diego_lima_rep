@@ -1,14 +1,14 @@
 // Arquivo renomeado a partir de modulo.js — mantém a mesma lógica
 document.addEventListener('DOMContentLoaded', async () => {
     // --- TRAVA DE SEGURANÇA (URL HACK) ---
-    // Impede que usuário comum acesse módulos 2, 3 ou 4 direto pela URL
+    // Impede que usuário comum acesse módulos 3 ou 4 direto pela URL
     const params = new URLSearchParams(window.location.search);
     const moduloId = params.get('id') || '1';
 
     const localUserStatus = localStorage.getItem('userStatus');
     const isLocalAdmin = (localUserStatus === 'ADMIN');
 
-    if (!isLocalAdmin && ['2', '3', '4'].includes(moduloId)) {
+    if (!isLocalAdmin && ['3', '4'].includes(moduloId)) {
         // Função inline para garantir o bloqueio imediato
         const overlay = document.createElement('div');
         overlay.style.position = 'fixed';
