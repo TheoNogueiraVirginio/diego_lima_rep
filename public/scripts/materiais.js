@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (rawTeorico.requiredModality || rawTeorico.file || rawTeorico.url) {
                     const req = rawTeorico.requiredModality;
                     let visible = true;
-                    if (req && !isAdmin) {
+                    if (req && !isAdmin && !userModality.includes('integral')) {
                         const reqStr = String(req).toLowerCase().trim();
                         if (reqStr === 'extensivo') {
                             const validos = ['extensivo', 'com_material', 'sem_material'];
