@@ -12,6 +12,14 @@ export const serveWatermarkedPdf = async (req, res) => {
     }
 
     let cleanDocId = docId.replace(/^\/+/, '');
+    
+    // Garantir que a string esteja devidamente decodificada (espaços, acentos, cedilha, e %2F para barras)
+    try {
+      cleanDocId = decodeURIComponent(cleanDocId);
+    } catch (e) {
+      console.warn('Erro ao decodificar docId:', cleanDocId);
+    }
+
     let nomeArquivo = `pdfs/${cleanDocId}`; 
     let fileRef = bucket.file(nomeArquivo);
 
