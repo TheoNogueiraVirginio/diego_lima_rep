@@ -743,14 +743,52 @@ const simuladoQuestions = [
     }
 ];
 
-function createOptionItem(letter, text) {
+const simuladoState = simuladoQuestions.map(() => ({
+    selectedOption: null,
+    flagged: false
+}));
+
+function createOptionItem(letter, text, optionIndex) {
     const article = document.createElement('article');
     article.className = 'alternativa';
+    article.dataset.optionIndex = optionIndex;
     article.innerHTML = `
         <span class="alternativa-letra">${letter}</span>
         <p>${text}</p>
     `;
     return article;
+}
+
+function updateFlagButton(index) {
+    const flagButton = document.getElementById('btn-flag');
+    if (!flagButton) return;
+    const isFlagged = simuladoState[index]?.flagged;
+    flagButton.textContent = isFlagged ? 'Remover Revisão' : 'Marcar para Revisão';
+    flagButton.classList.toggle('flagged-active', isFlagged);
+}
+
+function updateMapItemStatus(index) {
+    document.querySelectorAll('.mapa-item').forEach(button => {
+        const buttonIndex = Number(button.textContent) - 1;
+        if (Number.isNaN(buttonIndex)) return;
+
+        const state = simuladoState[buttonIndex];
+        button.classList.toggle('respondida', state.selectedOption !== null);
+        button.classList.toggle('flagged', state.flagged);
+    });
+}
+
+function selectOption(questionIndex, optionIndex) {
+    const currentSelected = simuladoState[questionIndex].selectedOption;
+    simuladoState[questionIndex].selectedOption = currentSelected === optionIndex ? null : optionIndex;
+    setActiveQuestion(questionIndex);
+    updateMapItemStatus(questionIndex);
+}
+
+function toggleFlag(questionIndex) {
+    simuladoState[questionIndex].flagged = !simuladoState[questionIndex].flagged;
+    updateFlagButton(questionIndex);
+    updateMapItemStatus(questionIndex);
 }
 
 function setActiveQuestion(index) {
@@ -765,6 +803,7 @@ function setActiveQuestion(index) {
         enunciadoTexto.innerHTML = `<p>Questão não disponível.</p>`;
         graficoPlaceholder.innerHTML = `<span>Imagem será importada em breve.</span>`;
         alternativasCard.innerHTML = '';
+        updateFlagButton(index);
         return;
     }
 
@@ -774,10 +813,21 @@ function setActiveQuestion(index) {
 
     alternativasCard.innerHTML = '';
     const letters = ['A', 'B', 'C', 'D', 'E'];
+    const selectedOption = simuladoState[index].selectedOption;
 
     currentQuestion.options.forEach((optionText, optionIndex) => {
-        alternativasCard.appendChild(createOptionItem(letters[optionIndex], optionText));
+        const optionItem = createOptionItem(letters[optionIndex], optionText, optionIndex);
+        if (selectedOption === optionIndex) {
+            optionItem.classList.add('selecionada');
+        }
+        optionItem.addEventListener('click', () => {
+            selectOption(index, optionIndex);
+        });
+        alternativasCard.appendChild(optionItem);
     });
+
+    updateFlagButton(index);
+    updateMapItemStatus(index);
 }
 
 function updateMapActive(index) {
@@ -786,12 +836,14 @@ function updateMapActive(index) {
     });
 }
 
+let currentIndex = 0;
+
 function initSimulado1() {
     const prevButton = document.querySelector('.btn-prev');
     const nextButton = document.querySelector('.btn-next');
+    const flagButton = document.getElementById('btn-flag');
     const mapButtons = Array.from(document.querySelectorAll('.mapa-item'));
 
-    let currentIndex = 0;
     setActiveQuestion(currentIndex);
     updateMapActive(currentIndex);
 
@@ -823,10 +875,16 @@ function initSimulado1() {
             updateMapActive(currentIndex);
         });
     });
+
+    updateMapItemStatus();
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initSimulado1);
-} else {
+document.addEventListener('DOMContentLoaded', () => {
+    const flagButton = document.getElementById('btn-flag');
+    if (flagButton) {
+        flagButton.addEventListener('click', () => {
+            toggleFlag(currentIndex);
+        });
+    }
     initSimulado1();
-}
+});
