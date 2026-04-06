@@ -14,10 +14,12 @@ document.addEventListener('DOMContentLoaded', ()=>{
   // Buscar alunos PAID e popular a tabela (inicial)
   initCustomSelect();
   const courseSelect = document.getElementById('courseFilter');
+  const classSelect = document.getElementById('classFilter');
   const searchInput = document.getElementById('studentSearch');
   const currentSearch = searchInput ? searchInput.value : '';
   const currentCourse = getCourseValue();
-  fetchPaidStudents(currentSearch || '', currentCourse || '');
+  const currentClass = getClassValue();
+  fetchPaidStudents(currentSearch || '', currentCourse || '', currentClass || '');
   fetchEnrollmentSummary();
   fetchCommentsForDashboard();
 
@@ -26,7 +28,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
     searchInput.addEventListener('input', debounce((e) => {
       const q = e.target.value || '';
       const mod = getCourseValue();
-      fetchPaidStudents(q, mod);
+      const cls = getClassValue();
+      fetchPaidStudents(q, mod, cls);
     }, 300));
   }
 
@@ -36,7 +39,18 @@ document.addEventListener('DOMContentLoaded', ()=>{
     courseSelect.addEventListener('change', (e) => {
       const mod = e.target.value || '';
       const q = searchInput ? searchInput.value : '';
-      fetchPaidStudents(q || '', mod);
+      const cls = getClassValue();
+      fetchPaidStudents(q || '', mod, cls);
+    });
+  }
+
+  // Filtrar por dia da aula
+  if (classSelect) {
+    classSelect.addEventListener('change', (e) => {
+      const cls = e.target.value || '';
+      const q = searchInput ? searchInput.value : '';
+      const mod = getCourseValue();
+      fetchPaidStudents(q || '', mod, cls);
     });
   }
 
@@ -211,7 +225,7 @@ function renderStudentsTable(students){
       <td>${escapeHtml(s.modality || '')}</td>
       <td><div class="progress"><div style="width:${percent}%"></div></div>${percent}%</td>
       <td>—</td>
-      <td class="status active">Ativo</td>
+      <td>${escapeHtml(s.classDay || '—')}</td>
       <td><button class="link-btn" onclick="openStudentDetails('${s.id}', '${escapeHtml(s.name.replace(/'/g, "\\'"))}')">Ver Detalhes</button></td>
     `;
     tbody.appendChild(tr);
@@ -319,17 +333,18 @@ function getLessonName(lessonId) {
   return null;
 }
 
-async function fetchPaidStudents(q = '', modality = ''){
+async function fetchPaidStudents(q = '', modality = '', classDay = ''){
   const debugElId = 'studentsDebug';
   try{
     const params = new URLSearchParams();
     if (q) params.set('q', q);
     if (modality) params.set('modality', modality);
+    if (classDay) params.set('classDay', classDay);
     const url = '/api/enrollment/paid' + (params.toString() ? '?' + params.toString() : '');
     const res = await fetch(url);
     const tbody = document.getElementById('studentsBody');
     const debugContainer = getOrCreateDebugContainer();
-    debugContainer.textContent = `HTTP ${res.status} ${res.statusText}  q=${q} modality=${modality}`;
+    debugContainer.textContent = `HTTP ${res.status} ${res.statusText}  q=${q} modality=${modality} classDay=${classDay}`;
 
     let students = [];
     try { students = await res.json(); } catch(e) { console.error('Erro ao parsear JSON', e); debugContainer.textContent += '\nJSON parse error'; }
@@ -374,6 +389,13 @@ async function fetchEnrollmentSummary(){
 
 function getCourseValue(){
   const cs = document.getElementById('courseFilter');
+  if (!cs) return '';
+  if (cs.classList.contains('custom-select')) return cs.getAttribute('data-value') || '';
+  return cs.value || '';
+}
+
+function getClassValue(){
+  const cs = document.getElementById('classFilter');
   if (!cs) return '';
   if (cs.classList.contains('custom-select')) return cs.getAttribute('data-value') || '';
   return cs.value || '';

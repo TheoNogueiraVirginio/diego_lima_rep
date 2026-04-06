@@ -53,6 +53,7 @@ async function importStudents() {
             headerMap.email = lowerHeaders.findIndex(h => h.includes('email'));
             headerMap.modality = lowerHeaders.findIndex(h => h.includes('curso') || h.includes('modalidade'));
             headerMap.phone = lowerHeaders.findIndex(h => h.includes('telefone') || h.includes('celular') || h.includes('whatsapp'));
+            headerMap.classDay = lowerHeaders.findIndex(h => h.includes('turma'));
 
             const missing = [];
             if (headerMap.name === -1) missing.push('Nome');
@@ -77,7 +78,8 @@ async function importStudents() {
             email: cols[headerMap.email],
             cpf: cols[headerMap.cpf],
             modality: cols[headerMap.modality],
-            phone: headerMap.phone !== -1 ? cols[headerMap.phone] : 'Não informado'
+            phone: headerMap.phone !== -1 ? cols[headerMap.phone] : 'Não informado',
+            classDay: headerMap.classDay !== -1 ? cols[headerMap.classDay] : null
         };
 
         if (!foundStart) {
@@ -111,6 +113,7 @@ async function processStudent(row) {
     const cpf = row.cpf ? row.cpf.replace(/\D/g, '') : '';
     const rawModality = row.modality || 'Extensivo';
     const phone = row.phone;
+    const classDay = row.classDay || null;
 
     if (!email || !cpf) {
         throw new Error(`Dados incompletos: Email=${email}, CPF=${cpf}`);
@@ -139,6 +142,7 @@ async function processStudent(row) {
             cpf,
             phone,
             modality,
+            classDay,
             amount: 0.0, // Importado, assumimos valor 0 ou ajuste conforme necessidade
             status: 'PAID', // Já entra como pago/ativo
             birthDate: null, // Opcional

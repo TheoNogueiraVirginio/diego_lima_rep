@@ -26,6 +26,7 @@ model Enrollment {
   
   modality String
   amount Float
+  classDay String? // Dia da semana (Segunda, Terça, etc)
 
   status String @default("PENDING")
   paymentId String?

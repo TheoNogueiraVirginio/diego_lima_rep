@@ -497,6 +497,7 @@ export const listPaidEnrollments = async (req, res) => {
     try {
         const q = req.query.q ? String(req.query.q).trim() : '';
         const modality = req.query.modality ? String(req.query.modality).trim() : '';
+        const classDay = req.query.classDay ? String(req.query.classDay).trim() : '';
 
         let whereClause;
         if (!q) {
@@ -518,6 +519,11 @@ export const listPaidEnrollments = async (req, res) => {
             whereClause = Object.assign({}, whereClause, { modality });
         }
 
+        // Se dia da aula fornecido, adicionar filtro (AND)
+        if (classDay) {
+            whereClause = Object.assign({}, whereClause, { classDay });
+        }
+
         const students = await prisma.enrollment.findMany({
             where: whereClause,
             orderBy: { name: 'asc' },
@@ -531,7 +537,8 @@ export const listPaidEnrollments = async (req, res) => {
                 modality: true,
                 amount: true,
                 createdAt: true,
-                lastAccess: true
+                lastAccess: true,
+                classDay: true
             }
         });
 
