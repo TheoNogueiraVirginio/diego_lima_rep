@@ -499,29 +499,25 @@ export const listPaidEnrollments = async (req, res) => {
         const modality = req.query.modality ? String(req.query.modality).trim() : '';
         const classDay = req.query.classDay ? String(req.query.classDay).trim() : '';
 
-        let whereClause;
-        if (!q) {
-            whereClause = { status: { in: ['PAID','ADMIN'] } };
-        } else {
-            // Buscar nomes que começam com 'q' ou que contenham ' q' (após espaço)
-            // Ex: q = 'T' -> matches 'Tiago' (startsWith) and 'Ana Tavares' (contains ' T')
-            whereClause = {
-                status: { in: ['PAID','ADMIN'] },
-                OR: [
-                    { name: { startsWith: q } },
-                    { name: { contains: ' ' + q } }
-                ]
-            };
+        // Base: sempre filtrar por status PAID ou ADMIN
+        let whereClause = { status: { in: ['PAID','ADMIN'] } };
+
+        // Se houver busca por nome, adicionar OR
+        if (q) {
+            whereClause.OR = [
+                { name: { startsWith: q } },
+                { name: { contains: ' ' + q } }
+            ];
         }
 
         // Se modalidade fornecida, adicionar filtro (AND)
         if (modality) {
-            whereClause = Object.assign({}, whereClause, { modality });
+            whereClause.modality = modality;
         }
 
         // Se dia da aula fornecido, adicionar filtro (AND)
         if (classDay) {
-            whereClause = Object.assign({}, whereClause, { classDay });
+            whereClause.classDay = classDay;
         }
 
         const students = await prisma.enrollment.findMany({

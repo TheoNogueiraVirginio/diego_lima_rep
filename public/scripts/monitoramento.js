@@ -33,27 +33,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
     }, 300));
   }
 
-  // Filtrar por curso
-  if (courseSelect) {
-    // custom-select handles change internally; keep for native select fallback
-    courseSelect.addEventListener('change', (e) => {
-      const mod = e.target.value || '';
-      const q = searchInput ? searchInput.value : '';
-      const cls = getClassValue();
-      fetchPaidStudents(q || '', mod, cls);
-    });
-  }
-
-  // Filtrar por dia da aula
-  if (classSelect) {
-    classSelect.addEventListener('change', (e) => {
-      const cls = e.target.value || '';
-      const q = searchInput ? searchInput.value : '';
-      const mod = getCourseValue();
-      fetchPaidStudents(q || '', mod, cls);
-    });
-  }
-
   // Listeners para ordenação
   const thProgress = document.getElementById('th-progress');
   if (thProgress) {
@@ -402,39 +381,42 @@ function getClassValue(){
 }
 
 function initCustomSelect(){
-  const cs = document.getElementById('courseFilter');
-  if (!cs) return;
-  // If native select left in place, skip (we replaced it in HTML)
-  if (!cs.classList.contains('custom-select')) return;
+  const customSelects = document.querySelectorAll('.custom-select');
+  
+  customSelects.forEach(cs => {
+    const label = cs.querySelector('.cs-label');
+    const options = cs.querySelectorAll('.cs-options li');
 
-  const label = cs.querySelector('.cs-label');
-  const options = cs.querySelectorAll('.cs-options li');
-
-  cs.addEventListener('click', (e)=>{
-    cs.classList.toggle('open');
-  });
-
-  options.forEach(li=>{
-    li.addEventListener('click', (e)=>{
-      e.stopPropagation();
-      const val = li.getAttribute('data-value') || '';
-      cs.setAttribute('data-value', val);
-      label.textContent = li.textContent;
-      cs.classList.remove('open');
-      const q = document.getElementById('studentSearch')?.value || '';
-      fetchPaidStudents(q, val);
+    cs.addEventListener('click', (e)=>{
+      cs.classList.toggle('open');
     });
-  });
 
-  // Close when clicking outside
-  document.addEventListener('click', (e)=>{
-    if (!cs.contains(e.target)) cs.classList.remove('open');
-  });
+    options.forEach(li=>{
+      li.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const val = li.getAttribute('data-value') || '';
+        cs.setAttribute('data-value', val);
+        label.textContent = li.textContent;
+        cs.classList.remove('open');
+        
+        // Trigger filtro
+        const q = document.getElementById('studentSearch')?.value || '';
+        const mod = getCourseValue();
+        const cls = getClassValue();
+        fetchPaidStudents(q, mod, cls);
+      });
+    });
 
-  // keyboard
-  cs.addEventListener('keydown', (e)=>{
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cs.classList.toggle('open'); }
-    if (e.key === 'Escape') cs.classList.remove('open');
+    // Close when clicking outside
+    document.addEventListener('click', (e)=>{
+      if (!cs.contains(e.target)) cs.classList.remove('open');
+    });
+
+    // keyboard
+    cs.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cs.classList.toggle('open'); }
+      if (e.key === 'Escape') cs.classList.remove('open');
+    });
   });
 }
 

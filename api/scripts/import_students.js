@@ -28,7 +28,7 @@ async function importStudents() {
     //comando para importar: node api/scripts/import_students.js
     // Defina aqui o email do aluno a partir do qual deseja começar (inclusivo)
     // Deixe vazio para processar todos
-    const START_FROM_EMAIL = 'jlira0862@gmail.com'; 
+    const START_FROM_EMAIL = ''; 
     let foundStart = !START_FROM_EMAIL; // Se vazio, já começa true
 
     console.log('Iniciando importação...');
@@ -130,11 +130,7 @@ async function processStudent(row) {
     await prisma.enrollment.upsert({
         where: { email },
         update: {
-            // Se já existe, atualiza status para pago e modalidade?
-            // Descomente linhas abaixo se quiser atualizar usuários existentes
-            // status: 'PAID',
-            // modality: modality
-            // Ou apenas ignore
+            classDay
         },
         create: {
             name,
