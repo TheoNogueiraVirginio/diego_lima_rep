@@ -11,11 +11,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const botoes = document.querySelectorAll('.btn-fazer-simulado');
 
-    // comportamento padrão dos botões
+    // comportamento dos botões de simulado
     botoes.forEach(botao => {
         botao.addEventListener('click', (e) => {
             if (botao.disabled) return;
             const idSimulado = botao.getAttribute('data-id');
+            if (idSimulado == '1') {
+                window.location.href = '/simulado1.html';
+                return;
+            }
+
+            //lembrar de fazer para os outros simulados depois
             window.location.href = `questoes.html?id=${idSimulado}`;
         });
     });
@@ -58,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
         title.style.color = '#fff';
 
         const p = document.createElement('p');
-        p.textContent = 'Para prosseguir, conclua todas as atividades pendentes do Módulo 1.';
+        p.textContent = 'Acesso restrito: por enquanto apenas administradores podem abrir este simulado.';
         p.style.color = '#cbd5e1';
         p.style.lineHeight = '1.5';
         p.style.marginBottom = '24px';
@@ -146,28 +152,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     (async () => {
-        // --- NOVO BLOQUEIO DE FACHADA (PÁGINA INTEIRA) ---
-        // Verifica se é Admin (do localStorage salvo no login, para ser rápido)
-        const userStatus = localStorage.getItem('userStatus');
-        const isAdminLocal = (userStatus === 'ADMIN');
-
-        // Se NÃO for admin, bloqueia a página imediatamente
-        if (!isAdminLocal) {
-            showBlockModal();
-            return; // Interrompe o restante
-        }
-        // -------------------------------------------------
-
-
         const admin = await isAdmin();
-        if (admin) return; // admin sempre pode acessar
+        if (admin) return;
 
-        /* LÓGICA ANTIGA BYPASSADA PELA FACHADA
-        const completed = await hasCompletedModule();
-        if (!completed) {
-            redirectBlocked();
-        }
-        */
+        showBlockModal();
     })();
 
 });
