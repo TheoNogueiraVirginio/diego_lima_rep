@@ -860,17 +860,15 @@ function setActiveQuestion(index) {
     indice.textContent = `${currentQuestion.title} de 45`;
     enunciadoTexto.innerHTML = currentQuestion.prompt;
     
-    // Tratamento da imagem da questão
-    if (currentQuestion.graphic && currentQuestion.graphic.type !== 'none') {
-        const imageUrl = `/api/image/Simulados/Simulado1/Q${currentQuestion.number}.png`;
-        graficoPlaceholder.innerHTML = `
-            <div class="questao-imagem-container">
-                <img src="${imageUrl}" alt="Imagem da Questão ${currentQuestion.number}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 15px 0;">
-            </div>
-        `;
-    } else {
-        graficoPlaceholder.innerHTML = '';
-    }
+    // Tratamento dinâmico da imagem para todas as questões:
+    // O sistema sempre tenta buscar a imagem no servidor. Se a imagem não existir (retornar 404),
+    // o atributo 'onerror' é acionado e esconde o contêiner instantaneamente, sem deixar ícones quebrados na tela.
+    const imageUrl = `/api/image/Simulados/Simulado1/Q${currentQuestion.number}.png`;
+    graficoPlaceholder.innerHTML = `
+        <div class="questao-imagem-container">
+            <img src="${imageUrl}" onerror="this.parentElement.style.display='none';" alt="Imagem da Questão ${currentQuestion.number}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 15px 0;">
+        </div>
+    `;
 
     alternativasCard.innerHTML = '';
     const letters = ['A', 'B', 'C', 'D', 'E'];
