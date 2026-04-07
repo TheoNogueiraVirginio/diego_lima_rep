@@ -41,7 +41,6 @@ model Enrollment {
   refreshTokens RefreshToken[]
   notices Notice[]
   comments LessonComment[]
-  simuladoSubmissions SimuladoSubmission[]
 }
 
 model LessonComment {
@@ -182,8 +181,7 @@ model Coupon {
 
 model SimuladoSubmission {
   id           String   @id @default(uuid())
-  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id])
-  enrollmentId String
+  studentName  String
   simuladoId   String   // Ex.: "simulado1"
   startedAt    DateTime @default(now())
   submittedAt  DateTime?
@@ -195,8 +193,8 @@ model SimuladoSubmission {
 
   responses    SimuladoResponse[]
 
-  @@unique([enrollmentId, simuladoId]) // Uma submissão por aluno/simulado
-  @@index([enrollmentId])
+  @@unique([studentName, simuladoId]) // Uma submissão por aluno/simulado
+  @@index([studentName])
   @@index([simuladoId])
 }
 
@@ -204,6 +202,7 @@ model SimuladoResponse {
   id           String   @id @default(uuid())
   submission   SimuladoSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
   submissionId String
+  studentName  String?
   questionIndex Int    // 0-based
   selectedOption String? // "A", "B", etc.
   flagged      Boolean @default(false)

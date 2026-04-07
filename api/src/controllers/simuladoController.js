@@ -26,11 +26,11 @@ const CORRECT_ANSWERS = {
 export const startSimulado = async (req, res) => {
   try {
     const { simuladoId } = req.params;
-    const enrollmentId = req.enrollment.id;
+    const studentName = req.enrollment.name;
 
     // Verificar se já submeteu
     const existing = await prisma.simuladoSubmission.findUnique({
-      where: { enrollmentId_simuladoId: { enrollmentId, simuladoId } }
+      where: { studentName_simuladoId: { studentName, simuladoId } }
     });
     if (existing && existing.submittedAt) {
       return res.status(400).json({ error: 'Simulado já submetido' });
@@ -45,7 +45,7 @@ export const startSimulado = async (req, res) => {
     const timeLimit = SIMULADO_TIME_LIMITS[simuladoId] || 210;
     const submission = await prisma.simuladoSubmission.create({
       data: {
-        enrollmentId,
+        studentName,
         simuladoId,
         timeLimit,
         maxScore: 20, // Ajustar conforme número de questões
@@ -62,12 +62,12 @@ export const startSimulado = async (req, res) => {
 export const submitSimulado = async (req, res) => {
   try {
     const { simuladoId } = req.params;
-    const enrollmentId = req.enrollment.id;
+    const studentName = req.enrollment.name;
     const { responses, timeSpent } = req.body; // responses: array de {questionIndex, selectedOption, flagged}
 
     // Verificar se já submeteu
     const existing = await prisma.simuladoSubmission.findUnique({
-      where: { enrollmentId_simuladoId: { enrollmentId, simuladoId } }
+      where: { studentName_simuladoId: { studentName, simuladoId } }
     });
     if (existing && existing.submittedAt) {
       return res.status(400).json({ error: 'Simulado já submetido' });
@@ -85,12 +85,13 @@ export const submitSimulado = async (req, res) => {
         selectedOption,
         flagged: r.flagged,
         isCorrect,
+        studentName,
       };
     });
 
     // Atualizar ou criar submissão
     const submission = await prisma.simuladoSubmission.upsert({
-      where: { enrollmentId_simuladoId: { enrollmentId, simuladoId } },
+      where: { studentName_simuladoId: { studentName, simuladoId } },
       update: {
         submittedAt: new Date(),
         timeSpent,
@@ -102,7 +103,7 @@ export const submitSimulado = async (req, res) => {
         },
       },
       create: {
-        enrollmentId,
+        studentName,
         simuladoId,
         submittedAt: new Date(),
         timeLimit: SIMULADO_TIME_LIMITS[simuladoId] || 60,
@@ -126,10 +127,10 @@ export const submitSimulado = async (req, res) => {
 export const getSimuladoStatus = async (req, res) => {
   try {
     const { simuladoId } = req.params;
-    const enrollmentId = req.enrollment.id;
+    const studentName = req.enrollment.name;
 
     const submission = await prisma.simuladoSubmission.findUnique({
-      where: { enrollmentId_simuladoId: { enrollmentId, simuladoId } }
+      where: { studentName_simuladoId: { studentName, simuladoId } }
     });
 
     if (!submission) {
@@ -150,12 +151,12 @@ export const getSimuladoStatus = async (req, res) => {
 export const saveSimuladoProgress = async (req, res) => {
   try {
     const { simuladoId } = req.params;
-    const enrollmentId = req.enrollment.id;
+    const studentName = req.enrollment.name;
     const { responses, timeSpent } = req.body;
 
     // Atualizar submissão existente com progresso
     const submission = await prisma.simuladoSubmission.update({
-      where: { enrollmentId_simuladoId: { enrollmentId, simuladoId } },
+      where: { studentName_simuladoId: { studentName, simuladoId } },
       data: {
         timeSpent,
         responses: {
@@ -164,6 +165,7 @@ export const saveSimuladoProgress = async (req, res) => {
             questionIndex: r.questionIndex,
             selectedOption: normalizeSelectedOption(r.selectedOption),
             flagged: r.flagged,
+            studentName,
           })),
         },
       },
@@ -180,10 +182,10 @@ export const saveSimuladoProgress = async (req, res) => {
 export const getSimuladoResults = async (req, res) => {
   try {
     const { simuladoId } = req.params;
-    const enrollmentId = req.enrollment.id;
+    const studentName = req.enrollment.name;
 
     const submission = await prisma.simuladoSubmission.findUnique({
-      where: { enrollmentId_simuladoId: { enrollmentId, simuladoId } },
+      where: { studentName_simuladoId: { studentName, simuladoId } },
       include: { responses: true },
     });
 

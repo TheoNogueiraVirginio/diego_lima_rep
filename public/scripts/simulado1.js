@@ -851,6 +851,7 @@ function setActiveQuestion(index) {
     if (!currentQuestion) {
         indice.textContent = `Questão ${index + 1} de 45`;
         enunciadoTexto.innerHTML = `<p>Questão não disponível.</p>`;
+        graficoPlaceholder.style.display = 'none';
         graficoPlaceholder.innerHTML = '';
         alternativasCard.innerHTML = '';
         updateFlagButton(index);
@@ -861,12 +862,16 @@ function setActiveQuestion(index) {
     enunciadoTexto.innerHTML = currentQuestion.prompt;
     
     // Tratamento dinâmico da imagem para todas as questões:
-    // O sistema sempre tenta buscar a imagem no servidor. Se a imagem não existir (retornar 404),
-    // o atributo 'onerror' é acionado e esconde o contêiner instantaneamente, sem deixar ícones quebrados na tela.
+    // Começamos escondendo o placeholder. Ele só será exibido se a imagem carregar com sucesso.
+    graficoPlaceholder.style.display = 'none';
     const imageUrl = `/api/image/Simulados/Simulado1/Q${currentQuestion.number}.png`;
     graficoPlaceholder.innerHTML = `
         <div class="questao-imagem-container">
-            <img src="${imageUrl}" onerror="this.parentElement.style.display='none';" alt="Imagem da Questão ${currentQuestion.number}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 15px 0;">
+            <img src="${imageUrl}" 
+                 onload="document.getElementById('grafico-placeholder').style.display='flex';" 
+                 onerror="document.getElementById('grafico-placeholder').style.display='none'; this.parentElement.style.display='none';" 
+                 alt="Imagem da Questão ${currentQuestion.number}" 
+                 style="max-width: 100%; height: auto; border-radius: 8px; margin: 15px 0;">
         </div>
     `;
 
@@ -976,7 +981,7 @@ function submitSimulado() {
         if (data.error) {
             alert(data.error);
         } else {
-            alert(`Simulado submetido! Pontuação: ${data.score}/${data.percentage.toFixed(1)}%`);
+            alert('Simulado enviado com sucesso! O resultado estará disponível em breve.');
             window.location.href = '/modulos.html'; // Redirecionar para home ou página de resultados
         }
     })
@@ -1061,6 +1066,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const submitButton = document.getElementById('btn-submit');
     if (submitButton) {
         submitButton.addEventListener('click', () => {
+            const hasFlagged = simuladoState.some(state => state.flagged);
+            if (hasFlagged) {
+                alert('Você ainda tem alguma(s) questões marcadas para revisão! Por favor, desmarque-as antes de submeter.');
+                return;
+            }
             if (confirm('Tem certeza que deseja finalizar o simulado?')) {
                 submitSimulado();
             }
