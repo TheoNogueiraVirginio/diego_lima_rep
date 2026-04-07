@@ -97,6 +97,7 @@ export const submitSimulado = async (req, res) => {
         totalScore: score,
         percentage: (score / correctAnswers.length) * 100,
         responses: {
+          deleteMany: {},
           create: responseData,
         },
       },
