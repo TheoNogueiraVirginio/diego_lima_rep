@@ -979,7 +979,7 @@ function submitSimulado() {
             alert(data.error);
         } else {
             alert(`Simulado submetido! Pontuação: ${data.score}/${data.percentage.toFixed(1)}%`);
-            window.location.href = '/'; // Redirecionar para home ou página de resultados
+            window.location.href = '/modulos.html'; // Redirecionar para home ou página de resultados
         }
     })
     .catch(err => {
@@ -996,7 +996,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (status.submitted) {
             alert('Você já submeteu este simulado.');
-            window.location.href = '/';
+            window.location.href = '/modulos.html';
             return;
         }
 
@@ -1041,7 +1041,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const startData = await startRes.json();
             if (startData.error) {
                 alert(startData.error);
-                window.location.href = '/';
+                window.location.href = '/modulos.html';
                 return;
             }
             startTime = new Date(startData.startedAt).getTime();

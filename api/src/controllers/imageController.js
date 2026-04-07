@@ -14,53 +14,141 @@ export const serveImage = async (req, res) => {
     let nomeArquivo = `images/${cleanDocId}`;
     let fileRef = bucket.file(nomeArquivo);
 
-    // Tenta encontrar também com .paint ou .jpg caso o front peça .png e não exista
-    const extensionsToTry = ['', '.paint', '.jpg', '.jpeg', '.PNG'];
+    // Array para guardar todas as variações de nomes possíveis
+    const baseNames = [];
+    
+    // Nome original limpo (ex: Simulados/Simulado1/Q2.png)
+    baseNames.push(cleanDocId.replace(/\.png$/i, ''));
+    
+    // Se o arquivo tiver a estrutura Q[numero] ou q[numero], adiciona a versão com zero (ex: Q02) e lowercase
+    const qMatch = cleanDocId.match(/(.*\/)(Q|q)(\d+)\.png$/i);
+    if (qMatch) {
+        const path = qMatch[1]; // Simulados/Simulado1/
+        const qLevel = qMatch[2]; // Q ou q
+        const num = qMatch[3]; // 2
+        
+        // Padded (ex: Q02)
+        if (num.length === 1) {
+            baseNames.push(`${path}${qLevel}0${num}`);
+            baseNames.push(`${path}q0${num}`);
+            baseNames.push(`${path}Q0${num}`);
+        }
+        
+        // Alternar cases do 'Q' para o original
+        baseNames.push(`${path}q${num}`);
+        baseNames.push(`${path}Q${num}`);
+    }
+
+    // Variar também case dos diretórios Simulados/Simulado1 ou simulados/simulado1
+    const lowerDirsNames = baseNames.map(n => n.toLowerCase());
+    
+    const allNamesToTest = [...new Set([...baseNames, ...lowerDirsNames])];
+    
+    const extensionsToTry = ['.paint', '.png', '.jpg', '.jpeg', '.PNG', '.JPG', ''];
     let found = false;
 
     // Verificar com prefixo images/
-    for (let ext of extensionsToTry) {
-      let tempArquivo = cleanDocId.replace(/\.png$/i, ext);
-      fileRef = bucket.file(`images/${tempArquivo}`);
-      let [exists] = await fileRef.exists();
-      if (exists) {
-        nomeArquivo = `images/${tempArquivo}`;
-        found = true;
-        break;
-      }
-    }
-
-    if (!found) {
-      // Verificar sem o prefixo images/
+    for (let base of allNamesToTest) {
       for (let ext of extensionsToTry) {
-        let tempArquivo = cleanDocId.replace(/\.png$/i, ext);
-        fileRef = bucket.file(tempArquivo);
+        let tempArquivo = `${base}${ext}`;
+        fileRef = bucket.file(`images/${tempArquivo}`);
         let [exists] = await fileRef.exists();
         if (exists) {
-          nomeArquivo = tempArquivo;
+          nomeArquivo = `images/${tempArquivo}`;
           found = true;
           break;
         }
       }
+      if (found) break;
     }
 
     if (!found) {
-      console.log(`Arquivo de imagem não encontrado: images/${cleanDocId} etc.`);
-      return res.status(404).json({ error: 'Imagem não encontrada.' });
+      // Verificar sem o prefixo images/
+      for (let base of allNamesToTest) {
+        for (let ext of extensionsToTry) {
+          let tempArquivo = `${base}${ext}`;
+          fileRef = bucket.file(tempArquivo);
+          let [exists] = await fileRef.exists();
+          if (exists) {
+            nomeArquivo = tempArquivo;
+            found = true;
+            break;
+          }
+        }
+        if (found) break;
+      }
     }
 
-    // Identificar contentType pela extensão
+    if (!found) {
+      // LAST RESORT FALLBACK: Busca difusa por tudo que tiver 'Simulado' no nome 'QX'
+      try {
+        const [allImages1] = await bucket.getFiles({ prefix: 'images/Simulados/' });
+        const [allImages2] = await bucket.getFiles({ prefix: 'Simulados/' });
+        const [allImages3] = await bucket.getFiles({ prefix: 'simulados/' });
+        const allImages = [...allImages1, ...allImages2, ...allImages3];
+        
+        // Pega o número da questão, ex: Q2 -> 2
+        let questaoNumMatch = cleanDocId.match(/(Q|q)(\d+)\.png$/i);
+        let numBuscado = questaoNumMatch ? questaoNumMatch[2] : null;
+
+        if (numBuscado) {
+          // Busca em todos os arquivos um que tenha "simulado" e "q<numero>" ou "q0<numero>"
+          for (let file of allImages) {
+            let nomeL = file.name.toLowerCase();
+            // Verifica se tem "simulado" e se termina com "q2.ext", "q02.ext", "questao2.ext"
+            if (nomeL.includes('simulado') && (nomeL.match(new RegExp(`q0?${numBuscado}\\.`, 'i')) || nomeL.match(new RegExp(`questao0?${numBuscado}\\.`, 'i')))) {
+              nomeArquivo = file.name;
+              fileRef = bucket.file(nomeArquivo);
+              found = true;
+              break;
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Erro na busca difusa:", err);
+      }
+    }
+
+    if (!found) {
+      console.log(`Arquivo de imagem não encontrado. Caminhos testados para: ${cleanDocId}`);
+      
+      // DEBUG: Vamos listar os arquivos no diretório para ajudar o usuário a descobrir o nome exato
+      let filesNoBanco = [];
+      try {
+        // Tenta pegar com o prefixo 'images/'
+        const [files1] = await bucket.getFiles({ prefix: 'images/' });
+        filesNoBanco = files1.map(f => f.name).filter(n => n.toLowerCase().includes('simulado'));
+        
+        // Se vazio, tenta na raiz
+        if (filesNoBanco.length === 0) {
+            const [files2] = await bucket.getFiles({ prefix: 'Simulados/' });
+            filesNoBanco = [...filesNoBanco, ...files2.map(f => f.name)];
+            
+            const [files3] = await bucket.getFiles({ prefix: 'simulados/' });
+            filesNoBanco = [...filesNoBanco, ...files3.map(f => f.name)];
+        }
+      } catch (err) {
+        console.error("DEBUG-ERROR Listando arquivos:", err);
+      }
+
+      return res.status(404).json({ 
+        error: 'Imagem não encontrada.', 
+        requestedId: cleanDocId,
+        availableFiles: filesNoBanco.slice(0, 50) // Retorna até 50 imagens do diretório p/ ajudar a achar o erro de digitação
+      });
+    }
+
+    // Identificar contentType pela extensão do arquivo encontrado, não do docId
     let contentType = 'image/png'; // Default
-    if (docId.toLowerCase().endsWith('.jpg') || docId.toLowerCase().endsWith('.jpeg')) {
+    if (nomeArquivo.toLowerCase().endsWith('.jpg') || nomeArquivo.toLowerCase().endsWith('.jpeg')) {
         contentType = 'image/jpeg';
-    } else if (docId.toLowerCase().endsWith('.gif')) {
+    } else if (nomeArquivo.toLowerCase().endsWith('.gif')) {
         contentType = 'image/gif';
-    } else if (docId.toLowerCase().endsWith('.webp')) {
+    } else if (nomeArquivo.toLowerCase().endsWith('.webp')) {
         contentType = 'image/webp';
-    } else if (docId.toLowerCase().endsWith('.svg')) {
+    } else if (nomeArquivo.toLowerCase().endsWith('.svg')) {
         contentType = 'image/svg+xml';
-    } else if (docId.toLowerCase().endsWith('.paint')) {
-        // Fallback for .paint (likely PNG or JPEG renamed)
+    } else if (nomeArquivo.toLowerCase().endsWith('.paint')) {
         contentType = 'image/png';
     }
 
