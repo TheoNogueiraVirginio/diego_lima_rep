@@ -139,7 +139,7 @@ export const serveImage = async (req, res) => {
     }
 
     // Identificar contentType pela extensão do arquivo encontrado, não do docId
-    let contentType = 'image/png'; // Default
+    let contentType = null; // Vamos deixar nulo por padrão para `.paint` ou desconhecidos forçarem o MIME sniffing do browser
     if (nomeArquivo.toLowerCase().endsWith('.jpg') || nomeArquivo.toLowerCase().endsWith('.jpeg')) {
         contentType = 'image/jpeg';
     } else if (nomeArquivo.toLowerCase().endsWith('.gif')) {
@@ -148,11 +148,20 @@ export const serveImage = async (req, res) => {
         contentType = 'image/webp';
     } else if (nomeArquivo.toLowerCase().endsWith('.svg')) {
         contentType = 'image/svg+xml';
-    } else if (nomeArquivo.toLowerCase().endsWith('.paint')) {
+    } else if (nomeArquivo.toLowerCase().endsWith('.png')) {
         contentType = 'image/png';
     }
 
-    res.setHeader('Content-Type', contentType);
+    if (contentType) {
+        res.setHeader('Content-Type', contentType);
+    }
+    
+    // Header vital para MIME sniffing. Se for um .bmp ou .png disfarçado de .paint,
+    // o navegador ignora a falta de content-type e verifica a assinatura do arquivo real.
+    res.setHeader('X-Content-Type-Options', 'nosniff'); // Remover se der erro, mas para imagens costuma ser arriscado. Melhor: NAO usar nosniff se queremos que o browser sniffe!
+    // Na verdade, para permitir MIME sniffing de imagens (como .paint que pode ser .bmp), NÃO devemos bloquear o sniffing.
+    res.removeHeader('X-Content-Type-Options'); 
+
     res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache 24 horas
 
     // Faça streaming do arquivo do Firebase
