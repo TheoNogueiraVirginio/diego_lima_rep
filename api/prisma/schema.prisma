@@ -41,6 +41,7 @@ model Enrollment {
   refreshTokens RefreshToken[]
   notices Notice[]
   comments LessonComment[]
+  simuladoSubmissions SimuladoSubmission[]
 }
 
 model LessonComment {
@@ -177,4 +178,37 @@ model Coupon {
   discount  Float
   type      String   @default("PERCENTAGE") // "PERCENTAGE" ou "FIXED_PRICE"
   createdAt DateTime @default(now())
+}
+
+model SimuladoSubmission {
+  id           String   @id @default(uuid())
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id])
+  enrollmentId String
+  simuladoId   String   // Ex.: "simulado1"
+  startedAt    DateTime @default(now())
+  submittedAt  DateTime?
+  timeLimit    Int      // Em minutos, ex.: 60
+  timeSpent    Int?     // Em segundos, tempo real usado
+  totalScore   Float?   // Ex.: 15.0
+  maxScore     Float    @default(20.0)
+  percentage   Float?   // Calculado automaticamente
+
+  responses    SimuladoResponse[]
+
+  @@unique([enrollmentId, simuladoId]) // Uma submissão por aluno/simulado
+  @@index([enrollmentId])
+  @@index([simuladoId])
+}
+
+model SimuladoResponse {
+  id           String   @id @default(uuid())
+  submission   SimuladoSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId String
+  questionIndex Int    // 0-based
+  selectedOption String? // "A", "B", etc.
+  flagged      Boolean @default(false)
+  isCorrect    Boolean? // true/false baseado na resposta correta
+
+  @@unique([submissionId, questionIndex]) // Uma resposta por questão por submissão
+  @@index([submissionId])
 }

@@ -115,7 +115,14 @@ export const logout = async (req, res) => {
 export const me = async (req, res) => {
   try {
     const user = req.enrollment;
-    return res.json({ id: user.id, name: user.name, email: user.email, status: user.status, modality: user.modality });
+    return res.json({ 
+      id: user.id, 
+      name: user.name, 
+      email: user.email, 
+      status: user.status, 
+      modality: user.modality,
+      isAdmin: user.status === 'ADMIN'
+    });
   } catch (err) {
     console.error('me error', err.message);
     return res.status(500).json({ error: 'Internal error' });

@@ -13,6 +13,7 @@ import courseRoutes from "./src/routes/courseRoutes.js";
 import materiaisRoutes from './src/routes/materialRoutes.js';
 import commentRoutes from './src/routes/commentRoutes.js';
 import couponRoutes from './src/routes/couponRoutes.js';
+import simuladoRoutes from './src/routes/simuladoRoutes.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -46,6 +47,7 @@ app.use("/api/pdf", PdfRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/coupons", couponRoutes);
+app.use("/api/simulado", simuladoRoutes);
 
 
 // --- ROTAS DE PÁGINAS ---

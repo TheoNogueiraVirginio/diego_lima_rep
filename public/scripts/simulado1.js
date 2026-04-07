@@ -748,6 +748,11 @@ const simuladoState = simuladoQuestions.map(() => ({
     flagged: false
 }));
 
+let timerInterval;
+let timeLeft = 210 * 60; // 3h30 em segundos, será ajustado
+let startTime = Date.now();
+const SIMULADO_ID = 'simulado1';
+
 function createOptionItem(letter, text, optionIndex) {
     const article = document.createElement('article');
     article.className = 'alternativa';
@@ -778,17 +783,35 @@ function updateMapItemStatus(index) {
     });
 }
 
+function saveProgress() {
+    const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+    const responses = simuladoState.map((state, index) => ({
+        questionIndex: index,
+        selectedOption: state.selectedOption,
+        flagged: state.flagged
+    }));
+
+    fetch(`/api/simulado/${SIMULADO_ID}/save-progress`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ responses, timeSpent })
+    }).catch(err => console.error('Erro ao salvar progresso:', err));
+}
+
 function selectOption(questionIndex, optionIndex) {
     const currentSelected = simuladoState[questionIndex].selectedOption;
     simuladoState[questionIndex].selectedOption = currentSelected === optionIndex ? null : optionIndex;
     setActiveQuestion(questionIndex);
     updateMapItemStatus(questionIndex);
+    saveProgress();
 }
 
 function toggleFlag(questionIndex) {
     simuladoState[questionIndex].flagged = !simuladoState[questionIndex].flagged;
     updateFlagButton(questionIndex);
     updateMapItemStatus(questionIndex);
+    saveProgress();
 }
 
 function setActiveQuestion(index) {
@@ -879,12 +902,131 @@ function initSimulado1() {
     updateMapItemStatus();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function startTimer() {
+    const timerElement = document.getElementById('timer');
+    if (!timerElement) return;
+
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            submitSimulado();
+        }
+    }, 1000);
+}
+
+function submitSimulado() {
+    clearInterval(timerInterval);
+    const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+
+    const responses = simuladoState.map((state, index) => ({
+        questionIndex: index,
+        selectedOption: state.selectedOption,
+        flagged: state.flagged
+    }));
+
+    fetch(`/api/simulado/${SIMULADO_ID}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ responses, timeSpent })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+        } else {
+            alert(`Simulado submetido! Pontuação: ${data.score}/${data.percentage.toFixed(1)}%`);
+            window.location.href = '/'; // Redirecionar para home ou página de resultados
+        }
+    })
+    .catch(err => {
+        console.error('Erro ao submeter:', err);
+        alert('Erro ao submeter simulado');
+    });
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // Buscar status do simulado
+    try {
+        const res = await fetch(`/api/simulado/${SIMULADO_ID}/status`, { credentials: 'include' });
+        const status = await res.json();
+
+        if (status.submitted) {
+            alert('Você já submeteu este simulado.');
+            window.location.href = '/';
+            return;
+        }
+
+        if (status.started) {
+            // Calcular tempo restante
+            const startedAt = new Date(status.startedAt).getTime();
+            const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+            const totalLimit = status.timeLimit * 60;
+            timeLeft = Math.max(0, totalLimit - elapsed);
+            startTime = startedAt;
+
+            // Buscar progresso salvo
+            try {
+                const progressRes = await fetch(`/api/simulado/${SIMULADO_ID}/results`, { credentials: 'include' });
+                if (progressRes.ok) {
+                    const progress = await progressRes.json();
+                    if (progress.responses) {
+                        progress.responses.forEach(r => {
+                            simuladoState[r.questionIndex] = {
+                                selectedOption: r.selectedOption,
+                                flagged: r.flagged
+                            };
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error('Erro ao buscar progresso:', err);
+            }
+        } else {
+            // Iniciar novo
+            const startRes = await fetch(`/api/simulado/${SIMULADO_ID}/start`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+            const startData = await startRes.json();
+            if (startData.error) {
+                alert(startData.error);
+                window.location.href = '/';
+                return;
+            }
+            startTime = new Date(startData.startedAt).getTime();
+            timeLeft = startData.timeLimit * 60;
+        }
+    } catch (err) {
+        console.error('Erro ao buscar status:', err);
+        alert('Erro ao carregar simulado');
+        return;
+    }
+
     const flagButton = document.getElementById('btn-flag');
     if (flagButton) {
         flagButton.addEventListener('click', () => {
             toggleFlag(currentIndex);
         });
     }
+
+    const submitButton = document.getElementById('btn-submit');
+    if (submitButton) {
+        submitButton.addEventListener('click', () => {
+            if (confirm('Tem certeza que deseja finalizar o simulado?')) {
+                submitSimulado();
+            }
+        });
+    }
+
+    startTimer();
     initSimulado1();
+
+    // Salvar progresso ao fechar/recarregar
+    window.addEventListener('beforeunload', saveProgress);
 });
