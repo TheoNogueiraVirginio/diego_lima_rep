@@ -851,7 +851,7 @@ function setActiveQuestion(index) {
     if (!currentQuestion) {
         indice.textContent = `Questão ${index + 1} de 45`;
         enunciadoTexto.innerHTML = `<p>Questão não disponível.</p>`;
-        graficoPlaceholder.innerHTML = `<span>Imagem será importada em breve.</span>`;
+        graficoPlaceholder.innerHTML = '';
         alternativasCard.innerHTML = '';
         updateFlagButton(index);
         return;
@@ -859,7 +859,18 @@ function setActiveQuestion(index) {
 
     indice.textContent = `${currentQuestion.title} de 45`;
     enunciadoTexto.innerHTML = currentQuestion.prompt;
-    graficoPlaceholder.innerHTML = `<span>Imagem será importada em breve.</span>`;
+    
+    // Tratamento da imagem da questão
+    if (currentQuestion.graphic && currentQuestion.graphic.type !== 'none') {
+        const imageUrl = `/api/image/Simulados/Simulado1/Q${currentQuestion.number}.png`;
+        graficoPlaceholder.innerHTML = `
+            <div class="questao-imagem-container">
+                <img src="${imageUrl}" alt="Imagem da Questão ${currentQuestion.number}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 15px 0;">
+            </div>
+        `;
+    } else {
+        graficoPlaceholder.innerHTML = '';
+    }
 
     alternativasCard.innerHTML = '';
     const letters = ['A', 'B', 'C', 'D', 'E'];

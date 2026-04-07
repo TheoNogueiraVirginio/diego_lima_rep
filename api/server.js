@@ -14,6 +14,7 @@ import materiaisRoutes from './src/routes/materialRoutes.js';
 import commentRoutes from './src/routes/commentRoutes.js';
 import couponRoutes from './src/routes/couponRoutes.js';
 import simuladoRoutes from './src/routes/simuladoRoutes.js';
+import imageRoutes from './src/routes/imageRoutes.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -44,6 +45,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/avisos", noticeRoutes);
 app.use("/api/pdf", PdfRoutes);
+app.use("/api/image", imageRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/coupons", couponRoutes);

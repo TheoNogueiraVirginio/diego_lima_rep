@@ -12,43 +12,23 @@ export const serveWatermarkedPdf = async (req, res) => {
     }
 
     let cleanDocId = docId.replace(/^\/+/, '');
-    
-    // Garantir que a string esteja devidamente decodificada (espaços, acentos, cedilha, e %2F para barras)
-    try {
-      cleanDocId = decodeURIComponent(cleanDocId);
-    } catch (e) {
-      console.warn('Erro ao decodificar docId:', cleanDocId);
-    }
+    let nomeArquivo = `pdfs/${cleanDocId}`; 
+    let fileRef = bucket.file(nomeArquivo);
 
-    // Variantes para testar devido a diferentes normalizações Unicode (ex: macOS vs Windows)
-    // e convenções adotadas (Módulo vs Modulo_)
-    const p1 = cleanDocId;
-    const p2 = cleanDocId.normalize('NFC');
-    const p3 = cleanDocId.normalize('NFD');
-    const p4 = cleanDocId.replace(/M[oó]dulo\s+(\d+)/gi, 'Modulo_$1').normalize('NFC');
-    const p5 = cleanDocId.replace(/M[oó]dulo\s+(\d+)/gi, 'Modulo_$1').normalize('NFD');
-
-    // Remove duplicatas
-    const caminhosParaTestar = [...new Set([p1, p2, p3, p4, p5])];
-    
-    let exists = false;
-    let nomeArquivo;
-    let fileRef;
-
-    for (const caminho of caminhosParaTestar) {
-      nomeArquivo = `pdfs/${caminho}`;
-      fileRef = bucket.file(nomeArquivo);
-      const [arquivoExiste] = await fileRef.exists();
-      
-      if (arquivoExiste) {
-        exists = true;
-        break; // Encontrou o arquivo na forma correta
-      }
-    }
-
+    let [exists] = await fileRef.exists();
     if (!exists) {
-      console.log(`Arquivo não encontrado. Tentativas realizadas:`, caminhosParaTestar);
-      return res.status(404).json({ error: 'Documento não encontrado.' });
+      // Tentar converter "Módulo X" para "Modulo_X" caso tenha sido salvo com acento e espaço
+      const alternateDocId = cleanDocId.replace(/M[oó]dulo\s+(\d+)/gi, 'Modulo_$1');
+      if (alternateDocId !== cleanDocId) {
+        nomeArquivo = `pdfs/${alternateDocId}`;
+        fileRef = bucket.file(nomeArquivo);
+        [exists] = await fileRef.exists();
+      }
+      
+      if (!exists) {
+        console.log(`Arquivo não encontrado: ${nomeArquivo} (tentou também ${cleanDocId})`);
+        return res.status(404).json({ error: 'Documento não encontrado.' });
+      }
     }
 
     const [fileBuffer] = await fileRef.download();

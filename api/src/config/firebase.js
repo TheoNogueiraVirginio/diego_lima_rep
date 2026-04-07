@@ -14,10 +14,18 @@ const serviceAccount = {
 
 // Inicializa apenas se não existir
 if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
+  const config = {
     storageBucket: 'diegolima-pdfs.firebasestorage.app'
-  });
+  };
+
+  // Aplica as credenciais apenas se existirem variáveis de ambiente
+  if (serviceAccount.projectId && serviceAccount.privateKey) {
+    config.credential = admin.credential.cert(serviceAccount);
+  } else {
+    console.warn("⚠️ [Aviso]: Variáveis de ambiente do Firebase (FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY) ausentes. O Storage não deve funcionar sem o .env corretamente configurado.");
+  }
+
+  admin.initializeApp(config);
 }
 
 const bucket = admin.storage().bucket();
