@@ -752,6 +752,17 @@ let timerInterval;
 let timeLeft = 210 * 60; // 3h30 em segundos, será ajustado
 let startTime = Date.now();
 const SIMULADO_ID = 'simulado1';
+const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E'];
+
+function updateProgressBar() {
+    const totalQuestions = 45; // Total fixo de questões
+    const answered = simuladoState.filter(state => state.selectedOption !== null).length;
+    const percentage = (answered / totalQuestions) * 100;
+    const progressFill = document.querySelector('.progress-fill');
+    if (progressFill) {
+        progressFill.style.width = `${percentage}%`;
+    }
+}
 
 function createOptionItem(letter, text, optionIndex) {
     const article = document.createElement('article');
@@ -778,24 +789,39 @@ function updateMapItemStatus(index) {
         if (Number.isNaN(buttonIndex)) return;
 
         const state = simuladoState[buttonIndex];
+        if (!state) {
+            button.classList.remove('respondida', 'flagged');
+            return;
+        }
+
         button.classList.toggle('respondida', state.selectedOption !== null);
         button.classList.toggle('flagged', state.flagged);
     });
 }
 
-function saveProgress() {
+function saveProgress(useBeacon = false) {
     const timeSpent = Math.floor((Date.now() - startTime) / 1000);
     const responses = simuladoState.map((state, index) => ({
         questionIndex: index,
-        selectedOption: state.selectedOption,
+        selectedOption: state.selectedOption !== null ? OPTION_LETTERS[state.selectedOption] : null,
         flagged: state.flagged
     }));
 
-    fetch(`/api/simulado/${SIMULADO_ID}/save-progress`, {
+    const payload = JSON.stringify({ responses, timeSpent });
+    const url = `/api/simulado/${SIMULADO_ID}/save-progress`;
+
+    if (useBeacon && navigator.sendBeacon) {
+        const blob = new Blob([payload], { type: 'application/json' });
+        navigator.sendBeacon(url, blob);
+        return;
+    }
+
+    fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ responses, timeSpent })
+        body: payload,
+        keepalive: true
     }).catch(err => console.error('Erro ao salvar progresso:', err));
 }
 
@@ -804,6 +830,7 @@ function selectOption(questionIndex, optionIndex) {
     simuladoState[questionIndex].selectedOption = currentSelected === optionIndex ? null : optionIndex;
     setActiveQuestion(questionIndex);
     updateMapItemStatus(questionIndex);
+    updateProgressBar();
     saveProgress();
 }
 
@@ -925,7 +952,7 @@ function submitSimulado() {
 
     const responses = simuladoState.map((state, index) => ({
         questionIndex: index,
-        selectedOption: state.selectedOption,
+        selectedOption: state.selectedOption !== null ? OPTION_LETTERS[state.selectedOption] : null,
         flagged: state.flagged
     }));
 
@@ -977,8 +1004,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const progress = await progressRes.json();
                     if (progress.responses) {
                         progress.responses.forEach(r => {
+                            const selectedOption = r.selectedOption;
+                            const selectedIndex = typeof selectedOption === 'number'
+                                ? selectedOption
+                                : typeof selectedOption === 'string'
+                                    ? OPTION_LETTERS.indexOf(selectedOption)
+                                    : -1;
+
                             simuladoState[r.questionIndex] = {
-                                selectedOption: r.selectedOption,
+                                selectedOption: selectedIndex >= 0 ? selectedIndex : null,
                                 flagged: r.flagged
                             };
                         });
@@ -1024,9 +1058,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    updateProgressBar();
     startTimer();
     initSimulado1();
 
     // Salvar progresso ao fechar/recarregar
-    window.addEventListener('beforeunload', saveProgress);
+    window.addEventListener('beforeunload', () => saveProgress(true));
 });

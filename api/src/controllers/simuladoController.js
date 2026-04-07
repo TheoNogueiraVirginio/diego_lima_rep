@@ -1,5 +1,17 @@
 import prisma from '../db.js';
 
+const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E'];
+
+function normalizeSelectedOption(selectedOption) {
+  if (typeof selectedOption === 'number') {
+    return OPTION_LETTERS[selectedOption] ?? null;
+  }
+  if (typeof selectedOption === 'string') {
+    return selectedOption;
+  }
+  return null;
+}
+
 // Tempo limite fixo por simulado (em minutos) - pode ser ajustado por simuladoId
 const SIMULADO_TIME_LIMITS = {
   'simulado1': 210, // 3 horas e meia
@@ -65,11 +77,12 @@ export const submitSimulado = async (req, res) => {
     const correctAnswers = CORRECT_ANSWERS[simuladoId] || [];
     let score = 0;
     const responseData = responses.map(r => {
-      const isCorrect = r.selectedOption === correctAnswers[r.questionIndex];
+      const selectedOption = normalizeSelectedOption(r.selectedOption);
+      const isCorrect = selectedOption === correctAnswers[r.questionIndex];
       if (isCorrect) score++;
       return {
         questionIndex: r.questionIndex,
-        selectedOption: r.selectedOption,
+        selectedOption,
         flagged: r.flagged,
         isCorrect,
       };
@@ -148,7 +161,7 @@ export const saveSimuladoProgress = async (req, res) => {
           deleteMany: {}, // Limpar antigas
           create: responses.map(r => ({
             questionIndex: r.questionIndex,
-            selectedOption: r.selectedOption,
+            selectedOption: normalizeSelectedOption(r.selectedOption),
             flagged: r.flagged,
           })),
         },
