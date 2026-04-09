@@ -16,6 +16,7 @@ document.querySelector('form').addEventListener('submit', async (e) => {
         if (response.ok) {
             localStorage.setItem('nomeAluno', data.userName);
             localStorage.setItem('userStatus', data.status);
+            localStorage.setItem('userEmail', email);
             window.location.href = "/modulos";
         } else {
             alert(data.error);

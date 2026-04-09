@@ -807,6 +807,15 @@ function saveProgress(useBeacon = false) {
         flagged: state.flagged
     }));
 
+    // Salvar progresso localmente (fallback para quando a sessão expirar)
+    try {
+        const emailInfo = localStorage.getItem('userEmail') || 'unknown';
+        const key = `simulado_${SIMULADO_ID}_${emailInfo}_state`;
+        localStorage.setItem(key, JSON.stringify(simuladoState));
+    } catch (e) {
+        console.error('Erro ao salvar no localStorage', e);
+    }
+
     const payload = JSON.stringify({ responses, timeSpent });
     const url = `/api/simulado/${SIMULADO_ID}/save-progress`;
 
@@ -981,6 +990,11 @@ function submitSimulado() {
         if (data.error) {
             alert(data.error);
         } else {
+            try {
+                const emailInfo = localStorage.getItem('userEmail') || 'unknown';
+                localStorage.removeItem(`simulado_${SIMULADO_ID}_${emailInfo}_state`);
+            } catch (e) { console.error('Error removing local state', e); }
+
             alert('Simulado enviado com sucesso! O resultado estará disponível em breve.');
             window.location.href = '/modulos.html'; // Redirecionar para home ou página de resultados
         }
@@ -1032,6 +1046,34 @@ document.addEventListener('DOMContentLoaded', async () => {
                         });
                     }
                 }
+
+                // Recuperar e mesclar fallback do localStorage, caso sessão tenha expirado
+                try {
+                    const emailInfo = localStorage.getItem('userEmail') || 'unknown';
+                    const key = `simulado_${SIMULADO_ID}_${emailInfo}_state`;
+                    const localDataStr = localStorage.getItem(key);
+                    if (localDataStr) {
+                        const localStateArray = JSON.parse(localDataStr);
+                        let updated = false;
+                        localStateArray.forEach((ls, index) => {
+                            if (ls && ls.selectedOption !== null && (simuladoState[index].selectedOption === null || simuladoState[index].selectedOption !== ls.selectedOption)) {
+                                simuladoState[index].selectedOption = ls.selectedOption;
+                                updated = true;
+                            }
+                            if (ls && ls.flagged && !simuladoState[index].flagged) {
+                                simuladoState[index].flagged = true;
+                                updated = true;
+                            }
+                        });
+                        // Se houve algo do localstorage que foi aplicado, salva de volta no servidor para parear
+                        if (updated) {
+                            setTimeout(() => { saveProgress(); }, 1500); // 1.5s pra não conflitar visual
+                        }
+                    }
+                } catch (e) {
+                    console.error('Erro ao mesclar progresso local:', e);
+                }
+
             } catch (err) {
                 console.error('Erro ao buscar progresso:', err);
             }

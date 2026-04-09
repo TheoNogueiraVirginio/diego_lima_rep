@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
-export const ACCESS_EXPIRES = 3 * 60 * 60; // seconds (3 hours)
+export const ACCESS_EXPIRES = 6 * 60 * 60; // seconds (6 hours)
 export const REFRESH_EXPIRES = 7 * 24 * 60 * 60; // seconds
 
 export function signAccess(userId) {
