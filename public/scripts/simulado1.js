@@ -26,7 +26,7 @@ const simuladoQuestions = [
     {
         number: 2,
         title: 'QUESTÃO 02',
-        prompt: `Em uma maquete com escala de 1:200, foi representado um prédio cuja base, na realidade, é um quadrado de área igual a 900 m², conforme ilustrado a seguir:`,
+        prompt: `Em uma maquete com escala de 1:200, foi representado um prédio cuja base, na realidade, é um quadrado de área igual a 900 m², conforme ilustrado abaixo. A área da base desse prédio, na representação da maquete, em centímetro quadrado, é igual a:`,
         graphic: {
             type: 'maquete'
         },
@@ -59,7 +59,7 @@ const simuladoQuestions = [
         number: 4,
         title: 'QUESTÃO 04',
         prompt: `A variação do PIB, medida pelo SCNT – Sistema de Contas Nacionais Trimestrais – traz a evolução do PIB no tempo, comparando seu desempenho trimestre a trimestre e ano a ano. Veja abaixo o gráfico da variação trimestral do PIB no Brasil do 2º trimestre de 2022 até o 1º trimestre de 2025.<br><br>
-        De acordo com o gráfico acima, temos que`,
+        De acordo com o gráfico abaixo, temos que`,
         graphic: {
             type: 'none'
         },
@@ -209,7 +209,7 @@ const simuladoQuestions = [
         number: 13,
         title: 'QUESTÃO 13',
         prompt: `Nos últimos anos, uma escola pública passou a monitorar o desempenho dos alunos nas avaliações mensais de Matemática, com o objetivo de ajustar suas práticas pedagógicas. A seguir estão as notas obtidas por um grupo de 15 estudantes em uma mesma avaliação, numa escala de 0 a 10:<br><br>
-        4, 5, 5, 5, 6, 6, 6, 7, 7, 8, 8, 8, 8.<br><br>
+        4, 4, 5, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8.<br><br>
         Com o intuito de compreender melhor o perfil da turma, a equipe pedagógica decidiu calcular as três principais medidas de tendência central: a moda, a mediana e a média aritmética. Essas informações foram consideradas fundamentais para orientar futuras estratégias de ensino. Então, as medidas obtidas foram,`,
         graphic: {
             type: 'none'
@@ -291,7 +291,9 @@ const simuladoQuestions = [
     {
         number: 18,
         title: 'QUESTÃO 18',
-        prompt: `Ao planejar uma viagem a negócios, o executivo de uma empresa multinacional decidiu consultar o histórico de temperaturas médias da cidade para a qual viajará, a fim de organizar as vestimentas que levaria em sua mala. Ao acessar um site com dados meteorológicos, ele consultou a temperatura média da cidade nos últimos 30 dias e se deparou com o gráfico a seguir. Com base nessas informações, a temperatura que corresponde a`,
+        prompt: `Ao planejar uma viagem a negócios, o executivo de uma empresa multinacional decidiu consultar o histórico de temperaturas médias da cidade para a qual viajará, a fim de organizar as vestimentas que levaria em sua mala. Ao acessar um site com dados meteorológicos, ele consultou a temperatura média da cidade nos últimos 30 dias e se deparou com o gráfico a seguir. <br><br>
+        O executivo decidiu escolher suas roupas de acordo com a temperatura representada pela moda dos valores
+consultados, que corresponde a:`,
         graphic: {
             type: 'none'
         },
@@ -355,7 +357,9 @@ const simuladoQuestions = [
     {
         number: 22,
         title: 'QUESTÃO 22',
-        prompt: `Durante o preparo de uma grande quantidade de sopa, um cozinheiro precisou utilizar três panelas de pressão para fazer todo o cozimento simultaneamente. As figuras a seguir mostram os volumes, em decilitro, de sopa preparados em cada panela. O último ingrediente a ser adicionado no preparo dessa sopa são dois tabletes de curry com 91 g cada. Para que o conteúdo final nas três panelas fique com o mesmo sabor, o cozinheiro irá dividir os tabletes em quantidades proporcionais aos volumes de sopa contidos em cada panela.`,
+        prompt: `Durante o preparo de uma grande quantidade de sopa, um cozinheiro precisou utilizar três panelas de pressão para fazer todo o cozimento simultaneamente. As figuras a seguir mostram os volumes, em decilitro, de sopa preparados em cada panela. <br><br>
+        O último ingrediente a ser adicionado no preparo dessa sopa são dois tabletes de curry com 91 g cada. Para que o conteúdo final nas três panelas fique com o mesmo sabor, o cozinheiro irá dividir os tabletes em quantidades proporcionais aos volumes de sopa contidos em cada panela.<br><br>
+        A quantidade, em grama, de curry acrescentada na panela com maior volume de sopa deve ser igual a:`,
         graphic: {
             type: 'none'
         },
@@ -521,7 +525,8 @@ const simuladoQuestions = [
     {
         number: 32,
         title: 'QUESTÃO 32',
-        prompt: `Para a organização de uma festa de aniversário, a empresa responsável dividiu a programação da festa em blocos. Tal divisão foi feita de modo que em cada bloco tivesse uma seleção de músicas e, no intervalo entre cada bloco, um dos amigos do aniversariante apresentasse uma mensagem de felicitações, sendo que a festa começaria e finalizaria com a seleção de músicas, não havendo fala de nenhum amigo antes do primeiro bloco e ao final do último bloco. Para a distribuição das músicas nos blocos, a empresa selecionou 144 músicas diferentes, sendo 36 no estilo pagode, 48 no estilo sertanejo e 60 no estilo pop. Sabe-se que as músicas foram divididas igualmente de maneira que em todos os blocos houvesse músicas de todos os estilos e a mesma quantidade de músicas por estilo. As músicas foram divididas nos maiores quantidades de blocos possíveis.`,
+        prompt: `Para a organização de uma festa de aniversário, a empresa responsável dividiu a programação da festa em blocos. Tal divisão foi feita de modo que em cada bloco tivesse uma seleção de músicas e, no intervalo entre cada bloco, um dos amigos do aniversariante apresentasse uma mensagem de felicitações, sendo que a festa começaria e finalizaria com a seleção de músicas, não havendo fala de nenhum amigo antes do primeiro bloco e ao final do último bloco. Para a distribuição das músicas nos blocos, a empresa selecionou 144 músicas diferentes, sendo 36 no estilo pagode, 48 no estilo sertanejo e 60 no estilo pop. Sabe-se que as músicas foram divididas igualmente de maneira que em todos os blocos houvesse músicas de todos os estilos e a mesma quantidade de músicas por estilo. As músicas foram divididas nos maiores quantidades de blocos possíveis.<br><br>
+        De acordo com as informações, quantos amigos do aniversariante falaram nos intervalos entre os blocos?`,
         graphic: {
             type: 'none'
         },
@@ -551,7 +556,11 @@ const simuladoQuestions = [
     {
         number: 34,
         title: 'QUESTÃO 34',
-        prompt: `Uma escola vai organizar uma gincana e precisa dividir 360 alunos em grupos todos com o mesmo número de participantes, de modo que: cada grupo tenha mais de 12 alunos; o número de alunos em cada grupo seja um divisor de 72; e o número total de grupos seja um múltiplo de 5. O maior número de grupos possível é igual a`,
+        prompt: `Uma escola vai organizar uma gincana e precisa dividir 360 alunos em grupos todos com o mesmo número de participantes, de modo que: <br> 
+        &bull; cada grupo tenha mais de 12 alunos; <br> 
+        &bull; o número de alunos em cada grupo seja um divisor de 72; <br> 
+        &bull; o número total de grupos seja um múltiplo de 5. <br><br>
+        O maior número de grupos possível é igual a`,
         graphic: {
             type: 'none'
         },
@@ -603,16 +612,17 @@ const simuladoQuestions = [
         Abril — 140<br>
         Maio — 165<br>
         Junho — 180.<br><br>
-        Se, para agosto e dezembro desse ano, a empresa deseja receber o maior e o menor número mensal de chamados técnicos do primeiro semestre, respectivamente, então`,
+        Se para agosto e dezembro desse ano a empresa deseja receber o maior e o menor número mensal de chamados técnicos do primeiro semestre, respectivamente. <br><br>
+        Assim, o percentual de chamados técnicos que dezembro tem a menos que agosto é de:`,
         graphic: {
             type: 'none'
         },
         options: [
-            'agosto: junho; dezembro: janeiro',
-            'agosto: junho; dezembro: fevereiro',
-            'agosto: maio; dezembro: janeiro',
-            'agosto: abril; dezembro: janeiro',
-            'agosto: junho; dezembro: março'
+            '20%',
+            '33%',
+            '42%',
+            '50%',
+            '60%'
         ]
     },
     {
@@ -651,7 +661,8 @@ const simuladoQuestions = [
     {
         number: 40,
         title: 'QUESTÃO 40',
-        prompt: `Um laboratório está ajustando as concentrações de duas soluções químicas. A solução A tem pH de −1,8 e a solução B tem pH de 3,2. Para testar a estabilidade, um técnico deve calcular o valor S = (pH_A − pH_B) · (2 + 5/7) + (−3,4 + 5/7). Dessa forma, o valor correto de S é igual a`,
+        prompt: `Um laboratório está ajustando as concentrações de duas soluções químicas. A solução A tem pH de −1,8 e a solução B tem pH de 3,2. Para testar a estabilidade, um técnico deve calcular o valor S = (pH_A − pH_B) · (2 + 5/7) + (−3,4 + 5/7).<br><br>
+        Dessa forma, o valor correto de S é igual a:`,
         graphic: {
             type: 'none'
         },
@@ -666,16 +677,17 @@ const simuladoQuestions = [
     {
         number: 41,
         title: 'QUESTÃO 41',
-        prompt: `Uma escola realizou uma pesquisa para analisar quantas horas, por semana, seus alunos do 3º ano dedicam ao estudo fora da sala de aula. Os 12 alunos dessa turma responderam com os seguintes valores (em horas): 4, 6, 5, 8, 10, 6, 7, 9, 4, 4, 8, 12. O coordenador pedagógico deseja escolher a medida de tendência central que melhor represente o comportamento geral da turma, evitando que valores extremos influenciem o resultado.`,
+        prompt: `Uma escola realizou uma pesquisa para analisar quantas horas, por semana, seus alunos do 3º ano dedicam ao estudo fora da sala de aula. Os 12 alunos dessa turma responderam com os seguintes valores (em horas): 4, 6, 5, 8, 10, 6, 7, 9, 4, 4, 8, 12. O coordenador pedagógico deseja escolher a medida de tendência central que melhor represente o comportamento geral da turma, evitando que valores extremos influenciem o resultado.<br><br>
+        Com base nesses dados, qual medida ele deve escolher, e qual é o valor dessa medida?`,
         graphic: {
             type: 'none'
         },
         options: [
-            'média',
-            'mediana',
-            'moda',
-            'amplitude',
-            'variância'
+            'Média e 6,9 horas',
+            'Média e 7,5 horas',
+            'Mediana e 6,5 horas',
+            'Mediana e 7 horas',
+            'Moda e 4 horas'
         ]
     },
     {
