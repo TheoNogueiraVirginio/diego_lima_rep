@@ -227,7 +227,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                          } else {
                               // Outros alunos abrem direto a versão extensivo (ou equivalente padrão)
 
-                              teoricoUrl = rawTeorico.pe_extensivo || rawTeorico.extensivo || rawTeorico.default;
+                              let tsUrlSource = rawTeorico.pe_extensivo || rawTeorico.extensivo || rawTeorico.default;
+                              if (Array.isArray(tsUrlSource) && tsUrlSource.length > 0) {
+                                  teoricoUrl = tsUrlSource[0];
+                                  if (tsUrlSource.length > 1) {
+                                      hasComplexTeoria = true;
+                                  }
+                              } else {
+                                  teoricoUrl = tsUrlSource;
+                              }
                          }
                     }
                 }
@@ -640,10 +648,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                    // Helper para adicionar item
                    const add = (label, url) => {
-                       if (url) {
-                            const actualLabel = (url && typeof url === 'object' && url.title && url.title.trim() !== '') ? url.title : label;
-                            items.push({ label: actualLabel, href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(typeof url === "string" ? url : url.filename)}` });
-                       }
+                       if (!url) return;
+                       const arr = Array.isArray(url) ? url : [url];
+                       arr.forEach((item, idx) => {
+                            let actualLabel = (item && typeof item === 'object' && item.title && item.title.trim() !== '') ? item.title : label;
+                            if (arr.length > 1 && (!item || typeof item !== 'object' || !item.title || item.title.trim() === '')) {
+                                actualLabel = `${label} - ${idx + 1}`;
+                            }
+                            const filename = typeof item === "string" ? item : item.filename;
+                            if (filename) items.push({ label: actualLabel, href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(filename)}` });
+                       });
                    };
 
                    if (isAdmin) {
