@@ -1018,6 +1018,10 @@ function submitSimulado() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    alert('Esse simulado não está mais disponível');
+    window.location.href = '/simulados.html';
+    return;
+
     // Buscar status do simulado
     try {
         const res = await fetch(`/api/simulado/${SIMULADO_ID}/status`, { credentials: 'include' });

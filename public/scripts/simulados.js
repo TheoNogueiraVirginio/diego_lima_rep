@@ -17,9 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (botao.disabled) return;
             const idSimulado = botao.getAttribute('data-id');
             if (idSimulado == '1') {
-                const confirmar = confirm('Quer iniciar o simulado agora?');
-                if (!confirmar) return;
-                window.location.href = '/simulado1.html';
+                alert('Esse simulado não está mais disponível');
                 return;
             }
 
