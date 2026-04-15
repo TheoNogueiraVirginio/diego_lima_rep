@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elementoNome.textContent = primeiroNomeOrganizado;
     }
 
-    const botoes = document.querySelectorAll('.btn-fazer-simulado');
+    const botoes = document.querySelectorAll('.btn-fazer-simulado[data-id]');
 
     // comportamento dos botões de simulado
     botoes.forEach(botao => {
