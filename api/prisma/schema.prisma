@@ -188,7 +188,6 @@ model SimuladoSubmission {
   timeLimit    Int      // Em minutos, ex.: 60
   timeSpent    Int?     // Em segundos, tempo real usado
   totalScore   Float?   // Ex.: 15.0
-  maxScore     Float    @default(20.0)
   percentage   Float?   // Calculado automaticamente
 
   responses    SimuladoResponse[]

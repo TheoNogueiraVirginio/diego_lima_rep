@@ -20,7 +20,13 @@ const SIMULADO_TIME_LIMITS = {
 
 // Respostas corretas (hardcoded por enquanto) - para calcular score
 const CORRECT_ANSWERS = {
-  'simulado1': ['A', 'B', 'C', 'D', 'A', 'B', 'C', 'D', 'A', 'B', 'C', 'D', 'A', 'B', 'C', 'D', 'A', 'B', 'C', 'D'], // Exemplo
+  'simulado1': [
+    'A', 'D', 'E', 'A', 'C', 'C', 'D', 'C', 'E', 'B',
+    'B', 'D', 'A', 'D', 'D', 'C', 'A', 'C', 'E', 'A',
+    'B', 'D', 'A', 'B', 'E', 'B', 'C', 'E', 'D', 'B',
+    'D', 'C', 'A', 'C', 'D', 'D', 'B', 'E', 'C', 'E',
+    'C', 'B', 'E', 'E', 'A'
+  ],
 };
 
 export const startSimulado = async (req, res) => {
@@ -48,7 +54,6 @@ export const startSimulado = async (req, res) => {
         studentName,
         simuladoId,
         timeLimit,
-        maxScore: 20, // Ajustar conforme número de questões
       }
     });
 
@@ -109,7 +114,6 @@ export const submitSimulado = async (req, res) => {
         timeLimit: SIMULADO_TIME_LIMITS[simuladoId] || 60,
         timeSpent,
         totalScore: score,
-        maxScore: correctAnswers.length,
         percentage: (score / correctAnswers.length) * 100,
         responses: {
           create: responseData,
@@ -138,7 +142,8 @@ export const getSimuladoStatus = async (req, res) => {
     }
 
     if (submission.submittedAt) {
-      return res.json({ submitted: true });
+      const maxScore = CORRECT_ANSWERS[simuladoId]?.length || 45;
+      return res.json({ submitted: true, score: submission.totalScore, maxScore });
     }
 
     res.json({ started: true, startedAt: submission.startedAt, timeLimit: submission.timeLimit });

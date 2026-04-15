@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Esse simulado não está mais disponível');
                 return;
             }
-
             //lembrar de fazer para os outros simulados depois
             window.location.href = `questoes.html?id=${idSimulado}`;
         });
@@ -153,5 +152,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // O simulado 1 está liberado para todos os alunos.
     // Não bloqueamos mais o acesso para usuários não-admin.
+
+    // Fetch simulado1 status and update UI
+    async function loadSimulado1Status() {
+        try {
+            const res = await fetch('/api/simulados/simulado1/status', { credentials: 'include' });
+            if (!res.ok) return;
+            const data = await res.json();
+            
+            const label = document.getElementById('simulado-label-1');
+            const valor = document.getElementById('simulado-valor-1');
+            const barraContainer = document.getElementById('simulado-barra-container-1');
+            const botaoFazer = document.querySelector('.btn-fazer-simulado[data-id="1"]');
+            
+            if (data.submitted) {
+                if (label) label.textContent = 'Nota:';
+                if (valor) valor.textContent = `${data.score} / ${data.maxScore || 45}`;
+                
+                // Hide progress bar as requested
+                if (barraContainer) {
+                    barraContainer.style.display = 'none';
+                }
+                
+                if (botaoFazer) {
+                    botaoFazer.textContent = 'Simulado Finalizado';
+                    botaoFazer.disabled = true;
+                    // Optional: add some styling for disabled state
+                    botaoFazer.style.opacity = '0.7';
+                    botaoFazer.style.cursor = 'not-allowed';
+                }
+            } else if (data.started) {
+                if (botaoFazer) botaoFazer.textContent = 'Continuar Simulado';
+            }
+        } catch (error) {
+            console.error('Erro ao carregar status do simulado 1:', error);
+        }
+    }
+    loadSimulado1Status();
 
 });
