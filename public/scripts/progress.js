@@ -77,8 +77,9 @@ async function loadProgress() {
         const moduleData = modules.find(m => String(m.moduleId) === String(modIndex)) || null;
         const percent = moduleData ? Math.round(moduleData.averageScore) : 0;
 
-        const destaque = card.querySelector('.destaque-verde');
-        const barraMod = card.querySelector('.barra-verde-mod');
+        const destaque = card.querySelector('.destaque-verde:not(#simulado-valor-1)');
+        const barraMod = card.querySelector('.barra-verde-mod:not(#simulado-barra-1)');
+        
         if (destaque) destaque.textContent = `${percent}%`;
         if (barraMod) barraMod.style.width = `${percent}%`;
       });

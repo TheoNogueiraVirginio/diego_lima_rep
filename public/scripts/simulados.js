@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fetch simulado1 status and update UI
     async function loadSimulado1Status() {
         try {
-            const res = await fetch('/api/simulados/simulado1/status', { credentials: 'include' });
+            const res = await fetch('/api/simulado/simulado1/status', { credentials: 'include' });
             if (!res.ok) return;
             const data = await res.json();
             
@@ -166,8 +166,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const botaoFazer = document.querySelector('.btn-fazer-simulado[data-id="1"]');
             
             if (data.submitted) {
-                if (label) label.textContent = 'Nota:';
-                if (valor) valor.textContent = `${data.score} / ${data.maxScore || 45}`;
+                if (label) label.textContent = 'Sua nota:';
+                if (valor) {
+                    valor.textContent = `${data.score}/${data.maxScore || 45}`;
+                    valor.style.color = '#10b981'; // Garantir que a nota final continue verde se desejar
+                }
                 
                 // Hide progress bar as requested
                 if (barraContainer) {
@@ -183,6 +186,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else if (data.started) {
                 if (botaoFazer) botaoFazer.textContent = 'Continuar Simulado';
+                if (label) label.textContent = 'Você não realizou esse simulado';
+                if (label) label.style.color = '#ff6b6b';
+                if (valor) valor.style.display = 'none';
+                if (barraContainer) {
+                    barraContainer.style.display = 'none';
+                }
+            } else {
+                if (label) label.textContent = 'Você não realizou esse simulado';
+                if (label) label.style.color = '#ff6b6b';
+                if (valor) valor.style.display = 'none';
+                if (barraContainer) {
+                    barraContainer.style.display = 'none';
+                }
             }
         } catch (error) {
             console.error('Erro ao carregar status do simulado 1:', error);
