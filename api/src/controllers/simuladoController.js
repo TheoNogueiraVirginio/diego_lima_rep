@@ -198,7 +198,13 @@ export const getSimuladoResults = async (req, res) => {
       return res.status(404).json({ error: 'Submissão não encontrada' });
     }
 
-    res.json(submission);
+    const correctAnswers = CORRECT_ANSWERS[simuladoId] || [];
+    const formattedResponses = submission.responses.map(r => ({
+      ...r,
+      correctOption: correctAnswers[r.questionIndex] || null
+    }));
+
+    res.json({ ...submission, responses: formattedResponses });
   } catch (error) {
     console.error('Erro ao buscar resultados:', error);
     res.status(500).json({ error: 'Erro interno' });

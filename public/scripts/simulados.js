@@ -184,6 +184,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     botaoFazer.style.opacity = '0.7';
                     botaoFazer.style.cursor = 'not-allowed';
                 }
+
+                // Show the errors link and bind it
+                const linkErros = document.getElementById('link-erros-1');
+                if (linkErros) {
+                    linkErros.style.display = 'block';
+                    linkErros.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        showErrorsModal('simulado1');
+                    });
+                }
+
             } else if (data.started) {
                 if (botaoFazer) botaoFazer.textContent = 'Continuar Simulado';
                 if (label) label.textContent = 'Você não realizou esse simulado';
@@ -205,5 +216,73 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     loadSimulado1Status();
+
+    // Modal de questões erradas
+    async function showErrorsModal(simuladoId) {
+        try {
+            const res = await fetch(`/api/simulado/${simuladoId}/results`, { credentials: 'include' });
+            if (!res.ok) return;
+            const data = await res.json();
+            
+            const wrongAnswers = (data.responses || []).filter(r => !r.isCorrect);
+
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-erros-overlay';
+
+            const box = document.createElement('div');
+            box.className = 'modal-erros-box';
+
+            const header = document.createElement('div');
+            header.className = 'modal-erros-header';
+            
+            const title = document.createElement('h3');
+            title.textContent = wrongAnswers.length > 0 ? 'Questões que você errou' : 'Você gabaritou tudo!';
+            
+            const btnClose = document.createElement('button');
+            btnClose.className = 'btn-fechar-erros';
+            btnClose.innerHTML = '&times;';
+            btnClose.onclick = () => document.body.removeChild(overlay);
+
+            header.appendChild(title);
+            header.appendChild(btnClose);
+            box.appendChild(header);
+
+            if (wrongAnswers.length > 0) {
+                // Ordenar por número da questão
+                wrongAnswers.sort((a,b) => a.questionIndex - b.questionIndex);
+
+                wrongAnswers.forEach(ans => {
+                    const item = document.createElement('div');
+                    item.className = 'erro-item';
+                    
+                    const qNum = document.createElement('p');
+                    qNum.innerHTML = `<strong>Questão ${ans.questionIndex + 1}</strong>`;
+                    
+                    const youMarked = document.createElement('p');
+                    youMarked.innerHTML = `Você marcou: <span style="color: #ef4444">${ans.selectedOption || 'Nenhuma'}</span>`;
+                    
+                    const correctIs = document.createElement('p');
+                    correctIs.innerHTML = `Gabarito correto: <span style="color: #10b981">${ans.correctOption || '?'}</span>`;
+                    
+                    item.appendChild(qNum);
+                    item.appendChild(youMarked);
+                    item.appendChild(correctIs);
+                    box.appendChild(item);
+                });
+            } else {
+                const p = document.createElement('p');
+                p.textContent = 'Parabéns, você não errou nenhuma questão!';
+                p.style.color = '#10b981';
+                box.appendChild(p);
+            }
+
+            overlay.appendChild(box);
+            document.body.appendChild(overlay);
+
+        } catch (error) {
+            console.error('Erro ao buscar resultados do simulado:', error);
+            alert('Não foi possível carregar as questões erradas no momento.');
+        }
+    }
 
 });
