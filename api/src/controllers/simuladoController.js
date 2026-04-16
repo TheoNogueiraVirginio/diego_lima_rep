@@ -21,9 +21,9 @@ const SIMULADO_TIME_LIMITS = {
 // Respostas corretas (hardcoded por enquanto) - para calcular score
 const CORRECT_ANSWERS = {
   'simulado1': [
-    'A', 'D', 'E', 'A', 'C', 'C', 'D', 'C', 'E', 'B',
-    'B', 'D', 'A', 'D', 'D', 'C', 'A', 'C', 'E', 'A',
-    'B', 'D', 'A', 'B', 'E', 'B', 'C', 'E', 'D', 'B',
+    'A', 'D', 'E', 'D', 'C', 'C', 'D', 'C', 'E', 'B',
+    'E', 'D', 'A', 'D', 'D', 'C', 'A', 'B', 'E', 'A',
+    'C', 'D', 'B', 'B', 'E', 'B', 'C', 'E', 'D', 'B',
     'D', 'C', 'A', 'C', 'D', 'D', 'B', 'E', 'C', 'E',
     'C', 'B', 'E', 'E', 'A'
   ],
