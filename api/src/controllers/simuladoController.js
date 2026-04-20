@@ -210,3 +210,46 @@ export const getSimuladoResults = async (req, res) => {
     res.status(500).json({ error: 'Erro interno' });
   }
 };
+export const getSimuladoRanking = async (req, res) => {
+  try {
+    const { simuladoId } = req.params;
+
+    if (req.enrollment.status !== 'ADMIN') {
+      return res.status(403).json({ error: 'Acesso restrito a administradores.' });
+    }
+
+    const submissions = await prisma.simuladoSubmission.findMany({
+      where: {
+        simuladoId,
+        submittedAt: { not: null }
+      },
+      select: {
+        studentName: true,
+        totalScore: true,
+      },
+      orderBy: [
+        { totalScore: 'desc' },
+        { submittedAt: 'asc' }
+      ]
+    });
+
+    let ranking = [];
+    let currentRank = 1;
+
+    for (let i = 0; i < submissions.length; i++) {
+      if (i > 0 && submissions[i].totalScore < submissions[i - 1].totalScore) {
+        currentRank++;
+      }
+      ranking.push({
+        position: currentRank,
+        studentName: submissions[i].studentName,
+        score: submissions[i].totalScore
+      });
+    }
+
+    res.json(ranking);
+  } catch (error) {
+    console.error('Erro ao buscar ranking:', error);
+    res.status(500).json({ error: 'Erro interno' });
+  }
+};

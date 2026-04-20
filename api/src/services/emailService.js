@@ -130,3 +130,79 @@ export const sendCredentialsEmail = async (toEmail, name, cpf) => {
         return false;
     }
 };
+export const sendSimuladoResultEmail = async (toEmail, name) => {
+    const transporter = getTransporter();
+    if (!transporter) return false;
+
+    const firstName = name.split(' ')[0];
+    const html = `
+    <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+        <p>Olá, <strong>${firstName}</strong>!</p>
+        
+        <p>O resultado do <strong>Simulado Revisional 1 do Extensivo</strong> já foi liberado na plataforma!</p>
+
+        <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Acesse sua conta para conferir seu desempenho em:</strong> <a href="${PLATFORM_URL}" target="_blank">Clique aqui para entrar</a></p>
+        </div>
+
+        <p>Aproveite para revisar as questões que você errou, verificar o gabarito e focar nos assuntos que precisam de mais atenção.</p>
+        
+        <p>Vamos juntos rumo à aprovação!</p>
+
+        <br>
+        <p>Atenciosamente,<br>
+        <strong>Professor Diego Lima</strong></p>
+    </div>`;
+
+    try {
+        const info = await transporter.sendMail({
+            from: `"Professor Diego Lima" <${process.env.GMAIL_USER}>`,
+            to: toEmail,
+            subject: "Resultado Liberado: Simulado Revisional 1 Extensivo",
+            html: html
+        });
+        console.log(`Email de resultados do simulado enviado para ${toEmail}`);
+        return true;
+    } catch (error) {
+        console.error(`Erro ao enviar email para ${toEmail}:`, error.message);
+        return false;
+    }
+};
+export const sendSimuladoResultsEmail = async (toEmail, name) => {
+    const transporter = getTransporter();
+    if (!transporter) return false;
+
+    const firstName = name.split(' ')[0];
+    const html = `
+    <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+        <p>Olá, <strong>${firstName}</strong>!</p>
+        
+        <p>O resultado do <strong>Simulado Revisional 1 do Extensivo</strong> já foi liberado na plataforma!</p>
+
+        <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Acesse sua conta para conferir seu desempenho em:</strong> <a href="${PLATFORM_URL}" target="_blank">Clique aqui para entrar</a></p>
+        </div>
+
+        <p>Aproveite para revisar as questões que você errou, verificar o gabarito e focar nos assuntos que precisam de mais atenção.</p>
+        
+        <p>Vamos juntos rumo à aprovação!</p>
+
+        <br>
+        <p>Atenciosamente,<br>
+        <strong>Professor Diego Lima</strong></p>
+    </div>`;
+
+    try {
+        const info = await transporter.sendMail({
+            from: `"Professor Diego Lima" <${process.env.GMAIL_USER}>`,
+            to: toEmail,
+            subject: "Resultado Liberado: Simulado Revisional 1 Extensivo",
+            html: html
+        });
+        console.log(`Email de resultados do simulado enviado para ${toEmail}`);
+        return true;
+    } catch (error) {
+        console.error(`Erro ao enviar email para ${toEmail}:`, error.message);
+        return false;
+    }
+};

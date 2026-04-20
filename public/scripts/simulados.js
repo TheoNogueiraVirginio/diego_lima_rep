@@ -171,6 +171,44 @@ document.addEventListener('DOMContentLoaded', () => {
                     valor.textContent = `${data.score}/${data.maxScore || 45}`;
                     valor.style.color = '#10b981'; // Garantir que a nota final continue verde se desejar
                 }
+
+                // Add Ranking button if admin
+                const userIsAdmin = await isAdmin();
+                if (userIsAdmin && label && valor) {
+                    let rankingBtn = document.getElementById('ranking-btn-1');
+                    if (!rankingBtn) {
+                        const scoreContainer = label.parentNode;
+                        scoreContainer.style.flexDirection = 'column';
+                        
+                        const divRow = document.createElement('div');
+                        divRow.style.display = 'flex';
+                        divRow.style.flexDirection = 'row';
+                        divRow.style.justifyContent = 'space-between';
+                        divRow.style.width = '100%';
+                        
+                        divRow.appendChild(label);
+                        divRow.appendChild(valor);
+
+                        rankingBtn = document.createElement('a');
+                        rankingBtn.id = 'ranking-btn-1';
+                        rankingBtn.href = '#';
+                        rankingBtn.textContent = 'Ranking';
+                        rankingBtn.style.alignSelf = 'flex-end';
+                        rankingBtn.style.color = '#aa77ff'; // Purple/admin color
+                        rankingBtn.style.textDecoration = 'underline';
+                        rankingBtn.style.fontSize = '0.9rem';
+                        rankingBtn.style.marginBottom = '6px';
+                        rankingBtn.style.marginTop = '4px';
+
+                        rankingBtn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            showRankingModal('simulado1');
+                        });
+                        
+                        scoreContainer.appendChild(rankingBtn);
+                        scoreContainer.appendChild(divRow);
+                    }
+                }
                 
                 // Hide progress bar as requested
                 if (barraContainer) {
@@ -282,6 +320,88 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Erro ao buscar resultados do simulado:', error);
             alert('Não foi possível carregar as questões erradas no momento.');
+        }
+    }
+
+    async function showRankingModal(simuladoId) {
+        try {
+            const res = await fetch(`/api/simulado/${simuladoId}/ranking`, { credentials: 'include' });
+            if (!res.ok) {
+                if (res.status === 403) alert('Acesso restrito a administradores.');
+                else alert('Erro ao carregar o ranking.');
+                return;
+            }
+            const ranking = await res.json();
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-erros-overlay'; // Reusing CSS from errros
+
+            const box = document.createElement('div');
+            box.className = 'modal-erros-box';
+            box.style.maxHeight = '80vh';
+            box.style.overflowY = 'auto';
+
+            const header = document.createElement('div');
+            header.className = 'modal-erros-header';
+            
+            const title = document.createElement('h3');
+            title.textContent = 'Ranking do Simulado';
+            
+            const btnClose = document.createElement('button');
+            btnClose.className = 'btn-fechar-erros';
+            btnClose.innerHTML = '&times;';
+            btnClose.onclick = () => document.body.removeChild(overlay);
+
+            header.appendChild(title);
+            header.appendChild(btnClose);
+            box.appendChild(header);
+
+            if (ranking.length === 0) {
+                const p = document.createElement('p');
+                p.textContent = 'Nenhum resultado disponível.';
+                p.style.textAlign = 'center';
+                p.style.marginTop = '20px';
+                box.appendChild(p);
+            } else {
+                const list = document.createElement('div');
+                list.style.marginTop = '15px';
+                
+                ranking.forEach(r => {
+                    const item = document.createElement('div');
+                    item.className = 'erro-item';
+                    item.style.display = 'flex';
+                    item.style.justifyContent = 'space-between';
+                    item.style.alignItems = 'center';
+                    
+                    const position = document.createElement('strong');
+                    position.textContent = `${r.position}º Lugar`;
+                    position.style.color = '#aa77ff'; // Purple/admin color
+                    position.style.width = '80px';
+                    
+                    const name = document.createElement('span');
+                    name.textContent = r.studentName;
+                    name.style.flex = '1';
+                    name.style.marginLeft = '10px';
+                    
+                    const score = document.createElement('strong');
+                    score.textContent = r.score;
+                    score.style.color = '#10b981'; // Green
+                    
+                    item.appendChild(position);
+                    item.appendChild(name);
+                    item.appendChild(score);
+                    list.appendChild(item);
+                });
+                
+                box.appendChild(list);
+            }
+
+            overlay.appendChild(box);
+            document.body.appendChild(overlay);
+
+        } catch (error) {
+            console.error('Erro ao chamar API do ranking:', error);
+            alert('Não foi possível carregar o ranking no momento.');
         }
     }
 

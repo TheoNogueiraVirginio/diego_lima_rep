@@ -1,5 +1,5 @@
 import express from 'express';
-import { startSimulado, submitSimulado, getSimuladoResults, getSimuladoStatus, saveSimuladoProgress } from '../controllers/simuladoController.js';
+import { startSimulado, submitSimulado, getSimuladoResults, getSimuladoStatus, saveSimuladoProgress, getSimuladoRanking } from '../controllers/simuladoController.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -12,5 +12,6 @@ router.post('/:simuladoId/submit', submitSimulado);
 router.post('/:simuladoId/save-progress', saveSimuladoProgress);
 router.get('/:simuladoId/status', getSimuladoStatus);
 router.get('/:simuladoId/results', getSimuladoResults);
+router.get('/:simuladoId/ranking', getSimuladoRanking);
 
 export default router;
