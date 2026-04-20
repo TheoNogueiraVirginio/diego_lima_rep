@@ -362,11 +362,50 @@ document.addEventListener('DOMContentLoaded', () => {
                 p.style.textAlign = 'center';
                 p.style.marginTop = '20px';
                 box.appendChild(p);
-            } else {
+                overlay.appendChild(box);
+                document.body.appendChild(overlay);
+                return;
+            }
+
+            // Abas
+            const tabsContainer = document.createElement('div');
+            tabsContainer.style.display = 'flex';
+            tabsContainer.style.gap = '10px';
+            tabsContainer.style.marginBottom = '15px';
+            tabsContainer.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+            tabsContainer.style.paddingBottom = '10px';
+            
+            const btnGeral = document.createElement('button');
+            btnGeral.textContent = 'Geral';
+            btnGeral.style.padding = '6px 12px';
+            btnGeral.style.borderRadius = '8px';
+            btnGeral.style.border = 'none';
+            btnGeral.style.cursor = 'pointer';
+            
+            const btnTurma = document.createElement('button');
+            btnTurma.textContent = 'Por Turma';
+            btnTurma.style.padding = '6px 12px';
+            btnTurma.style.borderRadius = '8px';
+            btnTurma.style.border = 'none';
+            btnTurma.style.cursor = 'pointer';
+            
+            tabsContainer.appendChild(btnGeral);
+            tabsContainer.appendChild(btnTurma);
+            box.appendChild(tabsContainer);
+
+            const contentContainer = document.createElement('div');
+            box.appendChild(contentContainer);
+
+            function renderList(data, container) {
                 const list = document.createElement('div');
                 list.style.marginTop = '15px';
                 
-                ranking.forEach(r => {
+                let currentRank = 1;
+                for (let i = 0; i < data.length; i++) {
+                    if (i > 0 && data[i].score < data[i - 1].score) {
+                        currentRank++;
+                    }
+                    
                     const item = document.createElement('div');
                     item.className = 'erro-item';
                     item.style.display = 'flex';
@@ -374,27 +413,99 @@ document.addEventListener('DOMContentLoaded', () => {
                     item.style.alignItems = 'center';
                     
                     const position = document.createElement('strong');
-                    position.textContent = `${r.position}º Lugar`;
-                    position.style.color = '#aa77ff'; // Purple/admin color
+                    position.textContent = `${currentRank}º Lugar`;
+                    position.style.color = '#aa77ff'; 
                     position.style.width = '80px';
                     
-                    const name = document.createElement('span');
-                    name.textContent = r.studentName;
-                    name.style.flex = '1';
-                    name.style.marginLeft = '10px';
+                    const nameInfo = document.createElement('div');
+                    nameInfo.style.flex = '1';
+                    nameInfo.style.marginLeft = '10px';
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = data[i].studentName;
+                    nameSpan.style.display = 'block';
+                    
+                    // Mostramos a turma em baixo apenas no raning geral p/ dar contexto
+                    const turmaSpan = document.createElement('span');
+                    turmaSpan.textContent = data[i].classDay;
+                    turmaSpan.style.display = 'block';
+                    turmaSpan.style.fontSize = '0.8em';
+                    turmaSpan.style.color = '#94a3b8';
+                    
+                    nameInfo.appendChild(nameSpan);
+                    nameInfo.appendChild(turmaSpan);
                     
                     const score = document.createElement('strong');
-                    score.textContent = r.score;
-                    score.style.color = '#10b981'; // Green
+                    score.textContent = data[i].score;
+                    score.style.color = '#10b981';
                     
                     item.appendChild(position);
-                    item.appendChild(name);
+                    item.appendChild(nameInfo);
                     item.appendChild(score);
                     list.appendChild(item);
+                }
+                container.appendChild(list);
+            }
+
+            function showGeral() {
+                btnGeral.style.background = '#aa77ff';
+                btnGeral.style.color = 'white';
+                btnTurma.style.background = 'transparent';
+                btnTurma.style.color = '#cbd5e1';
+                
+                contentContainer.innerHTML = '';
+                renderList(ranking, contentContainer);
+            }
+
+            function showTurma() {
+                btnTurma.style.background = '#aa77ff';
+                btnTurma.style.color = 'white';
+                btnGeral.style.background = 'transparent';
+                btnGeral.style.color = '#cbd5e1';
+                
+                contentContainer.innerHTML = '';
+                
+                // Group by classDay
+                const groups = {};
+                ranking.forEach(r => {
+                    const t = r.classDay || 'Sem Turma';
+                    if (!groups[t]) groups[t] = [];
+                    groups[t].push(r);
                 });
                 
-                box.appendChild(list);
+                // Ordem desejada das turmas
+                const customOrder = ['desconhecido', 'Sem Turma', 'Segunda', 'Terça', 'Quarta'];
+                
+                const sortedTurmas = Object.keys(groups).sort((a, b) => {
+                    const indexA = customOrder.indexOf(a);
+                    const indexB = customOrder.indexOf(b);
+                    
+                    if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+                    if (indexA !== -1) return -1;
+                    if (indexB !== -1) return 1;
+                    return a.localeCompare(b);
+                });
+                
+                // Render each group
+                sortedTurmas.forEach(turma => {
+                    const groupTitle = document.createElement('h4');
+                    groupTitle.textContent = "Turma: " + turma;
+                    groupTitle.style.marginTop = '20px';
+                    groupTitle.style.marginBottom = '10px';
+                    groupTitle.style.color = '#e2e8f0';
+                    groupTitle.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+                    groupTitle.style.paddingBottom = '5px';
+                    contentContainer.appendChild(groupTitle);
+                    
+                    renderList(groups[turma], contentContainer);
+                });
             }
+
+            btnGeral.addEventListener('click', showGeral);
+            btnTurma.addEventListener('click', showTurma);
+            
+            // Inicia na aba geral
+            showGeral();
 
             overlay.appendChild(box);
             document.body.appendChild(overlay);

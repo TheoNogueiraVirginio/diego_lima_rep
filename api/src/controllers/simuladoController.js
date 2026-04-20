@@ -233,6 +233,14 @@ export const getSimuladoRanking = async (req, res) => {
       ]
     });
 
+    const enrollments = await prisma.enrollment.findMany({
+      select: { name: true, classDay: true }
+    });
+    const enrollmentMap = {};
+    enrollments.forEach(e => {
+        if(e.name) enrollmentMap[e.name] = e.classDay || 'Sem Turma';
+    });
+
     let ranking = [];
     let currentRank = 1;
 
@@ -243,7 +251,8 @@ export const getSimuladoRanking = async (req, res) => {
       ranking.push({
         position: currentRank,
         studentName: submissions[i].studentName,
-        score: submissions[i].totalScore
+        score: submissions[i].totalScore,
+        classDay: enrollmentMap[submissions[i].studentName] || 'Sem Turma'
       });
     }
 
