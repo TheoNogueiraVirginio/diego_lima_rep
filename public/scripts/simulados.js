@@ -389,8 +389,73 @@ document.addEventListener('DOMContentLoaded', () => {
             btnTurma.style.border = 'none';
             btnTurma.style.cursor = 'pointer';
             
+            const spacer = document.createElement('div');
+            spacer.style.flex = '1';
+
+            const btnExportPdf = document.createElement('button');
+            btnExportPdf.innerHTML = '&#128196; Exportar PDF';
+            btnExportPdf.style.padding = '6px 12px';
+            btnExportPdf.style.borderRadius = '8px';
+            btnExportPdf.style.border = 'none';
+            btnExportPdf.style.cursor = 'pointer';
+            btnExportPdf.style.backgroundColor = '#aa77ff';
+            btnExportPdf.style.color = '#fff';
+            btnExportPdf.onclick = () => {
+                if (!window.jspdf || !window.jspdf.jsPDF) {
+                    alert('Biblioteca PDF não carregada. Atualize a página e tente novamente.');
+                    return;
+                }
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                doc.setFontSize(18);
+                doc.text('Ranking por Turma - Simulado', 14, 20);
+                
+                const classes = [...new Set(ranking.map(r => r.classDay || 'Sem Turma'))].sort();
+                let startY = 30;
+                
+                classes.forEach((turma, index) => {
+                    const turmaRanking = ranking.filter(r => (r.classDay || 'Sem Turma') === turma);
+                    
+                    let sorted = turmaRanking.sort((a,b) => b.score - a.score);
+                    let currentRank = 1;
+                    let displayRanking = [];
+                    for(let i=0; i<sorted.length; i++) {
+                        if(i>0 && sorted[i].score < sorted[i-1].score) currentRank++;
+                        displayRanking.push([
+                            currentRank,
+                            sorted[i].studentName,
+                            sorted[i].score + ' pts'
+                        ]);
+                    }
+                    
+                    if (index > 0) {
+                        startY = doc.lastAutoTable.finalY + 15;
+                    }
+                    if (startY > 250) {
+                        doc.addPage();
+                        startY = 20;
+                    }
+                    
+                    doc.setFontSize(14);
+                    doc.text(`Turma: ${turma}`, 14, startY);
+                    
+                    doc.autoTable({
+                        startY: startY + 5,
+                        head: [['Posição', 'Aluno', 'Pontuação']],
+                        body: displayRanking,
+                        theme: 'striped',
+                        headStyles: { fillColor: [170, 119, 255] }
+                    });
+                });
+                
+                doc.save('ranking_turmas.pdf');
+            };
+            
             tabsContainer.appendChild(btnGeral);
             tabsContainer.appendChild(btnTurma);
+            tabsContainer.appendChild(spacer);
+            tabsContainer.appendChild(btnExportPdf);
             box.appendChild(tabsContainer);
 
             const contentContainer = document.createElement('div');
