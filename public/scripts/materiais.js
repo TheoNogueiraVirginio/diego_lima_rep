@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const localUserStatus = localStorage.getItem('userStatus');
     const isLocalAdmin = (localUserStatus === 'ADMIN');
 
-    if (!isLocalAdmin && ['3', '4'].includes(moduloId)) {
+    if (!isLocalAdmin && ['4'].includes(moduloId)) {
         // Função inline para garantir o bloqueio imediato
         const overlay = document.createElement('div');
         overlay.style.position = 'fixed';
