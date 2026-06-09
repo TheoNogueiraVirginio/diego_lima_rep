@@ -163,6 +163,7 @@ model PdfMaterial {
   subjectName  String
   category     String
   modality     String?
+  displayOrder Int      @default(0)
   filename     String
   title        String?
   createdAt    DateTime @default(now())

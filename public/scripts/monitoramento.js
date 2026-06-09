@@ -1063,11 +1063,163 @@ document.addEventListener('input', (e) => {
     if(e.target.id === 'pdf-subject-select') {
         const idx = e.target.selectedIndex;
         const subjectOrder = e.target.options[idx].dataset.subjectOrder;
-        if(subjectOrder) renderPdfList(subjectOrder);
+        if(subjectOrder) {
+            renderPdfList(subjectOrder);
+            const sections = populatePdfSectionSelect(parseInt(subjectOrder));
+            const sectionSelect = document.getElementById('pdf-section-select');
+            const reorderBtn = document.getElementById('btn-reorder-pdfs');
+            const reorderContainer = document.getElementById('pdf-reorder-container');
+
+            if (sectionSelect) {
+                sectionSelect.disabled = sections.length === 0;
+                sectionSelect.value = sections[0] ? sections[0].key : '';
+            }
+            if (reorderBtn) reorderBtn.style.display = sections.length > 0 ? 'inline-block' : 'none';
+            if (reorderContainer) reorderContainer.style.display = 'none';
+        }
+    }
+    if(e.target.id === 'pdf-section-select') {
+        const subjectSelect = document.getElementById('pdf-subject-select');
+        const subjectOrder = subjectSelect ? parseInt(subjectSelect.value) : null;
+        if (subjectOrder && e.target.value) {
+            renderPdfReorderList(subjectOrder, e.target.value);
+        }
     }
 });
 
 let currentPdfModuleData = null; // Can reuse currentModuleData if fetches cover both
+
+function getPdfSectionsForSubject(subj) {
+    if (!subj || !subj.materiais) return [];
+
+    const categoryLabels = {
+        teoria: 'Teoria',
+        listas: 'Listas',
+        gabaritos: 'Gabaritos'
+    };
+
+    const sections = [];
+    Object.entries(categoryLabels).forEach(([categoryKey, categoryLabel]) => {
+        const bucket = subj.materiais[categoryKey] || {};
+        Object.entries(bucket).forEach(([modKey, items]) => {
+            if (!Array.isArray(items) || items.length === 0) return;
+            const label = modKey === 'default' ? `${categoryLabel} - Geral` : `${categoryLabel} - ${modKey}`;
+            sections.push({ key: `${categoryKey}:${modKey}`, categoryKey, modKey, label, items });
+        });
+    });
+
+    return sections;
+}
+
+function populatePdfSectionSelect(subjectOrder) {
+    const sectionSelect = document.getElementById('pdf-section-select');
+    if (!sectionSelect || !currentPdfModuleData) return [];
+
+    const subj = currentPdfModuleData.aulas[subjectOrder - 1];
+    const sections = getPdfSectionsForSubject(subj);
+
+    sectionSelect.innerHTML = '<option value="">Selecione a seção para ordenar</option>';
+    sectionSelect.disabled = sections.length === 0;
+
+    sections.forEach((section, index) => {
+        const opt = document.createElement('option');
+        opt.value = section.key;
+        opt.textContent = `${index + 1}. ${section.label} (${section.items.length})`;
+        sectionSelect.appendChild(opt);
+    });
+
+    return sections;
+}
+
+function renderPdfReorderList(subjectOrder, sectionKey) {
+    if (!currentPdfModuleData) return;
+
+    const subj = currentPdfModuleData.aulas[subjectOrder - 1];
+    const sections = getPdfSectionsForSubject(subj);
+    const section = sections.find(item => item.key === sectionKey) || sections[0];
+    const list = document.getElementById('pdf-reorder-list');
+
+    if (!list) return;
+    list.innerHTML = '';
+
+    if (!section) {
+        list.innerHTML = '<div style="color: var(--muted);">Nenhum PDF encontrado para ordenar.</div>';
+        return;
+    }
+
+    section.items.forEach((pdf, index) => {
+        const div = document.createElement('div');
+        div.className = 'reorder-item';
+        div.style.padding = '10px';
+        div.style.background = 'rgba(255,255,255,0.1)';
+        div.style.border = '1px solid #444';
+        div.style.borderRadius = '5px';
+        div.style.cursor = 'grab';
+        div.style.display = 'flex';
+        div.style.alignItems = 'center';
+        div.style.gap = '10px';
+
+        const handle = document.createElement('span');
+        handle.innerHTML = '☰';
+        handle.style.color = '#ccc';
+
+        const title = document.createElement('span');
+        const displayTitle = pdf.title || pdf.filename.split('/').pop();
+        title.textContent = `${index + 1}. ${displayTitle}`;
+
+        div.appendChild(handle);
+        div.appendChild(title);
+        div.dataset.dbId = pdf.id;
+        div.draggable = true;
+
+        div.addEventListener('dragstart', handlePdfDragStart);
+        div.addEventListener('dragover', handlePdfDragOver);
+        div.addEventListener('drop', handlePdfDrop);
+        div.addEventListener('dragenter', handlePdfDragEnter);
+        div.addEventListener('dragleave', handlePdfDragLeave);
+
+        list.appendChild(div);
+    });
+}
+
+let dragPdfSrcEl = null;
+
+function handlePdfDragStart(e) {
+    dragPdfSrcEl = this;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', this.dataset.dbId);
+    this.style.opacity = '0.4';
+}
+
+function handlePdfDragOver(e) {
+    if (e.preventDefault) e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+
+function handlePdfDragEnter() {
+    this.style.border = '2px dashed #6ee7b7';
+}
+
+function handlePdfDragLeave() {
+    this.style.border = '1px solid #444';
+}
+
+function handlePdfDrop(e) {
+    if (e.stopPropagation) e.stopPropagation();
+    if (dragPdfSrcEl !== this) {
+        const list = document.getElementById('pdf-reorder-list');
+        const items = Array.from(list.children);
+        const srcIdx = items.indexOf(dragPdfSrcEl);
+        const targetIdx = items.indexOf(this);
+
+        if (srcIdx < targetIdx) this.after(dragPdfSrcEl);
+        else this.before(dragPdfSrcEl);
+    }
+    dragPdfSrcEl.style.opacity = '1';
+    this.style.border = '1px solid #444';
+    return false;
+}
 
 async function loadAdminModulePdfs(modId) {
     try {
@@ -1089,6 +1241,18 @@ async function loadAdminModulePdfs(modId) {
             subjSelect.appendChild(opt);
         });
 
+        const sectionSelect = document.getElementById('pdf-section-select');
+        if (sectionSelect) {
+            sectionSelect.innerHTML = '<option value="">Selecione a seção para ordenar</option>';
+            sectionSelect.disabled = true;
+        }
+
+        const reorderBtn = document.getElementById('btn-reorder-pdfs');
+        if (reorderBtn) reorderBtn.style.display = 'none';
+
+        const reorderContainer = document.getElementById('pdf-reorder-container');
+        if (reorderContainer) reorderContainer.style.display = 'none';
+
     } catch (e) {
         console.error(e);
         alert('Erro ao carregar módulo PDF.');
@@ -1108,7 +1272,14 @@ function renderPdfList(subjectOrder) {
         div.innerHTML = `<h5>${title}</h5>`;
         
         Object.entries(items).forEach(([k, v]) => {
-            const list = Array.isArray(v) ? v : [v];
+            const list = (Array.isArray(v) ? [...v] : [v]).sort((a, b) => {
+                const orderA = Number.isFinite(a.displayOrder) ? a.displayOrder : Number.MAX_SAFE_INTEGER;
+                const orderB = Number.isFinite(b.displayOrder) ? b.displayOrder : Number.MAX_SAFE_INTEGER;
+                if (orderA !== orderB) return orderA - orderB;
+                const titleA = String(a.title || a.filename || '');
+                const titleB = String(b.title || b.filename || '');
+                return titleA.localeCompare(titleB, 'pt-BR', { sensitivity: 'base' });
+            });
             list.forEach(val => {
                 const displayTitle = val.title || val.filename.split('/').pop();
                 div.innerHTML += `<div style="font-size:0.9em; padding-left:10px; margin-bottom: 4px;">
@@ -1130,6 +1301,77 @@ function renderPdfList(subjectOrder) {
         container.innerHTML = '<p>Nenhum material encontrado.</p>';
     }
 }
+
+document.getElementById('btn-reorder-pdfs').addEventListener('click', (e) => {
+    e.preventDefault();
+    const subjectSelect = document.getElementById('pdf-subject-select');
+    const sectionSelect = document.getElementById('pdf-section-select');
+    const subjectOrder = subjectSelect ? parseInt(subjectSelect.value) : null;
+    const sectionKey = sectionSelect ? sectionSelect.value : '';
+
+    if (!subjectOrder || !sectionKey) {
+        alert('Selecione um assunto e uma seção com PDFs para ordenar.');
+        return;
+    }
+
+    const reorderContainer = document.getElementById('pdf-reorder-container');
+    if (reorderContainer) reorderContainer.style.display = 'flex';
+    renderPdfReorderList(subjectOrder, sectionKey);
+});
+
+const reorderPdfList = document.getElementById('pdf-reorder-list');
+
+document.getElementById('btn-save-pdf-order').addEventListener('click', async (e) => {
+    e.preventDefault();
+    const btn = e.target;
+    btn.disabled = true;
+    btn.textContent = 'Salvando...';
+
+    const items = reorderPdfList.querySelectorAll('.reorder-item');
+    const orderData = Array.from(items).map((item, idx) => ({
+        id: item.dataset.dbId,
+        displayOrder: idx + 1
+    }));
+
+    try {
+        const res = await fetch('/api/courses/pdfs/reorder', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: orderData })
+        });
+
+        if (res.ok) {
+            alert('Ordem dos PDFs atualizada com sucesso!');
+            const modId = document.getElementById('pdf-module-select').value;
+            const subjOrder = document.getElementById('pdf-subject-select').value;
+            const sectionKey = document.getElementById('pdf-section-select').value;
+
+            loadAdminModulePdfs(modId).then(() => {
+                document.getElementById('pdf-subject-select').value = subjOrder;
+                const sections = populatePdfSectionSelect(parseInt(subjOrder));
+                if (sectionKey) {
+                    const sectionSelect = document.getElementById('pdf-section-select');
+                    if (sectionSelect) sectionSelect.value = sectionKey;
+                    renderPdfReorderList(parseInt(subjOrder), sectionKey);
+                } else if (sections[0]) {
+                    renderPdfReorderList(parseInt(subjOrder), sections[0].key);
+                }
+                renderPdfList(subjOrder);
+            });
+
+            const reorderContainer = document.getElementById('pdf-reorder-container');
+            if (reorderContainer) reorderContainer.style.display = 'none';
+        } else {
+            const data = await res.json();
+            alert('Erro: ' + data.error);
+        }
+    } catch (err) {
+        alert('Erro ao salvar nova ordem dos PDFs');
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Salvar Ordem';
+});
 
 // Handler for adding new PDF
 document.getElementById('pdf-add-form').addEventListener('submit', async (e) => {
@@ -1171,6 +1413,7 @@ document.getElementById('pdf-add-form').addEventListener('submit', async (e) => 
             // Refresh list
             loadAdminModulePdfs(modId).then(() => {
                  document.getElementById('pdf-subject-select').value = subjOrderIdx;
+                  populatePdfSectionSelect(subjOrderIdx);
                  renderPdfList(subjOrderIdx);
             });
             e.target.reset();
@@ -1210,6 +1453,7 @@ document.getElementById('pdf-list').addEventListener('click', async (e) => {
                 const subjOrderIdx = parseInt(document.getElementById('pdf-subject-select').value);
                 loadAdminModulePdfs(modId).then(() => {
                     document.getElementById('pdf-subject-select').value = subjOrderIdx;
+                    populatePdfSectionSelect(subjOrderIdx);
                     renderPdfList(subjOrderIdx);
                 });
             } else {
@@ -1232,6 +1476,7 @@ document.getElementById('pdf-list').addEventListener('click', async (e) => {
                 const subjOrderIdx = parseInt(document.getElementById('pdf-subject-select').value);
                 loadAdminModulePdfs(modId).then(() => {
                     document.getElementById('pdf-subject-select').value = subjOrderIdx;
+                    populatePdfSectionSelect(subjOrderIdx);
                     renderPdfList(subjOrderIdx);
                 });
             } else {

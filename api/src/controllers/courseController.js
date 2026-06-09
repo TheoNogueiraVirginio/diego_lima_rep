@@ -20,7 +20,14 @@ export const getLessonsByModule = async (req, res) => {
 
         // Fetch materials for these subjects too
         const materials = await prisma.pdfMaterial.findMany({
-            where: { module: moduleIdInt }
+            where: { module: moduleIdInt },
+            orderBy: [
+                { subjectOrder: 'asc' },
+                { category: 'asc' },
+                { modality: 'asc' },
+                { displayOrder: 'asc' },
+                { createdAt: 'asc' }
+            ]
         });
 
         // Reshape to match frontend expectation (optional, or change frontend)
@@ -43,6 +50,29 @@ export const getLessonsByModule = async (req, res) => {
                 };
             }
             return subjects[order];
+        };
+
+        const getMaterialBucketKey = (category) => {
+            if (category === 'teoria') return 'teoria';
+            if (category === 'lista') return 'listas';
+            if (category === 'gabarito') return 'gabaritos';
+            return null;
+        };
+
+        const sortPdfEntries = (bucket) => {
+            Object.keys(bucket).forEach(modKey => {
+                if (!Array.isArray(bucket[modKey])) return;
+
+                bucket[modKey].sort((a, b) => {
+                    const orderA = Number.isFinite(a.displayOrder) ? a.displayOrder : Number.MAX_SAFE_INTEGER;
+                    const orderB = Number.isFinite(b.displayOrder) ? b.displayOrder : Number.MAX_SAFE_INTEGER;
+                    if (orderA !== orderB) return orderA - orderB;
+
+                    const titleA = String(a.title || a.filename || '');
+                    const titleB = String(b.title || b.filename || '');
+                    return titleA.localeCompare(titleB, 'pt-BR', { sensitivity: 'base' });
+                });
+            });
         };
 
         // Process Lessons
@@ -76,22 +106,27 @@ export const getLessonsByModule = async (req, res) => {
             
             // Map flat list to nested structure: materials[category][modality] = { id, filename, title }
             // Map flat list to nested structure: materials[category][modality] = [ { id, filename, title }, ... ]
-            if (m.category === 'teoria') {
-                if (!subj.materiais.teoria || typeof subj.materiais.teoria !== 'object') {
-                    subj.materiais.teoria = {};
-                }
-                const modKey = m.modality || 'default';
-                if (!Array.isArray(subj.materiais.teoria[modKey])) subj.materiais.teoria[modKey] = [];
-                subj.materiais.teoria[modKey].push({ id: m.id, filename: m.filename, title: m.title });
+            const bucketKey = getMaterialBucketKey(m.category);
+            if (!bucketKey) return;
 
-            } else if (['lista', 'gabarito'].includes(m.category)) {
-                const key = m.category === 'lista' ? 'listas' : 'gabaritos';
-                if (!subj.materiais[key]) subj.materiais[key] = {};
-                
-                const modKey = m.modality || 'default';
-                if (!Array.isArray(subj.materiais[key][modKey])) subj.materiais[key][modKey] = [];
-                subj.materiais[key][modKey].push({ id: m.id, filename: m.filename, title: m.title });
+            if (!subj.materiais[bucketKey] || typeof subj.materiais[bucketKey] !== 'object') {
+                subj.materiais[bucketKey] = {};
             }
+
+            const modKey = m.modality || 'default';
+            if (!Array.isArray(subj.materiais[bucketKey][modKey])) subj.materiais[bucketKey][modKey] = [];
+            subj.materiais[bucketKey][modKey].push({
+                id: m.id,
+                filename: m.filename,
+                title: m.title,
+                displayOrder: m.displayOrder
+            });
+        });
+
+        Object.values(subjects).forEach(subj => {
+            sortPdfEntries(subj.materiais.teoria || {});
+            sortPdfEntries(subj.materiais.listas || {});
+            sortPdfEntries(subj.materiais.gabaritos || {});
         });
 
         
@@ -168,7 +203,7 @@ export const createLesson = async (req, res) => {
 
 export const createPdf = async (req, res) => {
     try {
-        const { module, subjectOrder, subjectName, category, modality, filename, title } = req.body;
+        const { module, subjectOrder, subjectName, category, modality, filename, title, displayOrder } = req.body;
         
         if (!module || !subjectOrder || !category || !filename) {
             return res.status(400).json({ error: 'Missing required fields (module, subjectOrder, category, filename)' });
@@ -178,12 +213,31 @@ export const createPdf = async (req, res) => {
              return res.status(400).json({ error: 'Invalid category. Must be one of: teoria, lista, gabarito' });
         }
 
-        const data = {
+        const scope = {
             module: parseInt(module),
             subjectOrder: parseInt(subjectOrder),
+            category,
+            modality: modality || 'default'
+        };
+
+        let nextDisplayOrder = null;
+        if (Number.isInteger(Number(displayOrder))) {
+            nextDisplayOrder = parseInt(displayOrder);
+        } else {
+            const agg = await prisma.pdfMaterial.aggregate({
+                where: scope,
+                _max: { displayOrder: true }
+            });
+            nextDisplayOrder = (agg._max.displayOrder ?? 0) + 1;
+        }
+
+        const data = {
+            module: scope.module,
+            subjectOrder: scope.subjectOrder,
             subjectName,
             category,
-            modality: modality || 'default',
+            modality: scope.modality,
+            displayOrder: nextDisplayOrder,
             filename,
             title
         };
@@ -226,5 +280,32 @@ export const updatePdf = async (req, res) => {
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'Failed to update PDF' });
+    }
+};
+
+export const reorderPdfs = async (req, res) => {
+    try {
+        const { items } = req.body;
+
+        if (!Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ error: 'Invalid payload' });
+        }
+
+        const updates = items.map(item => {
+            if (!item?.id || !Number.isFinite(Number(item.displayOrder))) {
+                throw new Error('Invalid item in payload');
+            }
+
+            return prisma.pdfMaterial.update({
+                where: { id: item.id },
+                data: { displayOrder: parseInt(item.displayOrder) }
+            });
+        });
+
+        await prisma.$transaction(updates);
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Error reordering pdfs:', e);
+        res.status(500).json({ error: e.message });
     }
 };

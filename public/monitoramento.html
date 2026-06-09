@@ -145,6 +145,19 @@
                   <!-- Lista de PDFs existentes -->
               </div>
 
+              <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;">
+                <select id="pdf-section-select" class="admin-select" disabled>
+                    <option value="">Selecione a seção para ordenar</option>
+                </select>
+                <button id="btn-reorder-pdfs" class="admin-btn" style="display: none;">Reorganizar PDFs</button>
+              </div>
+
+              <div id="pdf-reorder-container" style="display: none; flex-direction: column; gap: 10px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                  <h4 style="margin-top: 0; color: #fff;">Arraste para reorganizar os PDFs desta seção</h4>
+                  <div id="pdf-reorder-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                  <button id="btn-save-pdf-order" class="admin-btn" style="margin-top: 10px; background-color: #2e8b57;">Salvar Ordem</button>
+              </div>
+
               <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
                 <h4>Adicionar Novo PDF</h4>
                 <form id="pdf-add-form" style="display: flex; flex-direction: column; gap: 8px;">
