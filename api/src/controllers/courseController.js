@@ -19,16 +19,49 @@ export const getLessonsByModule = async (req, res) => {
         });
 
         // Fetch materials for these subjects too
-        const materials = await prisma.pdfMaterial.findMany({
-            where: { module: moduleIdInt },
-            orderBy: [
-                { subjectOrder: 'asc' },
-                { category: 'asc' },
-                { modality: 'asc' },
-                { displayOrder: 'asc' },
-                { createdAt: 'asc' }
-            ]
-        });
+        // Try to fetch materials normally. If the DB hasn't run the migration
+        // to add `displayOrder`, Prisma may throw P2022 because the client
+        // expects that column. In that case retry with an explicit select
+        // that does not include `displayOrder`.
+        let materials;
+        try {
+            materials = await prisma.pdfMaterial.findMany({
+                where: { module: moduleIdInt },
+                orderBy: [
+                    { subjectOrder: 'asc' },
+                    { category: 'asc' },
+                    { modality: 'asc' },
+                    { createdAt: 'asc' }
+                ]
+            });
+        } catch (err) {
+            // If missing column error from Prisma, refetch selecting known columns
+            if (err && err.code === 'P2022') {
+                materials = await prisma.pdfMaterial.findMany({
+                    where: { module: moduleIdInt },
+                    orderBy: [
+                        { subjectOrder: 'asc' },
+                        { category: 'asc' },
+                        { modality: 'asc' },
+                        { createdAt: 'asc' }
+                    ],
+                    select: {
+                        id: true,
+                        module: true,
+                        subjectOrder: true,
+                        subjectName: true,
+                        category: true,
+                        modality: true,
+                        filename: true,
+                        title: true,
+                        createdAt: true,
+                        updatedAt: true
+                    }
+                });
+            } else {
+                throw err;
+            }
+        }
 
         // Reshape to match frontend expectation (optional, or change frontend)
         // Frontend expects: { subject: { vimeoId, subAulas: [], materiais: {} } }
@@ -64,9 +97,23 @@ export const getLessonsByModule = async (req, res) => {
                 if (!Array.isArray(bucket[modKey])) return;
 
                 bucket[modKey].sort((a, b) => {
-                    const orderA = Number.isFinite(a.displayOrder) ? a.displayOrder : Number.MAX_SAFE_INTEGER;
-                    const orderB = Number.isFinite(b.displayOrder) ? b.displayOrder : Number.MAX_SAFE_INTEGER;
-                    if (orderA !== orderB) return orderA - orderB;
+                    const hasA = Number.isFinite(a.displayOrder);
+                    const hasB = Number.isFinite(b.displayOrder);
+
+                    if (hasA && hasB) {
+                        if (a.displayOrder !== b.displayOrder) return a.displayOrder - b.displayOrder;
+                    } else if (hasA && !hasB) {
+                        return -1; // A comes before B
+                    } else if (!hasA && hasB) {
+                        return 1; // B comes before A
+                    }
+
+                    // Fallback: prefer older createdAt first
+                    if (a.createdAt && b.createdAt) {
+                        const ta = new Date(a.createdAt).getTime();
+                        const tb = new Date(b.createdAt).getTime();
+                        if (ta !== tb) return ta - tb;
+                    }
 
                     const titleA = String(a.title || a.filename || '');
                     const titleB = String(b.title || b.filename || '');
@@ -119,7 +166,8 @@ export const getLessonsByModule = async (req, res) => {
                 id: m.id,
                 filename: m.filename,
                 title: m.title,
-                displayOrder: m.displayOrder
+                displayOrder: m.displayOrder,
+                createdAt: m.createdAt
             });
         });
 
@@ -224,11 +272,21 @@ export const createPdf = async (req, res) => {
         if (Number.isInteger(Number(displayOrder))) {
             nextDisplayOrder = parseInt(displayOrder);
         } else {
-            const agg = await prisma.pdfMaterial.aggregate({
-                where: scope,
-                _max: { displayOrder: true }
-            });
-            nextDisplayOrder = (agg._max.displayOrder ?? 0) + 1;
+            try {
+                const agg = await prisma.pdfMaterial.aggregate({
+                    where: scope,
+                    _max: { displayOrder: true }
+                });
+                nextDisplayOrder = (agg._max.displayOrder ?? 0) + 1;
+            } catch (err) {
+                // If displayOrder does not exist in the DB (P2022), fallback to count+1
+                if (err && err.code === 'P2022') {
+                    const cnt = await prisma.pdfMaterial.count({ where: scope });
+                    nextDisplayOrder = cnt + 1;
+                } else {
+                    throw err;
+                }
+            }
         }
 
         const data = {
@@ -302,8 +360,16 @@ export const reorderPdfs = async (req, res) => {
             });
         });
 
-        await prisma.$transaction(updates);
-        res.json({ success: true });
+        try {
+            await prisma.$transaction(updates);
+            res.json({ success: true });
+        } catch (err) {
+            // If DB hasn't applied migration and column is missing, return clear message
+            if (err && err.code === 'P2022') {
+                return res.status(500).json({ error: 'A coluna `displayOrder` não existe no banco. Execute a migração para adicionar essa coluna antes de usar a reordenação.' });
+            }
+            throw err;
+        }
     } catch (e) {
         console.error('Error reordering pdfs:', e);
         res.status(500).json({ error: e.message });
