@@ -544,8 +544,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                    // SEPARAÇÃO SOLICITADA PARA ALUNOS
                    if (modality === 'APROFUNDAMENTO') {
-                       if (hasAprof) addItems(hasAprof, 'Praticando ENEM (Aprof.)');
-                       else if (hasDefault) addItems(hasDefault, 'Praticando ENEM');
+                       if (hasAprof) {
+                           addItems(hasAprof, 'Praticando ENEM (Aprof.)');
+                           // Também mostrar as listas gerais além das específicas de aprofundamento
+                           if (hasDefault) addItems(hasDefault, 'Praticando ENEM');
+                       } else if (hasDefault) {
+                           addItems(hasDefault, 'Praticando ENEM');
+                       }
                    } else {
                        // Alunos EXTENSIVO ou outros
                        if (hasExtensivo) addItems(hasExtensivo, 'Praticando ENEM');
@@ -605,9 +610,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     // Lógica para Aluno
                     if (modality === 'APROFUNDAMENTO'){
-                        if (gabs.pe_aprofundamento) addItems(gabs.pe_aprofundamento, 'Praticando ENEM (Aprof.)');
-                        else if (gabs.pe_extensivo) addItems(gabs.pe_extensivo, 'Praticando ENEM');
-                        else if (gabs.default) addItems(gabs.default, 'Praticando ENEM (Geral)');
+                        if (gabs.pe_aprofundamento) {
+                            addItems(gabs.pe_aprofundamento, 'Praticando ENEM (Aprof.)');
+                            if (gabs.default) addItems(gabs.default, 'Praticando ENEM (Geral)');
+                        } else if (gabs.pe_extensivo) {
+                            addItems(gabs.pe_extensivo, 'Praticando ENEM');
+                            if (gabs.default) addItems(gabs.default, 'Praticando ENEM (Geral)');
+                        } else if (gabs.default) {
+                            addItems(gabs.default, 'Praticando ENEM (Geral)');
+                        }
                     } else {
                         if (gabs.pe_extensivo) addItems(gabs.pe_extensivo, 'Praticando ENEM');
                         else if (gabs.default) addItems(gabs.default, 'Praticando ENEM (Geral)');

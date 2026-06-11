@@ -1,6 +1,20 @@
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
+// Normaliza valores de `modality` vindos do banco para as chaves esperadas
+const normalizeModality = (raw) => {
+    if (!raw && raw !== '') return 'default';
+    const v = String(raw || '').toLowerCase().trim();
+    if (v === '' || v === 'default' || v === 'geral' || v === 'g') return 'default';
+    if (v.includes('extensivo')) return 'pe_extensivo';
+    if (v.includes('aprofund')) return 'pe_aprofundamento';
+    if (v.includes('cong') || v.includes('congru')) return 'cong_mod';
+    if (v === 'extra2' || v.includes('extra2')) return 'extra2';
+    if (v === 'extra' || v.includes('extra')) return 'extra';
+    // fallback: transformar espaços em underline e usar como chave
+    return v.replace(/\s+/g, '_');
+};
+
 export const getLessonsByModule = async (req, res) => {
     try {
         const { moduleId } = req.params;
@@ -160,7 +174,7 @@ export const getLessonsByModule = async (req, res) => {
                 subj.materiais[bucketKey] = {};
             }
 
-            const modKey = m.modality || 'default';
+            const modKey = normalizeModality(m.modality);
             if (!Array.isArray(subj.materiais[bucketKey][modKey])) subj.materiais[bucketKey][modKey] = [];
             subj.materiais[bucketKey][modKey].push({
                 id: m.id,
@@ -265,7 +279,7 @@ export const createPdf = async (req, res) => {
             module: parseInt(module),
             subjectOrder: parseInt(subjectOrder),
             category,
-            modality: modality || 'default'
+            modality: normalizeModality(modality)
         };
 
         let nextDisplayOrder = null;
