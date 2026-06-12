@@ -554,7 +554,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                    } else {
                        // Alunos EXTENSIVO ou outros
                        if (hasExtensivo) addItems(hasExtensivo, 'Praticando ENEM');
-                       else if (hasDefault) addItems(hasDefault, 'Praticando ENEM');
+                       if (hasDefault) addItems(hasDefault, 'Praticando ENEM (Geral)');
                    }
 
                    addItems(hasCongMod, 'Congruência Modular');
