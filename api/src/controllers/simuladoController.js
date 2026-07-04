@@ -29,8 +29,24 @@ const CORRECT_ANSWERS = {
   ],
 };
 
+function isAprofundamentoBlocked(user) {
+  if (!user) return false;
+  if (String(user.status || '').toUpperCase() === 'ADMIN') return false;
+  return String(user.modality || '').toLowerCase().includes('aprofundamento');
+}
+
+function denyAprofundamentoAccess(req, res) {
+  if (isAprofundamentoBlocked(req.enrollment)) {
+    return res.status(403).json({ error: 'Acesso aos simulados não disponível para alunos de Aprofundamento.' });
+  }
+  return null;
+}
+
 export const startSimulado = async (req, res) => {
   try {
+    const blocked = denyAprofundamentoAccess(req, res);
+    if (blocked) return blocked;
+
     const { simuladoId } = req.params;
     const studentName = req.enrollment.name;
 
@@ -66,6 +82,9 @@ export const startSimulado = async (req, res) => {
 
 export const submitSimulado = async (req, res) => {
   try {
+    const blocked = denyAprofundamentoAccess(req, res);
+    if (blocked) return blocked;
+
     const { simuladoId } = req.params;
     const studentName = req.enrollment.name;
     const { responses, timeSpent } = req.body; // responses: array de {questionIndex, selectedOption, flagged}
@@ -130,6 +149,9 @@ export const submitSimulado = async (req, res) => {
 
 export const getSimuladoStatus = async (req, res) => {
   try {
+    const blocked = denyAprofundamentoAccess(req, res);
+    if (blocked) return blocked;
+
     const { simuladoId } = req.params;
     const studentName = req.enrollment.name;
 
@@ -155,6 +177,9 @@ export const getSimuladoStatus = async (req, res) => {
 
 export const saveSimuladoProgress = async (req, res) => {
   try {
+    const blocked = denyAprofundamentoAccess(req, res);
+    if (blocked) return blocked;
+
     const { simuladoId } = req.params;
     const studentName = req.enrollment.name;
     const { responses, timeSpent } = req.body;
@@ -186,6 +211,9 @@ export const saveSimuladoProgress = async (req, res) => {
 
 export const getSimuladoResults = async (req, res) => {
   try {
+    const blocked = denyAprofundamentoAccess(req, res);
+    if (blocked) return blocked;
+
     const { simuladoId } = req.params;
     const studentName = req.enrollment.name;
 

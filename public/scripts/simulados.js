@@ -9,6 +9,28 @@ document.addEventListener('DOMContentLoaded', () => {
         elementoNome.textContent = primeiroNomeOrganizado;
     }
 
+    async function getUserModality() {
+        try {
+            const res = await fetch('/api/auth/me', { credentials: 'include' });
+            if (!res.ok) return '';
+            const user = await res.json();
+            return String(user?.modality || '').trim();
+        } catch (e) {
+            return '';
+        }
+    }
+
+    async function hideAprofundamentoSimuladoActions() {
+        const modality = await getUserModality();
+        if (!modality.toLowerCase().includes('aprofundamento')) return;
+
+        document.querySelectorAll('.btn-fazer-simulado[data-id]').forEach((button) => {
+            button.style.display = 'none';
+        });
+    }
+
+    hideAprofundamentoSimuladoActions();
+
     const botoes = document.querySelectorAll('.btn-fazer-simulado[data-id]');
 
     // comportamento dos botões de simulado

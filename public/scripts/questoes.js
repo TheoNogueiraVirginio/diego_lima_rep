@@ -1,4 +1,22 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    async function getUserModality() {
+        try {
+            const res = await fetch('/api/auth/me', { credentials: 'include' });
+            if (!res.ok) return '';
+            const user = await res.json();
+            return String(user?.modality || '').trim();
+        } catch (e) {
+            return '';
+        }
+    }
+
+    const modality = await getUserModality();
+    if (modality.toLowerCase().includes('aprofundamento')) {
+        alert('Os simulados não estão disponíveis para alunos de Aprofundamento.');
+        window.location.href = '/simulados.html';
+        return;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const idCombinado = params.get('id') || '1.1';
 
