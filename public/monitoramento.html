@@ -103,7 +103,7 @@
             </div>
           </div>
 
-          <!-- Conteúdo: Cadastro -->
+          <!-- Conteúdo: Gestão de alunos já cadastrados -->
           <div id="content-cadastro" class="panel-section">
             <form id="adminStudentForm" style="display: flex; flex-direction: column; gap: 10px;">
                 <input type="text" id="adminName" placeholder="Nome Completo" required style="padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03); background: rgba(255,255,255,0.01); color: inherit;">
@@ -124,7 +124,7 @@
             </form>
           </div>
 
-          <!-- Conteúdo: PDFs -->
+          <!-- Conteúdo: Gestão dePDFs -->
           <div id="content-pdfs" class="panel-section" style="display: none;">
               <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
                 <select id="pdf-module-select" class="admin-select">
@@ -181,7 +181,7 @@
               </div>
           </div>
 
-          <!-- Conteúdo: Vídeos -->
+          <!-- Conteúdo: Gestão de vídeos -->
           <div id="content-videos" class="panel-section" style="display: none;">
               <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
                 <select id="video-module-select" class="admin-select">
@@ -242,7 +242,7 @@
             </form>
           </div>
 
-          <!-- Conteúdo: Cupons -->
+          <!-- Conteúdo: Gestão de cupons -->
           <div id="content-cupons" class="panel-section" style="display: none;">
               <form id="coupon-add-form" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
                   <h4>Criar Novo Cupom</h4>
@@ -275,7 +275,7 @@
               </div>
           </div>
           
-          <!-- Conteúdo: Outros -->
+          <!-- Conteúdo: Outras configurações -->
           <div id="content-outros" class="panel-section" style="display: none;">
               <div style="padding: 15px; border: 1px dashed var(--muted); border-radius: 6px; text-align: center; color: var(--muted);">
                 <p>Outras Configurações</p>
@@ -311,7 +311,7 @@
   <!-- Dados das aulas para mapear IDs par nomes -->
   <script src="/scripts/monitoramento.js"></script>
 
-  <!-- Modal de Comentários -->
+  <!-- Modal de Comentários (lembrar de fazer futuros ajustes para tornar essa seção funcional) -->
   <div id="commentsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
     <div style="background:var(--card-bg); width:90%; max-width:800px; max-height:90%; border-radius:8px; display:flex; flex-direction:column; border:1px solid rgba(255,255,255,0.1);">
         <div style="padding:15px; border-bottom:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center;">
@@ -323,6 +323,7 @@
         </div>
     </div>
   </div>
+
   <!-- Modal de Detalhes do Aluno -->
   <div id="studentDetailsModal" class="modal-overlay">
     <div class="modal-content">
