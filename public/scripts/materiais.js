@@ -41,17 +41,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.body.appendChild(overlay);
 
         document.getElementById('btn-voltar-modulos').addEventListener('click', () => {
-             window.location.href = '/modulos.html';
+            window.location.href = '/modulos.html';
         });
 
-         // Parar execução do resto do script para não carregar conteúdo
-         return; 
+        // Parar execução do resto do script para não carregar conteúdo
+        return;
     }
     // --------------------------------------
 
     // fallback único para todas as miniaturas dos assuntos
     const DEFAULT_LOGO = '/images/logo_diego_png.png';
-    
+
     // Obter dados do usuário para verificação de modalidade
     let currentUser = null;
     let userModality = '';
@@ -65,19 +65,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             userModality = String(currentUser.modality || '').toLowerCase().trim();
             isAdmin = String(currentUser.status || '').toUpperCase() === 'ADMIN';
         }
-    } catch(e) {}
-    
+    } catch (e) { }
+
     // const params = new URLSearchParams(window.location.search); // Já declarado acima
     // const moduloId = params.get('id') || '1'; // Já declarado acima
 
     let mod = null;
     try {
         const res = await fetch(`/api/courses/${moduloId}`);
-        if(res.ok) mod = await res.json();
-    } catch(e) { console.error('Failed to load course data', e); }
-    
+        if (res.ok) mod = await res.json();
+    } catch (e) { console.error('Failed to load course data', e); }
+
     // Legacy fallback
-    if(!mod && window.cursoData) {
+    if (!mod && window.cursoData) {
         mod = window.cursoData[moduloId];
     }
 
@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Helper: verifica se o item deve contar para a soma de minutos com base na modalidade
     const shouldCountTime = (item) => {
         if (!item) return false;
-        
+
         if (isAdmin) return true;
 
         if (userModality.includes('integral')) return true;
@@ -116,28 +116,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Se existir uma aula com requiredModality="extensivo" ela seria ignorada aqui?
                 // Se sim, ok. Se ele deveria ver, então a regra precisa ser mais ampla.
                 // Vou assumir que "gerais" = sem requiredModality.
-                
+
                 // Mas espere, "extensivo (composto por: EXTENSIVO, COM_MATERIAL e SEM_MATERIAL)"
                 // A regra para Extensivo é: gerais + exclusivas de extensivo.
-                
+
                 // Se o texto é "verifique se o aluno é APROFUNDAMENTO e, caso seja, conte as alunas gerais e as exclusivas do aprofundamento", 
                 // então ele NÃO conta as exclusivas de extensivo (que teriam requiredModality='extensivo').
-                
-                return false; 
+
+                return false;
             }
-            
+
             // EXTENSIVO (qualquer variação)
             const isExtensivoUser = ['extensivo', 'com_material', 'sem_material'].some(v => userModality.includes(v));
             if (isExtensivoUser) {
-                 if (req === 'extensivo') return true;
-                 // Extensivo não conta 'aprofundamento'
-                 return false;
+                if (req === 'extensivo') return true;
+                // Extensivo não conta 'aprofundamento'
+                return false;
             }
-            
+
             // Outros casos (se houver): verifica inclusão direta
             return userModality.includes(req);
         }
-        
+
         // Sem requiredModality = Geral -> Conta para todos
         return true;
     };
@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // CALCULO DE TEMPO TOTAL (AULA + SUBAULAS)
         let totalMinutes = 0;
         const subs = aula.subAulas || aula.subaulas || [];
-        
+
         let hasVideo = false;
         if (aula.vimeoId && aula.vimeoId.trim()) hasVideo = true;
 
@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (Array.isArray(subs)) {
             subs.forEach(s => {
                 if (s.vimeoId && String(s.vimeoId).trim()) hasVideo = true;
-                
+
                 if (s.duracao && typeof s.duracao === 'number') {
                     if (shouldCountTime(s)) {
                         totalMinutes += s.duracao;
@@ -221,22 +221,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // Novo caso: Objeto com múltiplas chaves (pe_extensivo, pe_aprofundamento, etc.)
                     // Verifica se há pelo menos alguma chave relevante
                     if (rawTeorico.pe_extensivo || rawTeorico.pe_aprofundamento || rawTeorico.extensivo || rawTeorico.aprofundamento || rawTeorico.default) {
-                         // Se for ADMIN ou APROFUNDAMENTO, mostra modal com opções
-                         if (isAdmin || userModality.includes('aprofundamento') || userModality.includes('integral')) {
-                              hasComplexTeoria = true;
-                         } else {
-                              // Outros alunos abrem direto a versão extensivo (ou equivalente padrão)
+                        // Se for ADMIN ou APROFUNDAMENTO, mostra modal com opções
+                        if (isAdmin || userModality.includes('aprofundamento') || userModality.includes('integral')) {
+                            hasComplexTeoria = true;
+                        } else {
+                            // Outros alunos abrem direto a versão extensivo (ou equivalente padrão)
 
-                              let tsUrlSource = rawTeorico.pe_extensivo || rawTeorico.extensivo || rawTeorico.default;
-                              if (Array.isArray(tsUrlSource) && tsUrlSource.length > 0) {
-                                  teoricoUrl = tsUrlSource[0];
-                                  if (tsUrlSource.length > 1) {
-                                      hasComplexTeoria = true;
-                                  }
-                              } else {
-                                  teoricoUrl = tsUrlSource;
-                              }
-                         }
+                            let tsUrlSource = rawTeorico.pe_extensivo || rawTeorico.extensivo || rawTeorico.default;
+                            if (Array.isArray(tsUrlSource) && tsUrlSource.length > 0) {
+                                teoricoUrl = tsUrlSource[0];
+                                if (tsUrlSource.length > 1) {
+                                    hasComplexTeoria = true;
+                                }
+                            } else {
+                                teoricoUrl = tsUrlSource;
+                            }
+                        }
                     }
                 }
             }
@@ -333,19 +333,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // após criar todos os cards, tentar carregar as miniaturas dinamicamente
-    function tryLoadThumb(el, candidates, i = 0){
+    function tryLoadThumb(el, candidates, i = 0) {
         if (!el || i >= candidates.length) return;
         const url = candidates[i];
-        if (!url) return tryLoadThumb(el, candidates, i+1);
+        if (!url) return tryLoadThumb(el, candidates, i + 1);
         const img = new Image();
         img.onload = () => {
-                if (el.tagName && el.tagName.toUpperCase() === 'IMG') {
-                    el.src = url;
-                } else {
-                    el.style.backgroundImage = `url('${url}')`;
-                }
+            if (el.tagName && el.tagName.toUpperCase() === 'IMG') {
+                el.src = url;
+            } else {
+                el.style.backgroundImage = `url('${url}')`;
+            }
         };
-        img.onerror = () => tryLoadThumb(el, candidates, i+1);
+        img.onerror = () => tryLoadThumb(el, candidates, i + 1);
         img.src = url;
     }
 
@@ -355,7 +355,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const thumbs = card.querySelectorAll('.item-thumb');
         thumbs.forEach((thumbEl, i) => {
             // priorizar campo aula.thumb, senão tentar por título slug, senão fallback
-            const nameSlug = (aula.titulo || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g,'');
+            const nameSlug = (aula.titulo || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
             const lower = nameSlug.toLowerCase();
             const candidates = [];
             if (aula.thumb) candidates.push(aula.thumb);
@@ -378,7 +378,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // carregar miniatura do header (assunto) se existir placeholder ou imagem já colocada
         const headerThumb = card.querySelector('.assunto-thumb');
         if (headerThumb) {
-            const nameSlug = (aula.titulo || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g,'');
+            const nameSlug = (aula.titulo || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
             const lower = nameSlug.toLowerCase();
             const headerCandidates = [];
             if (aula.thumb) headerCandidates.push(aula.thumb);
@@ -393,9 +393,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Modal helper: cria/abre modal centralizado com opções
-    function openModal(title, items){
+    function openModal(title, items) {
         let overlay = document.getElementById('global-modal-overlay');
-        if (!overlay){
+        if (!overlay) {
             overlay = document.createElement('div');
             overlay.id = 'global-modal-overlay';
             overlay.className = 'modal-overlay';
@@ -429,11 +429,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             bodyEl.appendChild(btn);
         });
 
-        function onOverlayClick(e){
+        function onOverlayClick(e) {
             if (e.target === overlay) closeModal();
         }
-        function onEsc(e){ if (e.key === 'Escape') closeModal(); }
-        function closeModal(){
+        function onEsc(e) { if (e.key === 'Escape') closeModal(); }
+        function closeModal() {
             overlay.classList.remove('active');
             overlay.removeEventListener('click', onOverlayClick);
             document.removeEventListener('keydown', onEsc);
@@ -453,33 +453,47 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Anexar handlers para abrir modal quando clicar nas opções correspondentes
     // mapeamento de títulos (normalizados) -> docId (em api/storage/pdfs)
-    function normalizeTitle(s){
-        return String(s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,' ').trim();
+    function normalizeTitle(s) {
+        return String(s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+    }
+
+    function getUserProfileType(user) {
+        if (!user) return 'OUTRO';
+
+        const status = String(user.status || '').toUpperCase().trim();
+        if (status === 'ADMIN') return 'ADMIN';
+
+        const modality = String(user.modality || '').toUpperCase().trim();
+        if (modality.includes('INTEGRAL')) return 'INTEGRAL';
+        if (modality.includes('APROFUNDAMENTO')) return 'APROFUNDAMENTO';
+        if (modality.includes('EXTENSIVO') || modality.includes('COM_MATERIAL') || modality.includes('SEM_MATERIAL')) return 'EXTENSIVO';
+
+        return 'OUTRO';
     }
 
     // Mapeamento base removido a favor da configuração explícita em dados_aulas.js
 
     // Cache do usuário atual (fetch uma vez)
     let cachedUser = null;
-    async function getCurrentUser(){
+    async function getCurrentUser() {
         if (cachedUser) return cachedUser;
-        try{
+        try {
             const res = await fetch('/api/auth/me', { credentials: 'include' });
             if (!res.ok) return cachedUser = null;
             const json = await res.json();
             cachedUser = json;
             return cachedUser;
-        } catch(e){
+        } catch (e) {
             return cachedUser = null;
         }
     }
 
     // testa rapidamente se um doc existe (HEAD request)
-    async function docExists(docId){
-        try{
+    async function docExists(docId) {
+        try {
             const res = await fetch(`/api/pdf/${encodeURIComponent(typeof docId === "string" ? docId : docId.filename)}`, { method: 'HEAD', credentials: 'include' });
             return res.ok;
-        } catch(e){
+        } catch (e) {
             return false;
         }
     }
@@ -491,111 +505,111 @@ document.addEventListener('DOMContentLoaded', async () => {
         const cards = Array.from(document.querySelectorAll('.assunto-card'));
         const cardIndex = cards.indexOf(card);
         const aula = (mod && mod.aulas && mod.aulas[cardIndex]) || {};
-        
-        if (anchor.classList.contains('btn-lista')){
+
+        if (anchor.classList.contains('btn-lista')) {
             anchor.addEventListener('click', (e) => {
                 e.preventDefault();
-                
+
                 (async () => {
-                   const user = await getCurrentUser();
-                   const modality = user && (user.modality || '').toUpperCase();
-                   const isAdmin = user && String(user.status).toUpperCase() === 'ADMIN';
+                    const user = await getCurrentUser();
+                    const profileType = getUserProfileType(user);
+                    const isAdmin = profileType === 'ADMIN';
 
-                   // Dados novos
-                   const listas = (aula.materiais && aula.materiais.listas) || {};
-                   const hasExtensivo = listas.pe_extensivo;
-                   const hasAprof = listas.pe_aprofundamento;
-                   const hasExtra = listas.extra;
-                   const hasExtra2 = listas.extra2;
-                   const hasCongMod = listas.cong_mod;
-                   const hasDefault = listas.default;
-                   
-                   const items = [];
+                    // Dados novos
+                    const listas = (aula.materiais && aula.materiais.listas) || {};
+                    const hasExtensivo = listas.pe_extensivo;
+                    const hasAprof = listas.pe_aprofundamento;
+                    const hasExtra = listas.extra;
+                    const hasExtra2 = listas.extra2;
+                    const hasCongMod = listas.cong_mod;
+                    const hasDefault = listas.default;
 
-                   const getLabel = (obj, defaultLabel) => {
-                       return (obj && typeof obj === 'object' && obj.title && obj.title.trim() !== '') ? obj.title : defaultLabel;
-                   };
+                    const items = [];
 
-                   const addItems = (data, defaultLabel) => {
-                       if (!data) return;
-                       const arr = Array.isArray(data) ? data : [data];
-                       arr.forEach((obj, idx) => {
-                           let lbl = getLabel(obj, defaultLabel);
-                           if (arr.length > 1 && (!obj || typeof obj !== 'object' || !obj.title || obj.title.trim() === '')) {
-                               lbl = `${defaultLabel} - ${idx + 1}`;
-                           }
-                           const filename = typeof obj === "string" ? obj : obj.filename;
-                           if (filename) items.push({ label: lbl, href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(filename)}` });
-                       });
-                   };
+                    const getLabel = (obj, defaultLabel) => {
+                        return (obj && typeof obj === 'object' && obj.title && obj.title.trim() !== '') ? obj.title : defaultLabel;
+                    };
 
-                   // Se for ADMIN, mostrar tudo
-                   if (isAdmin || modality === 'INTEGRAL') {
-                         addItems(hasExtensivo, 'Praticando ENEM (Extensivo)');
-                         addItems(hasAprof, 'Praticando ENEM (Aprofundamento)');
-                         addItems(hasDefault, 'Praticando ENEM (Geral)');
-                         addItems(hasCongMod, 'Congruência Modular');
-                         addItems(hasExtra, 'Lista Extra');
-                         addItems(hasExtra2, 'Lista Extra 2');
+                    const addItems = (data, defaultLabel) => {
+                        if (!data) return;
+                        const arr = Array.isArray(data) ? data : [data];
+                        arr.forEach((obj, idx) => {
+                            let lbl = getLabel(obj, defaultLabel);
+                            if (arr.length > 1 && (!obj || typeof obj !== 'object' || !obj.title || obj.title.trim() === '')) {
+                                lbl = `${defaultLabel} - ${idx + 1}`;
+                            }
+                            const filename = typeof obj === "string" ? obj : obj.filename;
+                            if (filename) items.push({ label: lbl, href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(filename)}` });
+                        });
+                    };
 
-                         if (items.length > 0) openModal('Para Praticar', items);
-                         return;
-                   }
+                    if (isAdmin) {
+                        addItems(hasExtensivo, 'Praticando ENEM (Extensivo)');
+                        addItems(hasAprof, 'Praticando ENEM (Aprofundamento)');
+                        addItems(hasDefault, 'Praticando ENEM (Geral)');
+                        addItems(hasCongMod, 'Congruência Modular');
+                        addItems(hasExtra, 'Lista Extra');
+                        addItems(hasExtra2, 'Lista Extra 2');
+                    } else if (profileType === 'EXTENSIVO') {
+                        addItems(hasDefault, 'Praticando ENEM (Geral)');
+                        addItems(hasExtensivo, 'Praticando ENEM (Extensivo)');
+                        addItems(hasCongMod, 'Congruência Modular');
+                        addItems(hasExtra, 'Lista Extra');
+                        addItems(hasExtra2, 'Lista Extra 2');
+                    } else if (profileType === 'APROFUNDAMENTO') {
+                        addItems(hasDefault, 'Praticando ENEM (Geral)');
+                        addItems(hasAprof, 'Praticando ENEM (Aprofundamento)');
+                        addItems(hasCongMod, 'Congruência Modular');
+                        addItems(hasExtra, 'Lista Extra');
+                        addItems(hasExtra2, 'Lista Extra 2');
+                    } else if (profileType === 'INTEGRAL') {
+                        addItems(hasDefault, 'Praticando ENEM (Geral)');
+                        addItems(hasExtensivo, 'Praticando ENEM (Extensivo)');
+                        addItems(hasAprof, 'Praticando ENEM (Aprofundamento)');
+                        addItems(hasCongMod, 'Congruência Modular');
+                        addItems(hasExtra, 'Lista Extra');
+                        addItems(hasExtra2, 'Lista Extra 2');
+                    } else {
+                        addItems(hasDefault, 'Praticando ENEM (Geral)');
+                        addItems(hasCongMod, 'Congruência Modular');
+                        addItems(hasExtra, 'Lista Extra');
+                        addItems(hasExtra2, 'Lista Extra 2');
+                    }
 
-                   // SEPARAÇÃO SOLICITADA PARA ALUNOS
-                   if (modality === 'APROFUNDAMENTO') {
-                       if (hasAprof) {
-                           addItems(hasAprof, 'Praticando ENEM (Aprof.)');
-                           // Também mostrar as listas gerais além das específicas de aprofundamento
-                           if (hasDefault) addItems(hasDefault, 'Praticando ENEM');
-                       } else if (hasDefault) {
-                           addItems(hasDefault, 'Praticando ENEM');
-                       }
-                   } else {
-                       // Alunos EXTENSIVO ou outros
-                       if (hasExtensivo) addItems(hasExtensivo, 'Praticando ENEM');
-                       if (hasDefault) addItems(hasDefault, 'Praticando ENEM (Geral)');
-                   }
-
-                   addItems(hasCongMod, 'Congruência Modular');
-                   addItems(hasExtra, 'Lista Extra');
-                   addItems(hasExtra2, 'Lista Extra 2');
-
-                   if (items.length > 0) openModal('Para Praticar', items);
+                    if (items.length > 0) openModal('Para Praticar', items);
                 })();
             });
         }
-        if (anchor.classList.contains('btn-gabarito')){
+        if (anchor.classList.contains('btn-gabarito')) {
             anchor.addEventListener('click', (e) => {
                 e.preventDefault();
 
                 // Decidir qual PDF mostrar com base na modalidade/status do usuário
                 (async () => {
                     const user = await getCurrentUser();
-                    const isAdmin = user && String(user.status).toUpperCase() === 'ADMIN';
-                    const modality = user && (user.modality || '').toUpperCase();
+                    const profileType = getUserProfileType(user);
+                    const isAdmin = profileType === 'ADMIN';
 
                     const gabs = (aula.materiais && aula.materiais.gabaritos) || {};
 
                     const getLabel = (obj, defaultLabel) => {
-                       return (obj && typeof obj === 'object' && obj.title && obj.title.trim() !== '') ? obj.title : defaultLabel;
+                        return (obj && typeof obj === 'object' && obj.title && obj.title.trim() !== '') ? obj.title : defaultLabel;
                     };
 
                     const items = [];
                     const addItems = (data, defaultLabel) => {
-                       if (!data) return;
-                       const arr = Array.isArray(data) ? data : [data];
-                       arr.forEach((obj, idx) => {
-                           let lbl = getLabel(obj, defaultLabel);
-                           if (arr.length > 1 && (!obj || typeof obj !== 'object' || !obj.title || obj.title.trim() === '')) {
-                               lbl = `${defaultLabel} - ${idx + 1}`;
-                           }
-                           const filename = typeof obj === "string" ? obj : obj.filename;
-                           if (filename) items.push({ label: lbl, href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(filename)}` });
-                       });
+                        if (!data) return;
+                        const arr = Array.isArray(data) ? data : [data];
+                        arr.forEach((obj, idx) => {
+                            let lbl = getLabel(obj, defaultLabel);
+                            if (arr.length > 1 && (!obj || typeof obj !== 'object' || !obj.title || obj.title.trim() === '')) {
+                                lbl = `${defaultLabel} - ${idx + 1}`;
+                            }
+                            const filename = typeof obj === "string" ? obj : obj.filename;
+                            if (filename) items.push({ label: lbl, href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(filename)}` });
+                        });
                     };
 
-                    // Admin vê tudo que estiver disponível
                     if (isAdmin) {
                         addItems(gabs.pe_extensivo, 'Gabarito (E) - Praticando ENEM');
                         addItems(gabs.pe_aprofundamento, 'Gabarito (A) - Praticando ENEM');
@@ -603,124 +617,126 @@ document.addEventListener('DOMContentLoaded', async () => {
                         addItems(gabs.cong_mod, 'Gabarito - Congruência Modular');
                         addItems(gabs.extra, 'Gabarito Extra');
                         addItems(gabs.extra2, 'Gabarito Extra 2');
-                        
-                        if (items.length > 0) openModal('Gabaritos', items);
-                        return;
-                    }
-
-                    // Lógica para Aluno
-                    if (modality === 'APROFUNDAMENTO'){
-                        if (gabs.pe_aprofundamento) {
-                            addItems(gabs.pe_aprofundamento, 'Praticando ENEM (Aprof.)');
-                            if (gabs.default) addItems(gabs.default, 'Praticando ENEM (Geral)');
-                        } else if (gabs.pe_extensivo) {
-                            addItems(gabs.pe_extensivo, 'Praticando ENEM');
-                            if (gabs.default) addItems(gabs.default, 'Praticando ENEM (Geral)');
-                        } else if (gabs.default) {
-                            addItems(gabs.default, 'Praticando ENEM (Geral)');
-                        }
+                    } else if (profileType === 'EXTENSIVO') {
+                        addItems(gabs.default, 'Gabarito (Geral)');
+                        addItems(gabs.pe_extensivo, 'Gabarito - Praticando ENEM (Extensivo)');
+                        addItems(gabs.cong_mod, 'Gabarito - Congruência Modular');
+                        addItems(gabs.extra, 'Gabarito Extra');
+                        addItems(gabs.extra2, 'Gabarito Extra 2');
+                    } else if (profileType === 'APROFUNDAMENTO') {
+                        addItems(gabs.default, 'Gabarito (Geral)');
+                        addItems(gabs.pe_aprofundamento, 'Gabarito - Praticando ENEM (Aprofundamento)');
+                        addItems(gabs.cong_mod, 'Gabarito - Congruência Modular');
+                        addItems(gabs.extra, 'Gabarito Extra');
+                        addItems(gabs.extra2, 'Gabarito Extra 2');
+                    } else if (profileType === 'INTEGRAL') {
+                        addItems(gabs.default, 'Gabarito (Geral)');
+                        addItems(gabs.pe_extensivo, 'Gabarito - Praticando ENEM (Extensivo)');
+                        addItems(gabs.pe_aprofundamento, 'Gabarito - Praticando ENEM (Aprofundamento)');
+                        addItems(gabs.cong_mod, 'Gabarito - Congruência Modular');
+                        addItems(gabs.extra, 'Gabarito Extra');
+                        addItems(gabs.extra2, 'Gabarito Extra 2');
                     } else {
-                        if (gabs.pe_extensivo) addItems(gabs.pe_extensivo, 'Praticando ENEM');
-                        else if (gabs.default) addItems(gabs.default, 'Praticando ENEM (Geral)');
+                        addItems(gabs.default, 'Gabarito (Geral)');
+                        addItems(gabs.cong_mod, 'Gabarito - Congruência Modular');
+                        addItems(gabs.extra, 'Gabarito Extra');
+                        addItems(gabs.extra2, 'Gabarito Extra 2');
                     }
-
-                    addItems(gabs.cong_mod, 'Gabarito - Congruência Modular');
-                    addItems(gabs.extra, 'Gabarito Extra');
-                    addItems(gabs.extra2, 'Gabarito Extra 2');
 
                     if (items.length > 0) openModal('Gabaritos', items);
                 })();
             });
         }
-        
+
         if (anchor.classList.contains('btn-teoria')) {
             anchor.addEventListener('click', (e) => {
                 e.preventDefault();
 
                 (async () => {
-                   const hasComplex = anchor.classList.contains('btn-complex-teoria');
-                   const directHref = anchor.getAttribute('href');
+                    const hasComplex = anchor.classList.contains('btn-complex-teoria');
+                    const directHref = anchor.getAttribute('href');
 
-                   // Se não for complexo e tiver link direto válido, abrir
-                   if (!hasComplex && directHref && directHref !== '#' && directHref !== 'javascript:void(0)') {
-                       window.open(directHref, '_blank');
-                       return;
-                   }
+                    // Se não for complexo e tiver link direto válido, abrir
+                    if (!hasComplex && directHref && directHref !== '#' && directHref !== 'javascript:void(0)') {
+                        window.open(directHref, '_blank');
+                        return;
+                    }
 
-                   // Lógica para modal de teoria
-                   const user = await getCurrentUser();
-                   const modality = user && (user.modality || '').toUpperCase();
-                   const isAdmin = user && String(user.status).toUpperCase() === 'ADMIN';
+                    // Lógica para modal de teoria
+                    const user = await getCurrentUser();
+                    const profileType = getUserProfileType(user);
+                    const isAdmin = profileType === 'ADMIN';
 
-                   const mat = aula.materiais || {};
-                   const rawTeorico = mat.teorico || mat.teoria || {};
-                   
-                   const items = [];
+                    const mat = aula.materiais || {};
+                    const rawTeorico = mat.teorico || mat.teoria || {};
 
-                   // Helper para adicionar item
-                   const add = (label, url) => {
-                       if (!url) return;
-                       const arr = Array.isArray(url) ? url : [url];
-                       arr.forEach((item, idx) => {
+                    const items = [];
+
+                    // Helper para adicionar item
+                    const add = (label, url) => {
+                        if (!url) return;
+                        const arr = Array.isArray(url) ? url : [url];
+                        arr.forEach((item, idx) => {
                             let actualLabel = (item && typeof item === 'object' && item.title && item.title.trim() !== '') ? item.title : label;
                             if (arr.length > 1 && (!item || typeof item !== 'object' || !item.title || item.title.trim() === '')) {
                                 actualLabel = `${label} - ${idx + 1}`;
                             }
                             const filename = typeof item === "string" ? item : item.filename;
                             if (filename) items.push({ label: actualLabel, href: `/pdf-viewer/viewer.html?doc=${encodeURIComponent(filename)}` });
-                       });
-                   };
+                        });
+                    };
 
-                   if (isAdmin) {
+                    if (isAdmin) {
                         add('Teoria (Extensivo)', rawTeorico.pe_extensivo || rawTeorico.extensivo);
                         add('Teoria (Aprofundamento)', rawTeorico.pe_aprofundamento || rawTeorico.aprofundamento);
-                        // Suporte a extra se houver futuro
+                        if (rawTeorico.default) add('Teoria (Geral)', rawTeorico.default);
                         if (rawTeorico.extra) add('Teoria Extra', rawTeorico.extra);
-                        if (rawTeorico.default) add('Teoria', rawTeorico.default);
-                        
                         if (items.length > 0) openModal('Material Teórico', items);
                         return;
-                   }
+                    }
 
-                   // Alunos
-                   // Extensivo sempre disponível se existir
-                   const extUrl = rawTeorico.pe_extensivo || rawTeorico.extensivo || rawTeorico.default;
-                   const aprofUrl = rawTeorico.pe_aprofundamento || rawTeorico.aprofundamento;
+                    if (profileType === 'EXTENSIVO') {
+                        add('Teoria (Geral)', rawTeorico.default);
+                        add('Teoria (Extensivo)', rawTeorico.pe_extensivo || rawTeorico.extensivo);
+                        if (rawTeorico.extra) add('Teoria Extra', rawTeorico.extra);
+                    } else if (profileType === 'APROFUNDAMENTO') {
+                        add('Teoria (Geral)', rawTeorico.default);
+                        add('Teoria (Aprofundamento)', rawTeorico.pe_aprofundamento || rawTeorico.aprofundamento);
+                        if (rawTeorico.extra) add('Teoria Extra', rawTeorico.extra);
+                    } else if (profileType === 'INTEGRAL') {
+                        add('Teoria (Geral)', rawTeorico.default);
+                        add('Teoria (Extensivo)', rawTeorico.pe_extensivo || rawTeorico.extensivo);
+                        add('Teoria (Aprofundamento)', rawTeorico.pe_aprofundamento || rawTeorico.aprofundamento);
+                        if (rawTeorico.extra) add('Teoria Extra', rawTeorico.extra);
+                    } else {
+                        add('Teoria (Geral)', rawTeorico.default);
+                        if (rawTeorico.extra) add('Teoria Extra', rawTeorico.extra);
+                    }
 
-                   // Todos veem extensivo (base) - ou discute-se se aprofundamento substitui
-                   // Vou assumir que Aprofundamento vê AMBOS
-                   if (extUrl) {
-                       add('Teoria', extUrl);
-                   }
-
-                   if ((modality === 'APROFUNDAMENTO' || modality === 'INTEGRAL') && aprofUrl) {
-                       add('Teoria (Aprofundamento)', aprofUrl);
-                   }
-
-                   if (items.length > 0) {
-                       openModal('Material Teórico', items);
-                   } else {
-                       // Caso de fallback (se clicou e não tem nada, mas deveria estar hidden se não tivesse)
-                       // Mas se for direct link falhando...
-                   }
+                    if (items.length > 0) {
+                        openModal('Material Teórico', items);
+                    } else {
+                        // Caso de fallback (se clicou e não tem nada, mas deveria estar hidden se não tivesse)
+                        // Mas se for direct link falhando...
+                    }
 
                 })();
             });
         }
     });
 
-    try{
+    try {
         const nomeSalvo = localStorage.getItem('nomeAluno');
         if (nomeSalvo && nomeEl) {
             const primeiroNome = nomeSalvo.split(' ')[0].toLowerCase();
             const primeiroNomeOrganizado = primeiroNome.charAt(0).toUpperCase() + primeiroNome.slice(1);
             nomeEl.textContent = primeiroNomeOrganizado;
         }
-    } catch(e){}
+    } catch (e) { }
 
     if (barraVerde) barraVerde.style.width = '0%';
 
-    async function loadProgress(){
+    async function loadProgress() {
         try {
             const res = await fetch('/api/progress/lessons/me', { credentials: 'include' });
             if (!res.ok) return applyProgress(0, 10); // fallback default
@@ -737,7 +753,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (mod && mod.aulas) {
                 mod.aulas.forEach((aula, idx) => {
                     const assuntoId = `${moduloId}.${idx + 1}`;
-                    
+
                     // Contar subaulas
                     const subs = aula.subAulas || aula.subaulas || [];
                     if (subs.length > 0) {
@@ -771,7 +787,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Fallback se totalItems for 0 (evitar divisão por zero)
             const finalTotal = totalItems > 0 ? totalItems : (mod.aulas ? mod.aulas.length : 1);
-            
+
             applyProgress(completedCount, finalTotal);
 
         } catch (err) {
@@ -780,7 +796,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    function applyProgress(completedCount, total){
+    function applyProgress(completedCount, total) {
         const percent = total > 0 ? Math.round((completedCount / total) * 100) : 0;
         const destaque = document.querySelector('.destaque-verde');
         if (destaque) destaque.textContent = percent + '%';
@@ -790,8 +806,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.loadProgress = loadProgress;
     loadProgress();
 
-    function escapeHtml(str){
+    function escapeHtml(str) {
         if (!str) return '';
-        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 });
