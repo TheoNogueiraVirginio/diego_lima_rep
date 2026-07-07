@@ -551,21 +551,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                         addItems(hasExtra, 'Lista Extra');
                         addItems(hasExtra2, 'Lista Extra 2');
                     } else if (profileType === 'EXTENSIVO') {
-                        addItems(hasDefault, 'Praticando ENEM (Geral)');
                         addItems(hasExtensivo, 'Praticando ENEM (Extensivo)');
+                        addItems(hasDefault, 'Praticando ENEM (Geral)');
                         addItems(hasCongMod, 'Congruência Modular');
                         addItems(hasExtra, 'Lista Extra');
                         addItems(hasExtra2, 'Lista Extra 2');
                     } else if (profileType === 'APROFUNDAMENTO') {
-                        addItems(hasDefault, 'Praticando ENEM (Geral)');
                         addItems(hasAprof, 'Praticando ENEM (Aprofundamento)');
+                        addItems(hasDefault, 'Praticando ENEM (Geral)');
                         addItems(hasCongMod, 'Congruência Modular');
                         addItems(hasExtra, 'Lista Extra');
                         addItems(hasExtra2, 'Lista Extra 2');
                     } else if (profileType === 'INTEGRAL') {
-                        addItems(hasDefault, 'Praticando ENEM (Geral)');
                         addItems(hasExtensivo, 'Praticando ENEM (Extensivo)');
                         addItems(hasAprof, 'Praticando ENEM (Aprofundamento)');
+                        addItems(hasDefault, 'Praticando ENEM (Geral)');
                         addItems(hasCongMod, 'Congruência Modular');
                         addItems(hasExtra, 'Lista Extra');
                         addItems(hasExtra2, 'Lista Extra 2');
@@ -618,21 +618,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                         addItems(gabs.extra, 'Gabarito Extra');
                         addItems(gabs.extra2, 'Gabarito Extra 2');
                     } else if (profileType === 'EXTENSIVO') {
-                        addItems(gabs.default, 'Gabarito (Geral)');
                         addItems(gabs.pe_extensivo, 'Gabarito - Praticando ENEM (Extensivo)');
+                        addItems(gabs.default, 'Gabarito (Geral)');
                         addItems(gabs.cong_mod, 'Gabarito - Congruência Modular');
                         addItems(gabs.extra, 'Gabarito Extra');
                         addItems(gabs.extra2, 'Gabarito Extra 2');
                     } else if (profileType === 'APROFUNDAMENTO') {
-                        addItems(gabs.default, 'Gabarito (Geral)');
                         addItems(gabs.pe_aprofundamento, 'Gabarito - Praticando ENEM (Aprofundamento)');
+                        addItems(gabs.default, 'Gabarito (Geral)');
                         addItems(gabs.cong_mod, 'Gabarito - Congruência Modular');
                         addItems(gabs.extra, 'Gabarito Extra');
                         addItems(gabs.extra2, 'Gabarito Extra 2');
                     } else if (profileType === 'INTEGRAL') {
-                        addItems(gabs.default, 'Gabarito (Geral)');
                         addItems(gabs.pe_extensivo, 'Gabarito - Praticando ENEM (Extensivo)');
                         addItems(gabs.pe_aprofundamento, 'Gabarito - Praticando ENEM (Aprofundamento)');
+                        addItems(gabs.default, 'Gabarito (Geral)');
                         addItems(gabs.cong_mod, 'Gabarito - Congruência Modular');
                         addItems(gabs.extra, 'Gabarito Extra');
                         addItems(gabs.extra2, 'Gabarito Extra 2');
