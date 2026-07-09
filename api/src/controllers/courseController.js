@@ -262,6 +262,19 @@ export const createLesson = async (req, res) => {
 };
 
 // ... similar for Delete
+export const deleteLesson = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!id) return res.status(400).json({ error: 'Missing lesson id' });
+
+        // Attempt to delete the lesson by its primary id
+        await prisma.videoLesson.delete({ where: { id } });
+        return res.json({ success: true });
+    } catch (e) {
+        console.error('Error deleting lesson:', e);
+        return res.status(500).json({ error: 'Failed to delete lesson' });
+    }
+};
 
 export const createPdf = async (req, res) => {
     try {

@@ -860,6 +860,12 @@ function fillLessonForm(val) {
         document.getElementById('video-title').value = subj.titulo;
         document.getElementById('video-vimeo').value = subj.vimeoId;
         document.getElementById('video-duration').value = subj.duracao;
+        // Enable delete button for main lesson
+        const delBtnMain = document.getElementById('btn-delete-video');
+        if (delBtnMain) {
+            delBtnMain.disabled = !(subj.dbId);
+            delBtnMain.dataset.dbId = subj.dbId || '';
+        }
     } else {
         // Sub Lesson
         // sub.id is composite, sub.dbId is UUID. val is dbId.
@@ -870,6 +876,11 @@ function fillLessonForm(val) {
             document.getElementById('video-vimeo').value = sub.vimeoId;
             document.getElementById('video-duration').value = sub.duracao;
             document.getElementById('video-modality').value = sub.requiredModality || '';
+            const delBtnMain = document.getElementById('btn-delete-video');
+            if (delBtnMain) {
+                delBtnMain.disabled = false;
+                delBtnMain.dataset.dbId = sub.dbId;
+            }
         }
     }
 }
@@ -890,6 +901,11 @@ function setupNewLessonForm() {
     
     document.getElementById('video-subject-order').value = subjOrder;
     document.getElementById('video-subject-name').value = subj.titulo;
+    const delBtnMain = document.getElementById('btn-delete-video');
+    if (delBtnMain) {
+        delBtnMain.disabled = true;
+        delete delBtnMain.dataset.dbId;
+    }
 }
 
 // Reorder functionality
@@ -928,9 +944,43 @@ document.getElementById('btn-reorder-videos').addEventListener('click', (e) => {
             
             const title = document.createElement('span');
             title.textContent = sub.titulo;
-            
+
+            // delete button for this sub-lesson
+            const delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.className = 'delete-lesson-btn';
+            delBtn.style.marginLeft = 'auto';
+            delBtn.style.background = 'transparent';
+            delBtn.style.border = 'none';
+            delBtn.style.color = '#ff7b7b';
+            delBtn.style.cursor = 'pointer';
+            delBtn.textContent = 'Apagar';
+            delBtn.dataset.dbId = sub.dbId;
+
+            delBtn.addEventListener('click', async (ev) => {
+                ev.stopPropagation();
+                ev.preventDefault();
+                if (!confirm(`Confirma exclusão da aula "${sub.titulo}"?`)) return;
+                try {
+                    const res = await fetch(`/api/courses/lessons/${encodeURIComponent(sub.dbId)}`, { method: 'DELETE' });
+                    if (res.ok) {
+                        // remove from DOM and refresh module listing
+                        div.remove();
+                        const modId = document.getElementById('video-module-select').value;
+                        loadAdminModuleVideos(modId);
+                    } else {
+                        const data = await res.json().catch(()=>({}));
+                        alert('Erro ao apagar aula: ' + (data.error || 'Erro desconhecido'));
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Erro de conexão ao apagar aula.');
+                }
+            });
+
             div.appendChild(span);
             div.appendChild(title);
+            div.appendChild(delBtn);
             
             div.dataset.dbId = sub.dbId;
             div.draggable = true;
@@ -1068,6 +1118,33 @@ document.getElementById('video-edit-form').addEventListener('submit', async (e) 
     const modId = document.getElementById('video-module-select').value;
     loadAdminModuleVideos(modId);
 });
+
+// Delete button in edit form
+const btnDeleteVideo = document.getElementById('btn-delete-video');
+if (btnDeleteVideo) {
+    btnDeleteVideo.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const id = btnDeleteVideo.dataset.dbId || document.getElementById('video-id').value;
+        if (!id) return alert('Nenhuma aula selecionada para excluir.');
+        if (!confirm('Confirma exclusão desta aula?')) return;
+        try {
+            const res = await fetch(`/api/courses/lessons/${encodeURIComponent(id)}`, { method: 'DELETE' });
+            if (res.ok) {
+                alert('Aula excluída com sucesso!');
+                // Refresh UI
+                const modId = document.getElementById('video-module-select').value;
+                loadAdminModuleVideos(modId);
+                document.getElementById('video-edit-form').style.display = 'none';
+            } else {
+                const data = await res.json().catch(()=>({}));
+                alert('Erro ao apagar aula: ' + (data.error || 'Erro desconhecido'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Erro de conexão ao apagar aula.');
+        }
+    });
+}
 
 
 /* --- PDF Management --- */
