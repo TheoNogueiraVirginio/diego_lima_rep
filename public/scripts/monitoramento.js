@@ -785,7 +785,7 @@ async function loadAdminModuleVideos(modId) {
         // Let's assume index+1 (1-based) is subjectOrder for now as we grouped them sorted.
         data.aulas.forEach((subj, idx) => {
             const opt = document.createElement('option');
-            const order = idx + 1; 
+            const order = subj.subjectOrder || (idx + 1);
             opt.value = order;
             opt.dataset.subjectOrder = order;
             opt.textContent = `${order}. ${subj.titulo}`;
@@ -800,8 +800,12 @@ async function loadAdminModuleVideos(modId) {
 
 function loadAdminLessons(subjectOrder) {
     if(!currentModuleData) return;
-    // index is subjectOrder - 1
-    const subj = currentModuleData.aulas[subjectOrder - 1];
+    // Find subject by its real subjectOrder value (DB may have non-contiguous orders)
+    const subj = currentModuleData.aulas.find(s => String(s.subjectOrder) === String(subjectOrder));
+    if (!subj) {
+        console.warn('Assunto não encontrado para subjectOrder=', subjectOrder);
+        return;
+    }
     
     const lessonSelect = document.getElementById('video-lesson-select');
     lessonSelect.innerHTML = '<option value="">Selecione Aula</option><option value="new">+ Nova Aula</option>';
@@ -843,7 +847,11 @@ function fillLessonForm(val) {
     
     // Find selected data
     const subjOrder = document.getElementById('video-subject-select').value;
-    const subj = currentModuleData.aulas[subjOrder - 1];
+    const subj = currentModuleData.aulas.find(s => String(s.subjectOrder) === String(subjOrder));
+    if (!subj) {
+        console.warn('Assunto não encontrado para subjectOrder=', subjOrder);
+        return;
+    }
 
     // Check if val is main video ID (dbId) or 'main'
     // We compare with subj.dbId string
@@ -874,7 +882,11 @@ function setupNewLessonForm() {
     document.getElementById('video-id').value = '';
     
     const subjOrder = document.getElementById('video-subject-select').value;
-    const subj = currentModuleData.aulas[subjOrder - 1];
+    const subj = currentModuleData.aulas.find(s => String(s.subjectOrder) === String(subjOrder));
+    if (!subj) {
+        console.warn('Assunto não encontrado para subjectOrder=', subjOrder);
+        return;
+    }
     
     document.getElementById('video-subject-order').value = subjOrder;
     document.getElementById('video-subject-name').value = subj.titulo;
@@ -890,7 +902,11 @@ document.getElementById('btn-reorder-videos').addEventListener('click', (e) => {
     reorderList.innerHTML = '';
     
     const subjOrder = document.getElementById('video-subject-select').value;
-    const subj = currentModuleData.aulas[subjOrder - 1];
+    const subj = currentModuleData.aulas.find(s => String(s.subjectOrder) === String(subjOrder));
+    if (!subj) {
+        console.warn('Assunto não encontrado para subjectOrder=', subjOrder);
+        return;
+    }
     
     if (subj.subAulas) {
         subj.subAulas.forEach((sub, idx) => {
@@ -1115,7 +1131,11 @@ function populatePdfSectionSelect(subjectOrder) {
     const sectionSelect = document.getElementById('pdf-section-select');
     if (!sectionSelect || !currentPdfModuleData) return [];
 
-    const subj = currentPdfModuleData.aulas[subjectOrder - 1];
+    const subj = currentPdfModuleData.aulas.find(s => String(s.subjectOrder) === String(subjectOrder));
+    if (!subj) {
+        console.warn('PDF: assunto não encontrado para subjectOrder=', subjectOrder);
+        return [];
+    }
     const sections = getPdfSectionsForSubject(subj);
 
     sectionSelect.innerHTML = '<option value="">Selecione a seção para ordenar</option>';
@@ -1134,7 +1154,13 @@ function populatePdfSectionSelect(subjectOrder) {
 function renderPdfReorderList(subjectOrder, sectionKey) {
     if (!currentPdfModuleData) return;
 
-    const subj = currentPdfModuleData.aulas[subjectOrder - 1];
+    const subj = currentPdfModuleData.aulas.find(s => String(s.subjectOrder) === String(subjectOrder));
+    if (!subj) {
+        console.warn('PDF: assunto não encontrado para subjectOrder=', subjectOrder);
+        const list = document.getElementById('pdf-reorder-list');
+        if (list) list.innerHTML = '<div style="color: var(--muted);">Assunto não encontrado.</div>';
+        return;
+    }
     const sections = getPdfSectionsForSubject(subj);
     const section = sections.find(item => item.key === sectionKey) || sections[0];
     const list = document.getElementById('pdf-reorder-list');
@@ -1234,7 +1260,7 @@ async function loadAdminModulePdfs(modId) {
         
         data.aulas.forEach((subj, idx) => {
             const opt = document.createElement('option');
-            const order = idx + 1; 
+            const order = subj.subjectOrder || (idx + 1);
             opt.value = order;
             opt.dataset.subjectOrder = order;
             opt.textContent = `${order}. ${subj.titulo}`;
@@ -1261,7 +1287,13 @@ async function loadAdminModulePdfs(modId) {
 
 function renderPdfList(subjectOrder) {
     if(!currentPdfModuleData) return;
-    const subj = currentPdfModuleData.aulas[subjectOrder - 1];
+    const subj = currentPdfModuleData.aulas.find(s => String(s.subjectOrder) === String(subjectOrder));
+    if (!subj) {
+        console.warn('PDF: assunto não encontrado para subjectOrder=', subjectOrder);
+        const container = document.getElementById('pdf-list');
+        if (container) container.innerHTML = '<p>Assunto não encontrado.</p>';
+        return;
+    }
     const container = document.getElementById('pdf-list');
     container.innerHTML = '';
     
@@ -1382,7 +1414,11 @@ document.getElementById('pdf-add-form').addEventListener('submit', async (e) => 
     
     // We need subjectName and REAL subjectOrder
     if(!currentPdfModuleData) return;
-    const subj = currentPdfModuleData.aulas[subjOrderIdx - 1];
+    const subj = currentPdfModuleData.aulas.find(s => String(s.subjectOrder) === String(subjOrderIdx));
+    if (!subj) {
+        console.warn('PDF add: assunto não encontrado para subjectOrder=', subjOrderIdx);
+        return;
+    }
     
     // Use real subjectOrder from DB object, fallback to index
     const subjectOrder = subj.subjectOrder || subjOrderIdx;
