@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // ignore
     }
 
-    /*  NÃO É MAIS NECESSÁRIO BLOQUEAR MÓDULOS, MAS MANTIDO PARA POSSÍVEIS FUTURAS RESTRIÇÕES
+    
     const modulos = document.querySelectorAll('.modulo');
 
     modulos.forEach(modulo => {
@@ -74,6 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const moduloId = modulo.getAttribute('data-id');
             
+            /*  NÃO É MAIS NECESSÁRIO BLOQUEAR MÓDULOS, MAS MANTIDO PARA POSSÍVEIS FUTURAS RESTRIÇÕES
             // --- TRAVA DE MÓDULOS (Lógica de Fachada) ---
             // Apenas para não-admins
             const userStatus = localStorage.getItem('userStatus');
@@ -83,14 +84,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Exibir mensagem de bloqueio fake
                 showBlockModal();
                 return;
-            }
+            }*/
             // --------------------------------------------
 
             // Redirecionar para a página de materiais do módulo
             window.location.href = `materiais.html?id=${moduloId}`;
         });
     });
-
+    
+    /*  NÃO É MAIS NECESSÁRIO BLOQUEAR MÓDULOS, MAS MANTIDO PARA POSSÍVEIS FUTURAS RESTRIÇÕES
     function showBlockModal() {
         // Remove overlay existente se houver
         const existing = document.getElementById('module-lock-overlay');
