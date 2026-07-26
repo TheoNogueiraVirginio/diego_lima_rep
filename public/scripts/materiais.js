@@ -1,10 +1,11 @@
 // Arquivo renomeado a partir de modulo.js — mantém a mesma lógica
 document.addEventListener('DOMContentLoaded', async () => {
     // --- TRAVA DE SEGURANÇA (URL HACK) ---
-    // Impede que usuário comum acesse módulos 3 ou 4 direto pela URL
+    // Impede que usuário comum acesse módulos bloqueados direto pela URL
     const params = new URLSearchParams(window.location.search);
     const moduloId = params.get('id') || '1';
 
+    /* NÃO PRECISA MAIS BLOQUEAR MÓDULOS, MAS MANTIDO PARA POSSÍVEIS FUTURAS RESTRIÇÕES
     const localUserStatus = localStorage.getItem('userStatus');
     const isLocalAdmin = (localUserStatus === 'ADMIN');
 
@@ -47,8 +48,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Parar execução do resto do script para não carregar conteúdo
         return;
     }
-    // --------------------------------------
 
+    // --------------------------------------
+    */
     // fallback único para todas as miniaturas dos assuntos
     const DEFAULT_LOGO = '/images/logo_diego_png.png';
 

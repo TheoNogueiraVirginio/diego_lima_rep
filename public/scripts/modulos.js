@@ -66,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // ignore
     }
 
+    /*  NÃO É MAIS NECESSÁRIO BLOQUEAR MÓDULOS, MAS MANTIDO PARA POSSÍVEIS FUTURAS RESTRIÇÕES
     const modulos = document.querySelectorAll('.modulo');
 
     modulos.forEach(modulo => {
@@ -159,6 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.body.appendChild(overlay);
     }
+    */
 
     /* ---------- Gestão de Mensagens Motivacionais (Badges / Marquee) ---------- */
     const motivationalTexts = [
