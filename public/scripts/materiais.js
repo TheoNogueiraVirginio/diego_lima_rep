@@ -109,22 +109,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             // APROFUNDAMENTO: conta aulas gerais + exclusivas de "aprofundamento"
             if (userModality === 'aprofundamento') {
                 if (req === 'aprofundamento') return true;
-                // Se for extensivo, o aluno de aprofundamento vê? 
-                // Assumindo que aprofundamento inclui conteudo extensivo?
-                // A regra diz: "caso seja APROFUNDAMENTO, conte as alunas gerais e as exclusivas do aprofundamento."
-                // Isso PODE implicar que ele não vê 'extensivo' exclusivo se houver.
-                // Mas, geralmente, Aprofundamento vê tudo do Extensivo.
-                // Vou seguir estritamente o pedido: "conte gerais e exclusivas do aprofundamento".
-                // Se existir uma aula com requiredModality="extensivo" ela seria ignorada aqui?
-                // Se sim, ok. Se ele deveria ver, então a regra precisa ser mais ampla.
-                // Vou assumir que "gerais" = sem requiredModality.
-
-                // Mas espere, "extensivo (composto por: EXTENSIVO, COM_MATERIAL e SEM_MATERIAL)"
-                // A regra para Extensivo é: gerais + exclusivas de extensivo.
-
-                // Se o texto é "verifique se o aluno é APROFUNDAMENTO e, caso seja, conte as alunas gerais e as exclusivas do aprofundamento", 
-                // então ele NÃO conta as exclusivas de extensivo (que teriam requiredModality='extensivo').
-
                 return false;
             }
 
@@ -720,6 +704,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     } else {
                         // Caso de fallback (se clicou e não tem nada, mas deveria estar hidden se não tivesse)
                         // Mas se for direct link falhando...
+                        //FALTA FAZER
                     }
 
                 })();
