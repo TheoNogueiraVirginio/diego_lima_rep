@@ -1,7 +1,7 @@
-// Arquivo renomeado a partir de modulo.js — mantém a mesma lógica
+// Arquivo derivado de modulo.js — lógica preservada
 document.addEventListener('DOMContentLoaded', async () => {
-    // --- TRAVA DE SEGURANÇA (URL HACK) ---
-    // Impede que usuário comum acesse módulos bloqueados direto pela URL
+    // Bloqueio de acesso via URL (mantido para possíveis restrições futuras)
+    // Impede que um usuário comum acesse módulos restritos diretamente pela URL
     const params = new URLSearchParams(window.location.search);
     const moduloId = params.get('id') || '1';
 
@@ -51,15 +51,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --------------------------------------
     */
-    // fallback único para todas as miniaturas dos assuntos
+    // Fallback de miniatura usado quando não há imagem específica
     const DEFAULT_LOGO = '/images/logo_diego_png.png';
 
-    // Obter dados do usuário para verificação de modalidade
+    // Obter dados do usuário via /api/auth/me para determinar modalidade e permissão de admin
     let currentUser = null;
     let userModality = '';
     let isAdmin = false;
 
-    // Tentar obter sessão real para atualizar nomes, mas a trava local já agiu se necessário
+    // Tenta obter dados do usuário para atualizar modalidade e status de admin
     try {
         const res = await fetch('/api/auth/me', { credentials: 'include' });
         if (res.ok) {
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (res.ok) mod = await res.json();
     } catch (e) { console.error('Failed to load course data', e); }
 
-    // Legacy fallback
+    // Fallback legado: usa window.cursoData se disponível
     if (!mod && window.cursoData) {
         mod = window.cursoData[moduloId];
     }
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Helper: verifica se o item deve contar para a soma de minutos com base na modalidade
+    // Verifica se o item conta para o total de minutos conforme a modalidade do usuário
     const shouldCountTime = (item) => {
         if (!item) return false;
 
@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return false;
             }
 
-            // EXTENSIVO (qualquer variação)
+            // EXTENSIVO (inclui variações: com_material, sem_material)
             const isExtensivoUser = ['extensivo', 'com_material', 'sem_material'].some(v => userModality.includes(v));
             if (isExtensivoUser) {
                 if (req === 'extensivo') return true;
@@ -137,25 +137,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         const assuntoIndex = idx + 1;
         const card = document.createElement('div');
         card.className = 'assunto-card';
-        // Add data-id for progress tracking
+        // Adicionar atributo data-id para rastrear progresso
         card.setAttribute('data-id', `${moduloId}.${assuntoIndex}`);
 
-        // CALCULO DE TEMPO TOTAL (AULA + SUBAULAS)
+        // Calcula total de minutos (aula principal + subaulas)
         let totalMinutes = 0;
         const subs = aula.subAulas || aula.subaulas || [];
 
         let hasVideo = false;
         if (aula.vimeoId && aula.vimeoId.trim()) hasVideo = true;
 
-        // Tempo da aula principal
-        // Só conta se o usuário tiver acesso àquela modalidade/aula
+        // Duração da aula principal — contada apenas se o usuário tiver acesso
         if (aula.duracao && typeof aula.duracao === 'number') {
             if (shouldCountTime(aula)) {
                 totalMinutes += aula.duracao;
             }
         }
 
-        // Tempo das subaulas
+        // Duração das subaulas — contadas conforme a modalidade do usuário
         if (Array.isArray(subs)) {
             subs.forEach(s => {
                 if (s.vimeoId && String(s.vimeoId).trim()) hasVideo = true;
@@ -168,7 +167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
-        // Definir texto de status/duração
+        // Texto de status/duração (ex.: 'Em manutenção' ou '(XXmin)')
         let statusText = '';
         if (!hasVideo) {
             statusText = '(Em manutenção)';
@@ -178,7 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const mat = aula.materiais || {};
 
-        // Lógica de Material Teórico com suporte a requiredModality e Múltiplos Arquivos
+        // Processamento de material teórico: suporta `requiredModality` e múltiplos arquivos/versões
         let rawTeorico = mat.teorico || mat.teoria;
         let teoricoUrl = null;
         let hasComplexTeoria = false;
@@ -187,7 +186,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (typeof rawTeorico === 'string') {
                 teoricoUrl = rawTeorico;
             } else if (typeof rawTeorico === 'object') {
-                // Caso antigo: um único arquivo com restrição de modalidade
+                // Formato legado: objeto com keys como `file`/`url` e possivelmente `requiredModality`
                 if (rawTeorico.requiredModality || rawTeorico.file || rawTeorico.url) {
                     const req = rawTeorico.requiredModality;
                     let visible = true;
@@ -204,8 +203,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         teoricoUrl = rawTeorico.file || rawTeorico.url;
                     }
                 } else {
-                    // Novo caso: Objeto com múltiplas chaves (pe_extensivo, pe_aprofundamento, etc.)
-                    // Verifica se há pelo menos alguma chave relevante
+                    // Formato atual: objeto com chaves por modalidade (pe_extensivo, pe_aprofundamento, extensivo, aprofundamento, default)
+                    // Verifica se há ao menos uma chave relevante
                     if (rawTeorico.pe_extensivo || rawTeorico.pe_aprofundamento || rawTeorico.extensivo || rawTeorico.aprofundamento || rawTeorico.default) {
                         // Se for ADMIN ou APROFUNDAMENTO, mostra modal com opções
                         if (isAdmin || userModality.includes('aprofundamento') || userModality.includes('integral')) {
@@ -234,7 +233,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const matGabs = (aula.materiais && aula.materiais.gabaritos) || {};
         const hasAnyGabaritos = Object.keys(matGabs).length > 0;
 
-        // incluir miniatura para aulas de equações (se identificadas pelo título)
+        // Incluir miniatura específica para aulas de equações (quando identificadas pelo título)
         const tituloAula = aula.titulo || '';
         const isEquacoes = /Equa[cç]o/i.test(tituloAula) || /Equações?/i.test(tituloAula) || tituloAula.includes('Equações');
 
@@ -318,7 +317,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         container.appendChild(card);
     });
 
-    // após criar todos os cards, tentar carregar as miniaturas dinamicamente
+    // Carrega miniaturas dinamicamente após criar os cards
     function tryLoadThumb(el, candidates, i = 0) {
         if (!el || i >= candidates.length) return;
         const url = candidates[i];
@@ -335,12 +334,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         img.src = url;
     }
 
-    // criar thumbs para cada card
+    // Criar e carregar thumbnails para cada card
     document.querySelectorAll('.assunto-card').forEach((card, cardIndex) => {
         const aula = (mod && mod.aulas && mod.aulas[cardIndex]) || {};
         const thumbs = card.querySelectorAll('.item-thumb');
         thumbs.forEach((thumbEl, i) => {
-            // priorizar campo aula.thumb, senão tentar por título slug, senão fallback
+            // Prioriza `aula.thumb`; em seguida tenta por slug, vimeoId e imagens conhecidas; por fim fallback
             const nameSlug = (aula.titulo || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
             const lower = nameSlug.toLowerCase();
             const candidates = [];
@@ -351,7 +350,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // imagens conhecidas
             candidates.push('/images/teste.png');
 
-            // por fim, fallback único e centralizado
+            // Por fim, fallback global
             candidates.push(DEFAULT_LOGO);
 
             // se elemento já tem data-src explícito, tentar primeiro
@@ -361,7 +360,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             tryLoadThumb(thumbEl, candidates);
         });
 
-        // carregar miniatura do header (assunto) se existir placeholder ou imagem já colocada
+        // Carregar imagem do header do card (miniatura do assunto)
         const headerThumb = card.querySelector('.assunto-thumb');
         if (headerThumb) {
             const nameSlug = (aula.titulo || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
@@ -371,14 +370,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (nameSlug) headerCandidates.push(`/images/images_assuntos/image_${nameSlug}.png`);
             if (nameSlug) headerCandidates.push(`/images/images_assuntos/${nameSlug}.png`);
             if (aula.vimeoId) headerCandidates.push(`/images/images_assuntos/${aula.vimeoId}.png`);
-            // fallback único e centralizado
+            // Fallback global
             headerCandidates.push(DEFAULT_LOGO);
 
             tryLoadThumb(headerThumb, headerCandidates);
         }
     });
 
-    // Modal helper: cria/abre modal centralizado com opções
+    // Helper: cria/abre modal centralizado com lista de opções
     function openModal(title, items) {
         let overlay = document.getElementById('global-modal-overlay');
         if (!overlay) {
@@ -437,8 +436,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 50);
     }
 
-    // Anexar handlers para abrir modal quando clicar nas opções correspondentes
-    // mapeamento de títulos (normalizados) -> docId (em api/storage/pdfs)
+    // Anexa handlers que abrem modais para os botões de materiais
+    // Funções auxiliares abaixo ajudam a mapear/normalizar títulos e categorizar o perfil do usuário
     function normalizeTitle(s) {
         return String(s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
     }
@@ -457,9 +456,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         return 'OUTRO';
     }
 
-    // Mapeamento base removido a favor da configuração explícita em dados_aulas.js
+    // Mapeamento base removido em favor da configuração explícita externa (dados_aulas.js)
 
-    // Cache do usuário atual (fetch uma vez)
+    // Cache do usuário atual (faz fetch apenas uma vez)
     let cachedUser = null;
     async function getCurrentUser() {
         if (cachedUser) return cachedUser;
@@ -474,7 +473,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // testa rapidamente se um doc existe (HEAD request)
+    // Verifica existência do PDF via HEAD request
     async function docExists(docId) {
         try {
             const res = await fetch(`/api/pdf/${encodeURIComponent(typeof docId === "string" ? docId : docId.filename)}`, { method: 'HEAD', credentials: 'include' });
@@ -485,7 +484,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     document.querySelectorAll('.assunto-content a').forEach(anchor => {
-        // determinar qual assunto esse item pertence (usar index do card)
+        // Determina a aula correspondente ao item usando o índice do card
         const card = anchor.closest('.assunto-card');
         if (!card) return;
         const cards = Array.from(document.querySelectorAll('.assunto-card'));
@@ -501,7 +500,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const profileType = getUserProfileType(user);
                     const isAdmin = profileType === 'ADMIN';
 
-                    // Dados novos
+                    // Extrai listas do objeto de materiais
                     const listas = (aula.materiais && aula.materiais.listas) || {};
                     const hasExtensivo = listas.pe_extensivo;
                     const hasAprof = listas.pe_aprofundamento;
@@ -702,9 +701,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (items.length > 0) {
                         openModal('Material Teórico', items);
                     } else {
-                        // Caso de fallback (se clicou e não tem nada, mas deveria estar hidden se não tivesse)
-                        // Mas se for direct link falhando...
-                        //FALTA FAZER
+                        // Caso fallback: nenhum material encontrado. Normalmente este botão estaria oculto.
                     }
 
                 })();
@@ -751,11 +748,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 completedCount++;
                             }
                         });
-                        // User request: "soma de todas as aulas/subaulas"
-                        // Does main 'aula' count if it has subaulas?
-                        // Usually main container is separate.
-                        // If checking dados_aulas, some 'aulas' have main video (vimeoId).
-                        // If vimeoId exists, count it?
+                        // Se a aula possui subaulas, conta cada subaula; conta a aula principal apenas
+                        // se houver vimeoId (indicando conteúdo principal separado)
                         if (aula.vimeoId) {
                             totalItems++;
                             if (completedIds.includes(assuntoId)) completedCount++;
