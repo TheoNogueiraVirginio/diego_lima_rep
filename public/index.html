@@ -1,172 +1,227 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Curso de Matemática - Diego Lima (Dark Mode)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap"
-        rel="stylesheet">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Poppins:wght@500;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <link rel="stylesheet" href="/styles/lpg.css">
-
-    <link rel="shortcut icon" href="/images/logo_diego_redonda.png">
+    <link rel="stylesheet" href="styles/lpg.css">
+    <link rel="shortcut icon" href="images/logo_diego_redonda.png">
 </head>
 
 <body>
+    <nav>
+        <div class="container nav-container">
+            <div class="logo">
+                <img src="images/logo_diego_png.png" alt="" style="width: 60px; padding-right: 10px;">
+                Matemática<span>Extensivo</span>
+            </div>
+            <a href="login.html" class="btn btn-outline">
+                <i class="fa-solid fa-user"></i> Já sou aluno
+            </a>
+        </div>
+    </nav>
 
-    <header>
-        <nav>
-            <a href="login.html" class="btn btn-login">Já sou aluno</a>
-        </nav>
+    <header class="hero">
+        <div class="container hero-grid">
+            <div class="hero-content">
+                <h1>Domine a Matemática e <span>Alcance a Nota Máxima</span></h1>
+                <p>O curso extensivo definitivo que vai transformar a sua base matemática e te colocar nas melhores
+                    universidades do país. Preparação estratégica, focada e sem enrolação.</p>
+                <a href="#pricing" class="btn btn-primary">
+                    Garantir Minha Vaga <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
+            <div class="hero-image-wrapper">
+                <!-- Placeholder for Teacher Photo -->
+                <img src="images/diego_pose2-Photoroom.png" alt="Professor de Matemática" class="hero-image">
+                <div class="hero-image-glow"></div>
+            </div>
+        </div>
     </header>
 
-
-    <section id="hero">
+    <section class="section">
         <div class="container">
-            <div class="hero-wrapper">
-                <div class="hero-title text-center">
-                    <h1 class="text-white">CURSO</h1>
-                    <h2 class="text-purple">MATEMÁTICA - EXTENSIVO</h2>
+            <h2 class="section-title">Por que escolher o <span>Extensivo?</span></h2>
+            <div class="topics-grid">
+                <!-- Card 1 -->
+                <div class="topic-card">
+                    <i class="fa-solid fa-bullseye topic-icon"></i>
+                    <h3>Planejamento Estratégico</h3>
+                    <p>Cronograma e planejamento sério, sem improvisos</p>
                 </div>
+                <!-- Card 2 -->
+                <div class="topic-card">
+                    <i class="fa-solid fa-layer-group topic-icon"></i>
+                    <h3>Base Sólida</h3>
+                    <p>Início com uma explicação conceitual, pela base, tópicos fundamentais de matemática em situações
+                        e resoluções</p>
+                </div>
+                <!-- Card 3 -->
+                <div class="topic-card">
+                    <i class="fa-solid fa-chart-line topic-icon"></i>
+                    <h3>Teoria e Prática Direcionadas</h3>
+                    <p>Material didático com embasamento teórico para cada tópico da aula, questões bem selecionadas e
+                        convidativas</p>
+                </div>
+                <!-- Card 4 -->
+                <div class="topic-card">
+                    <i class="fa-solid fa-book-open-reader topic-icon"></i>
+                    <h3>Raio-X do ENEM</h3>
+                    <p>Revisão Final baseada nas competências e habilidades do ENEM, fazendo com que o aluno tenha um
+                        maior conhecimento da estrutura das questões</p>
+                </div>
+                <!-- Card 5 -->
+                <div class="topic-card">
+                    <i class="fa-solid fa-headset topic-icon"></i>
+                    <h3>Plataforma Completa</h3>
+                    <p>Plataforma com vídeo aulas gravadas de todos os tópicos do material didático</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-                <div class="hero-content">
-                    <div class="hero-image-container" style="text-align: right; height: 550px">
-                        <img src="/images/diego_pose2-Photoroom.png" alt="Professor Diego Lima">
+    <section class="section hall-of-fame">
+        <div class="container">
+            <h2 class="section-title">Nosso <span>Hall da Fama</span></h2>
+
+            <!-- Highlight 1 -->
+            <div class="achievement-block">
+                <div class="achievement-content">
+                    <h3>4x Nota Máxima em 2024 <br><span style="font-size: 1.2rem; color: var(--color-torn-edge);">(SiSU
+                            2025)</span></h3>
+                    <p>A excelência é a nossa rotina. Nossos alunos alcançaram a impressionante nota de
+                        <strong>961,9</strong>, provando que a nossa metodologia é o caminho mais seguro para o topo.
+                    </p>
+                    <div class="student-badge">
+                        <i class="fa-solid fa-trophy"
+                            style="color: var(--color-lime-green); margin-bottom: 10px; font-size: 1.5rem;"></i><br>
+                        <strong>4 Alunos no Topo</strong>
+                        <span>Nota: 961,9</span>
                     </div>
+                </div>
+                <div class="achievement-media">
+                    <img src="images/tropa_nota_max-Photoroom.png" alt="4x Nota Máxima" class="achievement-img">
+                </div>
+            </div>
 
-                    <div class="hero-features">
-                        <ul>
-                            <li>Cronograma e planejamento sério, sem improvisos;</li>
-                            <li>Início com uma explicação conceitual, pela base, tópicos fundamentais de matemática em
-                                situações e resoluções;</li>
-                            <li>Material didático com embasamento teórico para cada tópico da aula, questões bem
-                                selecionadas e convidativas;</li>
-                            <li>Plataforma com vídeo aulas gravadas de todos os tópicos do material didático;</li>
-                            <li>Revisão Final baseada nas competências e habilidades do ENEM, fazendo com que o aluno
-                                tenha um maior conhecimento da estrutura das questões.</li>
+            <!-- Highlight 2 -->
+            <div class="achievement-block reverse">
+                <div class="achievement-content">
+                    <h3>Única nota máxima da Paraíba <br><span
+                            style="font-size: 1.2rem; color: var(--color-torn-edge);">(ENEM 2022)</span></h3>
+                    <p>Fizemos história. A maior e única nota máxima de matemática no estado inteiro saiu do nosso
+                        curso. Um marco absoluto de preparação e dedicação.</p>
+                    <div class="student-badge">
+                        <strong>Antônio Neto</strong>
+                        <span>Ciência da Computação - USP</span><br>
+                        <span style="color: var(--color-white); font-size: 0.9rem;">Nota: 985,70</span>
+                    </div>
+                </div>
+                <div class="achievement-media">
+                    <img src="images/pika2022.png" alt="Nota Máxima PB" class="achievement-img">
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <section class="section" id="pricing">
+        <div class="container">
+            <h2 class="section-title">Invista no seu <span>Futuro</span></h2>
+
+            <div class="pricing-grid">
+                <!-- Tier 1: Online Only -->
+                <div class="pricing-card">
+                    <div>
+                        <h3>Apenas Online</h3>
+                        <p>Acesso completo à plataforma digital.</p>
+                        <div class="price">R$ 1.520,00</div>
+                        <ul class="pricing-features">
+                            <li><i class="fa-solid fa-check"></i> Todas as aulas em vídeo</li>
+                            <li><i class="fa-solid fa-check"></i> Material digital em PDF</li>
+                            <li><i class="fa-solid fa-check"></i> Listas de exercícios</li>
                         </ul>
                     </div>
+                    <a href="/cadastro.html" class="btn btn-outline" style="width: 100%;">Quero o Plano Digital</a>
                 </div>
-            </div>
-        </div>
-    </section>
 
-    <div class="torn-divider torn-bottom"></div>
+                <!-- Tier 2: Physical + Online (Premium) -->
+                <div class="pricing-card premium">
+                    <!-- Adjusted badge position to absolute in CSS -->
+                    <div class="recommended-badge">Mais Recomendado</div>
 
-    <section id="social-proof" style="padding-top: 60px;">
-        <div class="container">
-            <h2 class="text-white text-center">4x NOTA MÁXIMA EM 2024 <br> (SISU 2025)</h2>
-            <div class="score-highlight text-lime text-center">961,9</div>
-
-            <div class="students-photo text-center">
-                <img src="/images/tropa_nota_max-Photoroom.png" alt="Alunos Aprovados Diego Lima" class="invisible-fix">
-            </div>
-        </div>
-    </section>
-
-    <div style="background-color: var(--bg-black);">
-        <div class="torn-divider torn-bottom"></div>
-    </div>
-
-    <section id="highlight-2022">
-        <div class="container text-center">
-
-            <h3 class="text-white title-highlight-2022">
-                ÚNICA NOTA MÁXIMA DE MATEMÁTICA NA PARAÍBA<br>
-                NO ENEM 2022 É DO <span class="text-purple">EXATOS!</span>
-            </h3>
-
-            <div class="highlight-card-2022">
-                <div class="highlight-content-wrapper">
-
-                    <div class="highlight-info">
-                        <div class="score-2022 text-lime">985,70</div>
-
-                        <div class="highlight-img" style="margin: 20px 0;">
-                            <img src="/images/pika2022.png" alt="Antônio Neto">
-                        </div>
-
-                        <div class="name-badge">
-                            ANTÔNIO <span class="badge-dark">NETO</span>
-                        </div>
-                        <p class="course-badge">CIÊNCIAS DA COMPUTAÇÃO - USP</p>
+                    <div>
+                        <h3>Com Material Físico</h3>
+                        <p>A experiência completa para máxima aprendizagem.</p>
+                        <div class="price">R$ 1.920,00</div>
+                        <ul class="pricing-features">
+                            <li><i class="fa-solid fa-check"></i> <strong>Tudo do plano Online</strong></li>
+                            <li><i class="fa-solid fa-check"></i> Apostilas impressas exclusivas</li>
+                            <li><i class="fa-solid fa-check"></i> Caderno de simulados físicos</li>
+                        </ul>
                     </div>
-
-                </div>
-            </div>
-
-        </div>
-    </section>
-
-    <div class="torn-divider torn-top" style="transform: scaleY(-1); margin-top: -1px;"></div>
-
-    <!-- Faixa branca separadora acima do card promocional (torn) -->
-    <div class="torn-divider torn-top torn-divider--white" style="height:48px;"></div>
-
-    <!-- Card promocional exclusivo -->
-    <section id="promo-art" style="background-color:var(--bg-black); padding:36px 0;">
-        <div class="container text-center">
-            <div class="promo-card-wrapper" style="display:flex;justify-content:center;">
-                <div class="promo-card" style="background:transparent; display:inline-block; padding:8px; border-radius:16px;">
-                    <a href="/cadastro.html" aria-label="Promoção Extensivo - Comprar agora">
-                        <img src="/images/diego_valores.png" alt="Promo Extensivo - Material Físico e Online" class="promo-image">
-                    </a>
+                    <a href="/cadastro.html" class="btn btn-primary" style="width: 100%;">Quero a Experiência Completa</a>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Faixa branca separadora abaixo do card promocional (torn) -->
-    <div class="torn-divider torn-bottom torn-divider--white" style="height:48px;"></div>
-
-
-    <section id="offer-section">
+    <section class="section" style="padding-top: 0;">
         <div class="container">
-            <div class="offer-box">
-                <h3 class="text-white">ADQUIRA O EXTENSIVO ONLINE</h3>
-                <ul class="benefits-list text-white">
-                    <li>Acesso imediato ao curso completo</li>
-                    <li>Planejamento com explicação conceitual, sem macetes, focando na base matemática</li>
-                    <li>Material didático estruturado com questões selecionadas e gabaritadas</li>
-                    <li>Plataforma com videoaulas de todos os tópicos do material</li>
-                    <li>Revisão final focada nas competências e habilidades do ENEM</li>
-                    <li>Suporte direto para dúvidas de matemática</li>
-                </ul>
-            </div>
-
-            <div class="cta-container">
-                <a href="/cadastro.html" class="btn btn-purple-large">QUERO CURSO ONLINE</a>
-
-                <p class="tagline-finish text-white">VENHA FAZER PARTE DESSE TIME<br>E CONSTRUIR A SUA HISTÓRIA</p>
-
-                <div class="whatsapp-cta-wrapper">
-                    <a class="whatsapp-cta" href="https://wa.me/5583998042613?text=Ol%C3%A1%2C%20tenho%20uma%20d%C3%BAvida%20sobre%20o%20curso" target="_blank" rel="noopener noreferrer" aria-label="Contato pelo WhatsApp">
-                        <i class="fab fa-whatsapp" aria-hidden="true"></i>
-                        Falar com a equipe
+            <div class="invite-banner">
+                <div class="invite-content">
+                    <h2>VENHA FAZER PARTE DESSE TIME E CONSTRUIR A <span>SUA HISTÓRIA</span></h2>
+                    <ul class="invite-list">
+                        <li><i class="fa-solid fa-star" style="color: var(--color-purple-neon);"></i> Acesso imediato ao
+                            curso completo</li>
+                        <li><i class="fa-solid fa-star" style="color: var(--color-purple-neon);"></i> Planejamento com
+                            explicação conceitual, sem macetes, focando na base matemática</li>
+                        <li><i class="fa-solid fa-star" style="color: var(--color-purple-neon);"></i> Material didático
+                            estruturado com questões selecionadas e gabaritadas</li>
+                        <li><i class="fa-solid fa-star" style="color: var(--color-purple-neon);"></i> Plataforma com
+                            videoaulas de todos os tópicos do material</li>
+                        <li><i class="fa-solid fa-star" style="color: var(--color-purple-neon);"></i> Revisão final
+                            focada nas competências e habilidades do ENEM</li>
+                        <li><i class="fa-solid fa-star" style="color: var(--color-purple-neon);"></i> Suporte direto
+                            para dúvidas de matemática</li>
+                    </ul>
+                </div>
+                <div class="invite-cta">
+                    <a href="#pricing" class="btn btn-primary">
+                        QUERO CURSO ONLINE <i class="fa-solid fa-rocket"></i>
                     </a>
-                    <p class="whatsapp-note">Caso tenha alguma dúvida, entre em contato com nossa equipe pelo whatsapp</p>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <section class="contact-section">
+        <div class="container">
+            <h3 style="font-size: 2rem; margin-bottom: 15px;">Ficou com alguma dúvida?</h3>
+            <p>Caso tenha alguma dúvida sobre planos, material ou pagamentos, entre em contato com nossa equipe de
+                suporte pelo WhatsApp. Estamos prontos para te ajudar!</p>
+            <a class="btn btn-whatsapp"
+                href="https://wa.me/5583998042613?text=Ol%C3%A1%2C%20tenho%20uma%20d%C3%BAvida%20sobre%20o%20curso" target="_blank"
+                rel="noopener noreferrer" aria-label="Contato pelo WhatsApp">
+                <i class="fa-brands fa-whatsapp" style="font-size: 1.5rem;"></i> Falar com a equipe
+            </a>
         </div>
     </section>
 
     <footer>
         <div class="container">
-            <div class="footer-logo-text text-white">
-                <span class="footer-brand-row">
-                    <span class="footer-name">DIEGO LIMA</span>
-                    <!-- Logo fictícia do Instagram: coloque o arquivo jpeg em /public/imagens/instagram.jpg -->
-                    <a href="https://instagram.com/diegolllisboa" target="_blank" rel="noopener noreferrer" aria-label="Instagram Diego Lima">
-                        <img src="/images/instagram.png" alt="Instagram Diego Lima" class="instagram-logo">
-                    </a>
-                </span>
-                <span>CURSOS DE MATEMÁTICA</span>
-            </div>
-            <p style="color: var(--color-purple-neon); margin-top: 20px;">&copy; 2026 Diego de Lima. Todos os direitos reservados.</p>
+            <p>&copy; 2026 Diego de Lima. Todos os direitos reservados.</p>
         </div>
     </footer>
+
 </body>
 
 </html>
