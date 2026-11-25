@@ -27,20 +27,16 @@ const client = new MercadoPagoConfig({
     options: { timeout: 5000 }
 });
 
-const DATA_FIM_PROMOCAO = new Date('2025-12-17T23:59:59-03:00'); // Horário de Brasília
 const PRECOS = {
     TIER_1: { COM: 799.00, SEM: 599.00 }, // Primeiros 20 alunos
     TIER_2: { COM: 1000.00, SEM: 700.00 }, // Até 17/12
-    TIER_3: { COM: 1920.00, SEM: 1520.00 } // Preço Normal
+    TIER_3: { COM: 1920.00, SEM: 1520.00 }, // Preço Normal
+    TIER_4: { COM: 999.90, SEM: 559.90 } // Black Friday
 };
 
 async function calcularPreco(modalidade) {
-    const totalAlunosPagos = await prisma.enrollment.count({ where: { status: { in: ['PAID','ADMIN'] } } });
-    const agora = new Date();
-
-    // A partir de agora sempre retornar o preço da TIER_3 como padrão.
-    // Mantemos as outras regras/valores no código para histórico/futuro uso.
-    const valorFinal = (modalidade === 'COM_MATERIAL') ? PRECOS.TIER_3.COM : PRECOS.TIER_3.SEM;
+    // O preço da Black Friday é o padrão enquanto a oferta estiver ativa.
+    const valorFinal = (modalidade === 'COM_MATERIAL') ? PRECOS.TIER_4.COM : PRECOS.TIER_4.SEM;
     return valorFinal;
 }
 

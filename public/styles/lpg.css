@@ -436,6 +436,19 @@ nav {
     color: var(--color-torn-edge);
 }
 
+.black-friday-note {
+    margin: -20px 0 35px;
+    color: var(--color-lime-green);
+    font-weight: 700;
+    text-align: center;
+}
+
+.price-installments {
+    margin-top: -18px;
+    color: var(--color-torn-edge);
+    font-weight: 600;
+}
+
 .pricing-features {
     text-align: left;
     margin: 30px 0;

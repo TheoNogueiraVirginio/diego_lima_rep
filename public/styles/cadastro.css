@@ -39,6 +39,26 @@ body {
     opacity: 0.9;
 }
 
+.black-friday-banner {
+    margin: -20px auto 30px;
+    color: var(--color-lime-green);
+    font-weight: 700;
+    text-align: center;
+}
+
+.checkout-price-box {
+    margin: 0 0 20px;
+    padding: 16px;
+    border: 1px solid var(--color-lime-green);
+    border-radius: 10px;
+    color: var(--color-lime-green);
+}
+
+.checkout-price-box p {
+    margin-top: 6px;
+    color: var(--color-white);
+}
+
 .checkout-wrapper {
     display: flex;
     flex-direction: column;

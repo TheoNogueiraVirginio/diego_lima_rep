@@ -11,13 +11,37 @@ const API_BASE_URL = '';
 let paymentMethodId = '';
 let intervaloVerificacao = null;
 
-// --- PREÇOS LOCAIS (me-smas regras do backend) ---
+// --- PREÇOS LOCAIS (mesmas regras do backend) ---
 const FRONT_PRECOS = {
-    TIER_3: { COM: 1920.00, SEM: 1520.00 }
+    TIER_4: { COM: 999.90, SEM: 559.90 }
 };
 
 function calcularPrecoFrontend(modality) {
-    return (modality === 'COM_MATERIAL') ? FRONT_PRECOS.TIER_3.COM : FRONT_PRECOS.TIER_3.SEM;
+    return (modality === 'COM_MATERIAL') ? FRONT_PRECOS.TIER_4.COM : FRONT_PRECOS.TIER_4.SEM;
+}
+
+function atualizarResumoPreco() {
+    const summary = document.getElementById('checkout-price-summary');
+    const modalidade = document.getElementById('modalidade')?.value;
+    const pagamento = document.getElementById('pagamento')?.value;
+    const parcelas = Number(document.getElementById('parcelas')?.value) || 1;
+    if (!summary) return;
+
+    if (!modalidade) {
+        summary.innerText = 'Selecione uma modalidade para ver o valor.';
+        return;
+    }
+
+    const total = calcularPrecoFrontend(modalidade);
+    const formatarReal = (valor) => valor.toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    });
+    const parcelamento = pagamento === 'cartao'
+        ? ` — ${parcelas}x de ${formatarReal(Number((total / parcelas).toFixed(2)))}`
+        : '';
+
+    summary.innerText = `Total: ${formatarReal(total)}${parcelamento}`;
 }
 
 function normalizeCoupon(code) {
@@ -63,6 +87,8 @@ async function updateCouponPreview() {
         const modality = modalidadeEl ? modalidadeEl.value : '';
         const parcelas = parcelasEl ? Number(parcelasEl.value) || 1 : 1;
         const pagamento = pagamentoEl ? pagamentoEl.value : 'pix';
+
+        atualizarResumoPreco();
 
         let base = calcularPrecoFrontend(modality);
         let final = base;
