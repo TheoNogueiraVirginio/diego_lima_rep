@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { MercadoPagoConfig, Payment, PaymentRefund } from 'mercadopago';
 // Imports fs/path removed
 
@@ -13,6 +14,7 @@ import {
     isSamePaymentIntent,
     isTerminalPaymentStatus
 } from '../utils/paymentAttempts.js';
+import { matchesInstallmentSelection } from '../utils/paymentTerms.js';
 import {
     PaymentLockUnavailableError,
     withEnrollmentPaymentLock
@@ -285,11 +287,17 @@ async function processEnrollment(req, res, database, postCommitActions) {
             paymentData.installments = selectedInstallment.installments;
             paymentData.payment_method_id = String(paymentMethodId);
             paymentData.issuer_id = Number(selectedInstallment.issuerId);
+            paymentData.metadata.installments = selectedInstallment.installments;
+            paymentData.metadata.paymentMethodId = String(paymentMethodId);
+            paymentData.metadata.issuerId = String(selectedInstallment.issuerId);
         } else {
             paymentData.payment_method_id = 'pix';
         }
 
-        const mpResponse = await payment.create({ body: paymentData });
+        const mpResponse = await payment.create({
+            body: paymentData,
+            requestOptions: { idempotencyKey: randomUUID() }
+        });
         activePaymentId = String(mpResponse.id);
 
         await database.enrollment.update({
@@ -306,7 +314,14 @@ async function processEnrollment(req, res, database, postCommitActions) {
         }
 
         if (paymentMethod === 'cartao') {
-            if (!hasExactPaymentTotal(mpResponse, amount, mpResponse.status === 'approved')) {
+            const paymentTermsMatch = matchesInstallmentSelection(mpResponse, {
+                installments: selectedInstallment.installments,
+                paymentMethodId,
+                issuerId: selectedInstallment.issuerId
+            });
+            const paymentAmountMatches = cents(mpResponse.transaction_amount) === cents(amount) &&
+                hasExactPaymentTotal(mpResponse, amount, mpResponse.status === 'approved');
+            if (!paymentTermsMatch || !paymentAmountMatches) {
                 let paymentResolved = false;
                 try {
                     paymentResolved = await cancelUnexpectedPayment(payment, activePaymentId, mpResponse.status);
@@ -331,7 +346,7 @@ async function processEnrollment(req, res, database, postCommitActions) {
                 }
 
                 return res.status(502).json({
-                    error: 'O Mercado Pago retornou um total diferente do preço anunciado. A cobrança foi interrompida ou enviada para estorno; contate o suporte se ela aparecer na fatura.'
+                    error: 'O Mercado Pago retornou parcelas ou um total diferente do solicitado. A cobrança foi interrompida ou enviada para estorno; contate o suporte se ela aparecer na fatura.'
                 });
             }
         }
@@ -447,9 +462,17 @@ export const checkPaymentStatus = async (req, res) => {
         const transactionAmountMatches =
             cents(paymentInfo.transaction_amount) === cents(enrollment.amount);
         const totalPaidMatches = hasExactPaymentTotal(paymentInfo, enrollment.amount, true);
+        const recordedInstallmentCount = Number(paymentInfo.metadata?.installments);
+        const paymentTermsMatch = paymentInfo.payment_type_id !== 'credit_card' ||
+            !Number.isInteger(recordedInstallmentCount) ||
+            matchesInstallmentSelection(paymentInfo, {
+                installments: recordedInstallmentCount,
+                paymentMethodId: paymentInfo.metadata.paymentMethodId,
+                issuerId: paymentInfo.metadata.issuerId
+            });
 
-        if (!transactionAmountMatches || !totalPaidMatches) {
-            console.error('[checkPaymentStatus] Pagamento aprovado com valor divergente; matrícula não liberada.');
+        if (!transactionAmountMatches || !totalPaidMatches || !paymentTermsMatch) {
+            console.error('[checkPaymentStatus] Pagamento aprovado com valor ou parcelas divergentes; matrícula não liberada.');
             try {
                 const paymentResolved = await cancelUnexpectedPayment(
                     new Payment(client),
