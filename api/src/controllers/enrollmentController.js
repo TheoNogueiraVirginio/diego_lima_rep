@@ -1,9 +1,18 @@
-import { MercadoPagoConfig, Payment } from 'mercadopago';
+import { MercadoPagoConfig, Payment, PaymentRefund } from 'mercadopago';
 // Imports fs/path removed
 
 import { signAccess, signRefresh, ACCESS_EXPIRES, REFRESH_EXPIRES } from '../utils/jwt.js';
 import { sendWelcomeEmail, sendCredentialsEmail } from '../services/emailService.js';
 import prisma from '../db.js';
+import { fetchNoInterestInstallments } from '../utils/installments.js';
+import { applyCoupon, getBasePrice, normalizeCouponCode } from '../utils/paymentPricing.js';
+import {
+    cancelPendingPayment,
+    hasExactPaymentTotal,
+    isPendingPaymentStatus,
+    isSamePaymentIntent,
+    isTerminalPaymentStatus
+} from '../utils/paymentAttempts.js';
 
 async function countVimeoIds() {
   try {
@@ -27,369 +36,396 @@ const client = new MercadoPagoConfig({
     options: { timeout: 5000 }
 });
 
-const PRECOS = {
-    TIER_1: { COM: 799.00, SEM: 599.00 }, // Primeiros 20 alunos
-    TIER_2: { COM: 1000.00, SEM: 700.00 }, // Até 17/12
-    TIER_3: { COM: 1920.00, SEM: 1520.00 }, // Preço Normal
-    TIER_4: { COM: 999.90, SEM: 559.90 } // Black Friday
+async function calcularValorCobrado(modality, couponCode) {
+    const basePrice = getBasePrice(modality);
+    if (!couponCode) return basePrice;
+
+    const normalizedCode = normalizeCouponCode(couponCode);
+    if (!normalizedCode) throw new RangeError('Cupom inválido.');
+
+    const coupon = await prisma.coupon.findUnique({ where: { code: normalizedCode } });
+    if (!coupon) throw new RangeError('Cupom inválido.');
+
+    return applyCoupon(basePrice, coupon);
+}
+
+export const getInstallments = async (req, res) => {
+    try {
+        const { bin, modality, coupon, paymentMethodId } = req.query;
+        if (!/^\d{6}$/.test(String(bin || '')) || !paymentMethodId) {
+            return res.status(400).json({ error: 'BIN ou bandeira inválida.' });
+        }
+
+        const amount = await calcularValorCobrado(modality, coupon);
+        const options = await fetchNoInterestInstallments({
+            accessToken: process.env.MP_ACCESS_TOKEN,
+            bin: String(bin),
+            amount,
+            paymentMethodId: String(paymentMethodId)
+        });
+
+        return res.json({ amount, options });
+    } catch (error) {
+        const status = error instanceof RangeError ? 400 : 502;
+        console.error('[getInstallments] Falha ao consultar parcelas:', error.message);
+        return res.status(status).json({ error: error.message || 'Não foi possível consultar parcelas.' });
+    }
 };
 
-async function calcularPreco(modalidade) {
-    // O preço da Black Friday é o padrão enquanto a oferta estiver ativa.
-    const valorFinal = (modalidade === 'COM_MATERIAL') ? PRECOS.TIER_4.COM : PRECOS.TIER_4.SEM;
-    return valorFinal;
+function cents(amount) {
+    return Math.round(Number(amount) * 100);
+}
+
+async function cancelUnexpectedPayment(payment, paymentId, status) {
+    if (isPendingPaymentStatus(status)) {
+        await cancelPendingPayment(payment, paymentId);
+        return true;
+    }
+
+    if (status === 'approved') {
+        const refunds = await new PaymentRefund(client).list({ payment_id: paymentId });
+        const existingRefund = refunds.find((refund) =>
+            ['approved', 'pending'].includes(refund.status)
+        );
+        const refund = existingRefund ||
+            await new PaymentRefund(client).create({ payment_id: paymentId });
+        if (!['approved', 'pending'].includes(refund.status)) {
+            throw new Error('Mercado Pago não confirmou o estorno da cobrança divergente.');
+        }
+        return refund.status === 'approved';
+    }
+
+    if (isTerminalPaymentStatus(status)) return true;
+
+    throw new Error('O pagamento precisa ser cancelado ou estornado pelo Mercado Pago.');
 }
 
 export const createEnrollment = async (req, res) => {
+    let activePaymentId = null;
     try {
-        console.log("[createEnrollment] Iniciando processamento...");
-        // Recebemos 'paymentMethodId' (visa/master), 'token' e agora 'coupon' do frontend
-        const { name, email, cpf, phone, modality, paymentMethod, installments, token, paymentMethodId, coupon } = req.body;
-        
-        console.log("[createEnrollment] Body recebido:", JSON.stringify({ name, email, cpf, phone, modality, paymentMethod, coupon }, null, 2));
+        const {
+            name, email, cpf, phone, modality, paymentMethod, installments,
+            token, paymentMethodId, cardBin, issuerId, coupon
+        } = req.body;
 
-        if (!modality) {
-            console.error("[createEnrollment] Modalidade não fornecida.");
-            return res.status(400).json({ error: "Modalidade inválida." });
+        if (!name || !email || !cpf || !phone) {
+            return res.status(400).json({ error: 'Informe nome, e-mail, CPF e telefone.' });
+        }
+        if (!['COM_MATERIAL', 'SEM_MATERIAL'].includes(modality)) {
+            return res.status(400).json({ error: 'Modalidade inválida.' });
+        }
+        if (!['cartao', 'pix'].includes(paymentMethod)) {
+            return res.status(400).json({ error: 'Forma de pagamento inválida.' });
         }
 
-        let valorCobrado = await calcularPreco(modality);
-        
-        // --- LÓGICA DE CUPOM ---
-        if (coupon) {
-            // normalize: remove diacritics, spaces and non-alphanumeric, then uppercase
-            const cup = String(coupon || '')
-                .normalize('NFD')
-                .replace(/\p{Diacritic}/gu, '')
-                .replace(/\s+/g, '')
-                .replace(/[^A-Za-z0-9]/g, '')
-                .toUpperCase();
+        const amount = await calcularValorCobrado(modality, coupon);
+        const cleanCpf = String(cpf).replace(/\D/g, '');
+        const normalizedEmail = String(email).trim().toLowerCase();
+        const normalizedPhone = String(phone).replace(/\D/g, '');
+        const payment = new Payment(client);
+        let selectedInstallment = null;
 
-            // Buscar cupom no banco
-            const dbCoupon = await prisma.coupon.findUnique({
-                where: { code: cup }
+        if (paymentMethod === 'cartao') {
+            const count = Number(installments);
+            const issuer = String(issuerId || '');
+            const bin = String(cardBin || '');
+            if (!token || !paymentMethodId || !/^\d{6}$/.test(bin) ||
+                !/^\d+$/.test(issuer) || !Number.isInteger(count) || count < 1 || count > 12) {
+                return res.status(400).json({ error: 'Dados do cartão ou parcelamento inválidos.' });
+            }
+
+            const availableOptions = await fetchNoInterestInstallments({
+                accessToken: process.env.MP_ACCESS_TOKEN,
+                bin,
+                amount,
+                paymentMethodId: String(paymentMethodId)
             });
-
-            if (dbCoupon) {
-                if (dbCoupon.type === 'FIXED_PRICE') {
-                    console.log(`[createEnrollment] Cupom aplicado: ${dbCoupon.code} (preço fixo R$${dbCoupon.discount.toFixed(2)})`);
-                    valorCobrado = dbCoupon.discount;
-                } else {
-                    console.log(`[createEnrollment] Cupom aplicado: ${dbCoupon.code} (${dbCoupon.discount}% OFF)`);
-                    valorCobrado = valorCobrado * (1 - dbCoupon.discount / 100);
-                }
-            } else {
-                console.log(`[createEnrollment] Cupom inválido fornecido: ${cup}`);
+            selectedInstallment = availableOptions.find((option) =>
+                option.issuerId === issuer && option.installments === count
+            );
+            if (!selectedInstallment) {
+                return res.status(400).json({
+                    error: 'Este cartão não possui essa opção de parcelamento sem acréscimo. Atualize as parcelas e tente novamente.'
+                });
             }
         }
-        
-        // Garante duas casas decimais
-        valorCobrado = Number(valorCobrado.toFixed(2));
-        
-        console.log("[createEnrollment] Valor Final a Cobrar:", valorCobrado);
-       
-        // Flag para detectar mudança de valor (cupom aplicado/removido)
-        let valorMudou = false;
 
-        // 1. CRIA OU ATUALIZA O USUÁRIO NO BANCO COMO "PENDING" ANTES DO PAGAMENTO
-        console.log("[createEnrollment] Preparando dados do aluno (PENDING)...");
-        
-        const cpfLimpo = cpf.replace(/\D/g, '');
-        const alunoData = {
-            name,
-            email,
-            cpf: cpfLimpo,
-            phone,
-            modality,
-            amount: valorCobrado,
-            status: 'PENDING'
-        };
-        console.log("[createEnrollment] Dados do aluno para DB:", alunoData);
-
-        // Verifica se já existe
-        console.log("[createEnrollment] Buscando aluno existente por Email ou CPF...");
         const alunoExistente = await prisma.enrollment.findFirst({
-            where: { OR: [{ email: email }, { cpf: cpfLimpo }] }
+            where: { OR: [{ email: normalizedEmail }, { cpf: cleanCpf }] }
         });
+        if (alunoExistente && ['PAID', 'ADMIN'].includes(alunoExistente.status)) {
+            return res.status(409).json({ error: 'Usuário já possui inscrição paga.' });
+        }
 
-        let alunoId;
-
-        if (alunoExistente) {
-            console.log(`[createEnrollment] Aluno encontrado (ID: ${alunoExistente.id}).`);
-
-            // Verifica se o valor mudou (ex: cupom aplicado ou removido)
-            valorMudou =
-                Number(alunoExistente.amount) !== Number(valorCobrado);
-
-            if (valorMudou) {
-                console.log('[createEnrollment] Valor alterado. Novo pagamento será necessário.');
-            }
-            
-            // 1) Impedir sobrescrição de um PAID
-            if (['PAID','ADMIN'].includes(alunoExistente.status)) {
-                console.warn('[createEnrollment] Tentativa de criação/atualização para usuário já PAID.');
-                return res.status(409).json({ error: 'Usuário já possui inscrição paga.' });
+        if (alunoExistente?.paymentId) {
+            let existingPayment;
+            try {
+                existingPayment = await payment.get({ id: alunoExistente.paymentId });
+            } catch (error) {
+                console.error('[createEnrollment] Não foi possível consultar pagamento anterior:', error.code || error.name);
+                return res.status(502).json({
+                    error: 'Não foi possível verificar a cobrança anterior. Nenhuma nova cobrança foi criada.'
+                });
             }
 
-            // 2) Se estiver PENDING e já tiver paymentId, verificar o estado no Mercado Pago
-            if (alunoExistente.status === 'PENDING' && alunoExistente.paymentId) {
-                try {
-                    const payment = new Payment(client);
-                    const existingMp = await payment.get({ id: alunoExistente.paymentId });
-                    const mpStatus = existingMp.status;
-                    console.log(`[createEnrollment] Status MP do paymentId ${alunoExistente.paymentId}:`, mpStatus);
-
-                    // Se MP já aprovou, atualiza como PAID e retorna informação
-                    if (mpStatus === 'approved') {
-                        await prisma.enrollment.update({ where: { id: alunoExistente.id }, data: { status: 'PAID' } });
-
-                        // Enviar email de boas-vindas
-                        await sendWelcomeEmail(alunoExistente.email, alunoExistente.name);
-
-                        return res.status(200).json({ resume: false, message: 'Pagamento já aprovado.' , status: 'approved' });
-                    }
-
-                    // Se pagamento ainda estiver em processamento/pendente, retornamos os dados para o frontend retomar
-                    const resumableStates = ['pending', 'in_process', 'processing', 'pending_waiting_transfer'];
-                    if (resumableStates.includes(mpStatus)) {
-
-                        const modalidadeMudou = alunoExistente.modality !== modality;
-
-                        if (modalidadeMudou || valorMudou) {
-                            console.log('[createEnrollment] Novo pagamento necessário (modalidade ou valor mudou)');
-
-                            try {
-                                await prisma.enrollment.update({
-                                    where: { id: alunoExistente.id },
-                                    data: { status: 'REJECTED' }
-                                });
-                                console.log('[createEnrollment] Pagamento anterior marcado como REJECTED.');
-                            } catch (err) {
-                                console.error('[createEnrollment] Erro ao marcar REJECTED:', err.message);
-                            }
-
-                            // continua o fluxo para criar novo pagamento
-                        } else {
-                            return res.status(200).json({
-                                resume: true,
-                                paymentId: alunoExistente.paymentId,
-                                status: mpStatus,
-                                valor: alunoExistente.amount,
-                                payment: {
-                                    qrCodeBase64: existingMp.point_of_interaction?.transaction_data?.qr_code_base64,
-                                    qrCodeCopyPaste: existingMp.point_of_interaction?.transaction_data?.qr_code,
-                                }
+            if (existingPayment.status === 'approved') {
+                if (cents(existingPayment.transaction_amount) !== cents(alunoExistente.amount) ||
+                    !hasExactPaymentTotal(existingPayment, alunoExistente.amount, true)) {
+                    try {
+                        const paymentResolved = await cancelUnexpectedPayment(
+                            payment,
+                            alunoExistente.paymentId,
+                            existingPayment.status
+                        );
+                        if (!paymentResolved) {
+                            return res.status(409).json({
+                                error: 'O estorno da cobrança anterior ainda está em processamento. Aguarde a confirmação antes de tentar novamente.'
                             });
                         }
+                        await prisma.enrollment.update({
+                            where: { id: alunoExistente.id },
+                            data: { status: 'REJECTED', paymentId: null }
+                        });
+                        alunoExistente.status = 'REJECTED';
+                        alunoExistente.paymentId = null;
+                    } catch (error) {
+                        console.error('[createEnrollment] Não foi possível estornar a cobrança anterior divergente:', error.code || error.message);
+                        return res.status(502).json({
+                            error: 'Existe uma cobrança aprovada com valor divergente e não foi possível confirmar o estorno. Entre em contato com o suporte antes de tentar novamente.'
+                        });
                     }
-
-                    // Se MP rejeitou definitivamente, marcamos REJECTED e deixamos seguir para criar novo pagamento
-                    if (mpStatus === 'rejected' || mpStatus === 'cancelled' || mpStatus === 'refunded') {
-                        console.log(`[createEnrollment] Pagamento anterior (${alunoExistente.paymentId}) com status ${mpStatus}. Marcando como REJECTED.`);
-                        await prisma.enrollment.update({ where: { id: alunoExistente.id }, data: { status: 'REJECTED' } });
-                        // prosseguir criando novo pagamento abaixo
-                    }
-                } catch (err) {
-                    console.error('[createEnrollment] Erro ao consultar MP para paymentId existente:', err.message);
+                } else {
+                    await prisma.enrollment.update({
+                        where: { id: alunoExistente.id },
+                        data: { status: 'PAID' }
+                    });
+                    await sendWelcomeEmail(alunoExistente.email, alunoExistente.name);
+                    return res.status(200).json({ status: 'approved', message: 'Pagamento anterior já aprovado.' });
                 }
             }
 
-            // Atualiza (ou re-tenta) criando um novo registro de tentativa
-            console.log('[createEnrollment] Atualizando dados do aluno para nova tentativa...');
-            const updated = await prisma.enrollment.update({ where: { id: alunoExistente.id }, data: alunoData });
-            alunoId = updated.id;
-            console.log('[createEnrollment] Aluno atualizado com sucesso.');
+            if (isPendingPaymentStatus(existingPayment.status)) {
+                const sameIntent = alunoExistente.modality === modality &&
+                    isSamePaymentIntent(existingPayment, {
+                        amount,
+                        modality,
+                        paymentMethod,
+                        paymentMethodId,
+                        issuerId,
+                        installments: paymentMethod === 'cartao' ? Number(installments) : 1
+                    }) &&
+                    (paymentMethod !== 'cartao' ||
+                        hasExactPaymentTotal(existingPayment, amount, false));
 
-        } else {
-            console.log('[createEnrollment] Aluno não encontrado. Criando novo registro...');
-            const created = await prisma.enrollment.create({ data: alunoData });
-            alunoId = created.id;
-            console.log(`[createEnrollment] Aluno criado com sucesso. ID: ${alunoId}`);
+                if (sameIntent) {
+                    return res.status(200).json({
+                        resume: true,
+                        paymentId: alunoExistente.paymentId,
+                        status: existingPayment.status,
+                        valor: amount,
+                        paymentMethod,
+                        payment: {
+                            qrCodeBase64: existingPayment.point_of_interaction?.transaction_data?.qr_code_base64,
+                            qrCodeCopyPaste: existingPayment.point_of_interaction?.transaction_data?.qr_code
+                        }
+                    });
+                }
+
+                try {
+                    await cancelPendingPayment(payment, alunoExistente.paymentId);
+                } catch (error) {
+                    console.error('[createEnrollment] Cobrança anterior não cancelada:', error.code || error.message);
+                    return res.status(409).json({
+                        error: 'Não foi possível cancelar a cobrança anterior. A nova tentativa não foi criada para evitar cobranças duplicadas.'
+                    });
+                }
+            } else if (!isTerminalPaymentStatus(existingPayment.status)) {
+                return res.status(409).json({
+                    error: 'A cobrança anterior está em um estado que não permite uma nova tentativa com segurança.'
+                });
+            }
         }
 
-        // 2. GERA O PAGAMENTO NO MERCADO PAGO
-        console.log("[createEnrollment] Iniciando integração com Mercado Pago...");
-        const payment = new Payment(client);
-
-        let paymentData = {
-            transaction_amount: valorCobrado,
-            description: `Curso Matemática - ${modality}`,
-            payer: {
-                email: email,
-                first_name: name.split(" ")[0],
-                identification: { type: 'CPF', number: cpfLimpo }
-            },
-            metadata: { name, email, cpf: cpfLimpo, phone, modality, alunoId } // Passamos o ID do aluno no metadata
+        const enrollmentData = {
+            name: String(name).trim(),
+            email: normalizedEmail,
+            cpf: cleanCpf,
+            phone: normalizedPhone,
+            modality,
+            amount,
+            status: 'PENDING',
+            paymentId: null
         };
-        console.log("[createEnrollment] Payload para Mercado Pago:", JSON.stringify(paymentData, null, 2));
+        const enrollment = alunoExistente
+            ? await prisma.enrollment.update({ where: { id: alunoExistente.id }, data: enrollmentData })
+            : await prisma.enrollment.create({ data: enrollmentData });
 
-        // --- SELEÇÃO DO MÉTODO ---
+        const paymentData = {
+            transaction_amount: amount,
+            description: `Curso Matemática - ${modality}`,
+            external_reference: enrollment.id,
+            payer: {
+                email: normalizedEmail,
+                first_name: enrollmentData.name.split(/\s+/)[0],
+                identification: { type: 'CPF', number: cleanCpf }
+            },
+            metadata: { name: enrollmentData.name, email: normalizedEmail, cpf: cleanCpf, phone: normalizedPhone, modality, alunoId: enrollment.id }
+        };
+
         if (paymentMethod === 'cartao') {
-            // Validação simples de 'installments' (deve ser inteiro entre 1 e 12)
-            const parcelas = Number(installments) || 1;
-            if (!Number.isInteger(parcelas) || parcelas < 1 || parcelas > 12) {
-                console.warn('[createEnrollment] installments inválido:', installments);
-                return res.status(400).json({ error: 'Parâmetro installments inválido. Deve ser inteiro entre 1 e 12.' });
-            }
-
-            paymentData.token = token; // Token seguro
-            paymentData.installments = parcelas; // 1 a 12
-            paymentData.payment_method_id = paymentMethodId; // 'visa', 'master', etc. (Vem do Front)
-
-        } else if (paymentMethod === 'boleto') {
-            paymentData.payment_method_id = 'bolbradesco';
+            paymentData.token = token;
+            paymentData.installments = selectedInstallment.installments;
+            paymentData.payment_method_id = String(paymentMethodId);
+            paymentData.issuer_id = Number(selectedInstallment.issuerId);
         } else {
             paymentData.payment_method_id = 'pix';
         }
 
         const mpResponse = await payment.create({ body: paymentData });
-        console.log("[createEnrollment] Resposta do Mercado Pago:", mpResponse.status, mpResponse.id);
+        activePaymentId = String(mpResponse.id);
 
-        // 3. ATUALIZA O USUÁRIO COM O ID DO PAGAMENTO
-        console.log(`[createEnrollment] Vinculando PaymentID ${mpResponse.id} ao Aluno ${alunoId}...`);
         await prisma.enrollment.update({
-            where: { id: alunoId },
-            data: { paymentId: mpResponse.id.toString() }
+            where: { id: enrollment.id },
+            data: { paymentId: activePaymentId }
         });
-        console.log("[createEnrollment] Vínculo concluído.");
 
-        //cartão rejeitado
         if (mpResponse.status === 'rejected') {
-            console.warn("[createEnrollment] Pagamento rejeitado.");
-            // Marca explicitamente como REJECTED no banco
-            try {
-                await prisma.enrollment.update({ where: { id: alunoId }, data: { status: 'REJECTED' } });
-            } catch (err) {
-                console.error('[createEnrollment] Erro ao marcar REJECTED no DB:', err.message);
-            }
-            return res.status(400).json({ error: "Pagamento rejeitado pelo banco. Verifique os dados ou limite." });
+            await prisma.enrollment.update({
+                where: { id: enrollment.id },
+                data: { status: 'REJECTED' }
+            });
+            return res.status(400).json({ error: 'Pagamento rejeitado pelo banco. Verifique os dados ou limite.' });
         }
 
-        // Se o pagamento foi aprovado imediatamente (cartão), marca PAID e envia e-mail
-                if (mpResponse.status === 'approved') {
-            try {
-                await prisma.enrollment.update({ where: { id: alunoId }, data: { status: 'PAID' } });
-            } catch (err) {
-                console.error('[createEnrollment] Erro ao marcar PAID no DB:', err.message);
-            }
-            try {
-                // Obtemos os dados atuais do aluno para preencher o e-mail
-                const aluno = await prisma.enrollment.findUnique({ where: { id: alunoId } });
-                await sendWelcomeEmail(aluno.email, aluno.name);
-            } catch (err) {
-                console.error('[createEnrollment] Erro ao enviar e-mail após aprovação imediata:', err.message);
+        if (paymentMethod === 'cartao') {
+            if (!hasExactPaymentTotal(mpResponse, amount, mpResponse.status === 'approved')) {
+                let paymentResolved = false;
+                try {
+                    paymentResolved = await cancelUnexpectedPayment(payment, activePaymentId, mpResponse.status);
+                    await prisma.enrollment.update({
+                        where: { id: enrollment.id },
+                        data: {
+                            status: 'REJECTED',
+                            ...(paymentResolved ? { paymentId: null } : {})
+                        }
+                    });
+                } catch (error) {
+                    console.error('[createEnrollment] Falha ao reverter cobrança com total divergente:', error.code || error.message);
+                }
+
+                if (!paymentResolved && mpResponse.status === 'approved') {
+                    return res.status(202).json({
+                        paymentId: activePaymentId,
+                        status: 'refund_pending',
+                        paymentMethod,
+                        valor: amount
+                    });
+                }
+
+                return res.status(502).json({
+                    error: 'O Mercado Pago retornou um total diferente do preço anunciado. A cobrança foi interrompida ou enviada para estorno; contate o suporte se ela aparecer na fatura.'
+                });
             }
         }
 
-        res.status(201).json({
+        if (mpResponse.status === 'approved') {
+            await prisma.enrollment.update({
+                where: { id: enrollment.id },
+                data: { status: 'PAID' }
+            });
+            try {
+                await sendWelcomeEmail(enrollment.email, enrollment.name);
+            } catch (error) {
+                console.error('[createEnrollment] Pagamento aprovado, mas o e-mail não foi enviado:', error.message);
+            }
+        }
+
+        return res.status(201).json({
             success: true,
-            paymentId: mpResponse.id.toString(),
+            paymentId: activePaymentId,
             status: mpResponse.status,
-            valor: valorCobrado,
+            valor: amount,
+            paymentMethod,
             payment: {
-                // Dados para PIX
                 qrCodeBase64: mpResponse.point_of_interaction?.transaction_data?.qr_code_base64,
-                qrCodeCopyPaste: mpResponse.point_of_interaction?.transaction_data?.qr_code,
+                qrCodeCopyPaste: mpResponse.point_of_interaction?.transaction_data?.qr_code
             }
         });
-
     } catch (error) {
-        console.error("[createEnrollment] ERRO FATAL:", error);
-        if (error.response) {
-             console.error("[createEnrollment] Detalhes do erro MP:", JSON.stringify(error.response.data, null, 2));
+        console.error('[createEnrollment] Erro ao processar pagamento:', error.code || error.message);
+        if (activePaymentId) {
+            try {
+                const payment = new Payment(client);
+                const current = await payment.get({ id: activePaymentId });
+                if (isPendingPaymentStatus(current.status)) {
+                    await cancelPendingPayment(payment, activePaymentId);
+                }
+            } catch (cancelError) {
+                console.error('[createEnrollment] Não foi possível encerrar cobrança criada sem confirmação:', cancelError.code || cancelError.message);
+            }
         }
-        res.status(500).json({ error: "Erro ao processar pagamento.", details: error.message });
+        const status = error instanceof RangeError ? 400 : 500;
+        return res.status(status).json({ error: error.message || 'Erro ao processar pagamento.' });
     }
 };
 
 export const checkPaymentStatus = async (req, res) => {
     try {
         const { id } = req.params;
-
-        // 1. Consulta o Mercado Pago
-        const payment = new Payment(client);
-        const paymentInfo = await payment.get({ id: id });
-        const status = paymentInfo.status;
-
-        // --- ÁREA DE DEBUG (OLHE O TERMINAL APÓS PAGAR!) ---
-        if (status === 'approved') {
-            console.log("Pagamento Aprovado! ID:", id);
-        }
-        // ----------------------------------------
-
-        // 2. Se não for aprovado, encerra aqui
-        if (status !== 'approved') {
-            return res.json({ status: status });
+        const enrollment = await prisma.enrollment.findFirst({ where: { paymentId: id } });
+        if (!enrollment) {
+            return res.status(404).json({ status: 'not_current_payment' });
         }
 
-        // 3. Verifica se JÁ salvamos esse pagamento específico pelo ID
-        // Como agora salvamos o paymentId na criação, buscamos por ele
-        const existingPayment = await prisma.enrollment.findFirst({
-            where: { paymentId: id }
-        });
-
-        if (existingPayment && ['PAID','ADMIN'].includes(existingPayment.status)) {
-            return res.json({ status: status, message: "Pagamento já processado." }); 
+        const paymentInfo = await new Payment(client).get({ id });
+        if (paymentInfo.status !== 'approved') {
+            return res.json({ status: paymentInfo.status });
         }
 
-        if (existingPayment) {
-            // 4. ATUALIZA O STATUS PARA PAID (garantir paymentId também)
-            console.log("Confirmando pagamento para aluno:", existingPayment.email);
+        const transactionAmountMatches =
+            cents(paymentInfo.transaction_amount) === cents(enrollment.amount);
+        const totalPaidMatches = hasExactPaymentTotal(paymentInfo, enrollment.amount, true);
+
+        if (!transactionAmountMatches || !totalPaidMatches) {
+            console.error('[checkPaymentStatus] Pagamento aprovado com valor divergente; matrícula não liberada.');
             try {
-                await prisma.enrollment.update({
-                    where: { id: existingPayment.id },
-                    data: { status: 'PAID', paymentId: id }
-                });
-                
-                // Enviar email de boas-vindas
-                await sendWelcomeEmail(existingPayment.email, existingPayment.name);
-
-            } catch (err) {
-                console.error('[checkPaymentStatus] Erro ao marcar PAID no DB:', err.message);
+                const paymentResolved = await cancelUnexpectedPayment(
+                    new Payment(client),
+                    id,
+                    paymentInfo.status
+                );
+                if (paymentResolved) {
+                    await prisma.enrollment.update({
+                        where: { id: enrollment.id },
+                        data: { status: 'REJECTED', paymentId: null }
+                    });
+                    return res.status(409).json({ status: 'amount_mismatch' });
+                }
+                return res.status(202).json({ status: 'refund_pending' });
+            } catch (error) {
+                console.error('[checkPaymentStatus] Falha ao estornar pagamento divergente:', error.code || error.message);
+                return res.status(502).json({ status: 'refund_pending', error: 'Não foi possível confirmar o estorno da cobrança divergente.' });
             }
-        } else {
-            // Fallback: Se por algum motivo o registro não existir (ex: criado antes dessa mudança),
-            // tentamos criar/atualizar usando o metadata como antes.
-            console.warn("Aluno não encontrado pelo PaymentID. Tentando recuperar via Metadata...");
-            
-            const userData = paymentInfo.metadata || {};
-            const novoAluno = {
-                name: userData.name || "Aluno Sem Nome",
-                email: userData.email, 
-                cpf: userData.cpf,
-                phone: userData.phone || "",
-                modality: userData.modality || "SEM_MATERIAL", 
-                amount: paymentInfo.transaction_amount || 0,
-                status: 'PAID',
-                paymentId: id
-            };
-
-            const alunoExistente = await prisma.enrollment.findFirst({
-                where: { OR: [{ email: novoAluno.email }, { cpf: novoAluno.cpf }] }
-            });
-
-            if (alunoExistente) {
-                await prisma.enrollment.update({
-                    where: { id: alunoExistente.id },
-                    data: novoAluno
-                });
-            } else {
-                await prisma.enrollment.create({
-                    data: novoAluno
-                });
-            }
-            // Enviar email de boas-vindas no fluxo de fallback
-            await sendWelcomeEmail(novoAluno.email, novoAluno.name);
         }
 
-        res.json({ status: status, message: "Matrícula confirmada!" });
+        if (['PAID', 'ADMIN'].includes(enrollment.status)) {
+            return res.json({ status: 'approved', message: 'Pagamento já processado.' });
+        }
 
+        await prisma.enrollment.update({
+            where: { id: enrollment.id },
+            data: { status: 'PAID' }
+        });
+        try {
+            await sendWelcomeEmail(enrollment.email, enrollment.name);
+        } catch (error) {
+            console.error('[checkPaymentStatus] Pagamento aprovado, mas o e-mail não foi enviado:', error.message);
+        }
+
+        return res.json({ status: 'approved', message: 'Matrícula confirmada.' });
     } catch (error) {
-        // ESSE LOG VAI TE CONTAR A VERDADE NO TERMINAL
-        console.error("ERRO NO BACKEND:", error.message);
-        if (error.code) console.error("Código do Erro Prisma:", error.code);
-        
-        res.status(500).json({ error: "Erro ao processar matrícula", details: error.message });
+        console.error('[checkPaymentStatus] Erro ao consultar pagamento:', error.code || error.message);
+        return res.status(500).json({ error: 'Erro ao consultar pagamento.' });
     }
 };
 

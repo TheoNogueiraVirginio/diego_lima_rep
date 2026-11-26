@@ -9,7 +9,10 @@ const API_BASE_URL = '';
 // const API_BASE_URL = 'http://localhost:4000';
 
 let paymentMethodId = '';
+let selectedCardBin = '';
+let installmentRequestId = 0;
 let intervaloVerificacao = null;
+let submissionInProgress = false;
 
 // --- PREÇOS LOCAIS (mesmas regras do backend) ---
 const FRONT_PRECOS = {
@@ -18,6 +21,10 @@ const FRONT_PRECOS = {
 
 function calcularPrecoFrontend(modality) {
     return (modality === 'COM_MATERIAL') ? FRONT_PRECOS.TIER_4.COM : FRONT_PRECOS.TIER_4.SEM;
+}
+
+function formatarReal(valor) {
+    return Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 function atualizarResumoPreco() {
@@ -33,12 +40,8 @@ function atualizarResumoPreco() {
     }
 
     const total = calcularPrecoFrontend(modalidade);
-    const formatarReal = (valor) => valor.toLocaleString('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-    });
     const parcelamento = pagamento === 'cartao'
-        ? ` — ${parcelas}x de ${formatarReal(Number((total / parcelas).toFixed(2)))}`
+        ? ` — ${parcelas}x (total ${formatarReal(total)})`
         : '';
 
     summary.innerText = `Total: ${formatarReal(total)}${parcelamento}`;
@@ -80,27 +83,30 @@ async function updateCouponPreview() {
 
         const cupInput = document.getElementById('input-cupom');
         const modalidadeEl = document.getElementById('modalidade');
-        const parcelasEl = document.getElementById('parcelas');
         const pagamentoEl = document.getElementById('pagamento');
 
         const cup = cupInput ? cupInput.value.trim() : '';
+        clearTimeout(couponTimeout);
         const modality = modalidadeEl ? modalidadeEl.value : '';
-        const parcelas = parcelasEl ? Number(parcelasEl.value) || 1 : 1;
         const pagamento = pagamentoEl ? pagamentoEl.value : 'pix';
 
         atualizarResumoPreco();
 
-        let base = calcularPrecoFrontend(modality);
+        if (!modality) {
+            feedback.innerText = '';
+            return;
+        }
+
+        const base = calcularPrecoFrontend(modality);
         let final = base;
 
         // Se não houver cupom digitado, limpa mensagem
         if (!cup) {
             feedback.innerText = '';
+            if (selectedCardBin) refreshCardInstallments();
             return;
         }
 
-        // debounce p/ evitar muitas requisições
-        clearTimeout(couponTimeout);
         couponTimeout = setTimeout(async () => {
             const couponData = await fetchCouponData(cup);
             if (couponData) {
@@ -109,13 +115,19 @@ async function updateCouponPreview() {
                 } else {
                     final = Number((base * (1 - couponData.discount / 100)).toFixed(2));
                 }
-                const perParcel = parcelas > 0 ? Number((final / parcelas).toFixed(2)) : final;
-                
-                feedback.innerHTML = `Valor com cupom: <strong style="color:var(--highlight);">R$ ${final.toFixed(2)}</strong>` +
-                    (pagamento === 'cartao' ? ` — ${parcelas}x de R$ ${perParcel.toFixed(2)}` : '');
+                if (final <= 0 || final > base) {
+                    feedback.innerHTML = '<span style="color:red;">Cupom não aplicável a esta modalidade</span>';
+                    if (selectedCardBin) refreshCardInstallments();
+                    return;
+                }
+
+                feedback.innerHTML = `Valor com cupom: <strong style="color:var(--highlight);">${formatarReal(final)}</strong>` +
+                    (pagamento === 'cartao' ? ' — parcelas sem acréscimo disponíveis para este cartão' : '');
+                atualizarResumoPreco();
             } else {
                 feedback.innerHTML = `<span style="color:red;">Cupom inválido</span>`;
             }
+            if (selectedCardBin) refreshCardInstallments();
         }, 500);
 
     } catch (e) {
@@ -176,24 +188,88 @@ if (phoneField) {
     });
 }
 
-// --- 2. DETECTAR BANDEIRA DO CARTÃO ---
-document.getElementById('cardNumber').addEventListener('keyup', async (event) => {
-    // Remove os espaços visuais para enviar o número limpo para a API
-    const cardNumber = event.target.value.replace(/\s/g, '');
+function resetInstallmentOptions(message) {
+    const select = document.getElementById('parcelas');
+    const feedback = document.getElementById('installment-feedback');
+    select.innerHTML = '';
+    select.disabled = true;
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = message;
+    select.appendChild(option);
+    feedback.textContent = message;
+}
 
-    if (cardNumber.length >= 6 && !paymentMethodId) {
-        const bin = cardNumber.substring(0, 6);
-        try {
-            const paymentMethods = await mp.getPaymentMethods({ bin: bin });
-            if (paymentMethods.results.length > 0) {
-                paymentMethodId = paymentMethods.results[0].id; // ex: "visa", "master"
-                console.log("Bandeira detectada:", paymentMethodId);
-            }
-        } catch (error) {
-            console.error("Erro ao detectar bandeira", error);
-        }
+async function refreshCardInstallments() {
+    const requestId = ++installmentRequestId;
+    const select = document.getElementById('parcelas');
+    const previousSelection = select.value;
+    const cardNumber = document.getElementById('cardNumber').value.replace(/\D/g, '');
+    const bin = cardNumber.slice(0, 6);
+    selectedCardBin = /^\d{6}$/.test(bin) ? bin : '';
+    paymentMethodId = '';
+    resetInstallmentOptions('Consultando opções sem acréscimo...');
+
+    if (!selectedCardBin || document.getElementById('pagamento').value !== 'cartao') {
+        resetInstallmentOptions('Informe o cartão para consultar');
+        return;
     }
-    if (cardNumber.length < 6) paymentMethodId = '';
+
+    try {
+        const paymentMethods = await mp.getPaymentMethods({ bin: selectedCardBin });
+        if (requestId !== installmentRequestId) return;
+
+        const cardMethod = paymentMethods.results?.find((method) => method.payment_type_id === 'credit_card');
+        if (!cardMethod) {
+            resetInstallmentOptions('Não foi possível identificar um cartão de crédito válido.');
+            return;
+        }
+
+        paymentMethodId = cardMethod.id;
+        const params = new URLSearchParams({
+            bin: selectedCardBin,
+            modality: document.getElementById('modalidade').value,
+            coupon: document.getElementById('input-cupom')?.value || '',
+            paymentMethodId
+        });
+        const response = await fetch(`${API_BASE_URL}/api/enrollment/installments?${params}`);
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Não foi possível consultar parcelas.');
+        if (requestId !== installmentRequestId) return;
+
+        const feedback = document.getElementById('installment-feedback');
+        select.innerHTML = '';
+        if (!result.options.length) {
+            resetInstallmentOptions('Este cartão não tem parcelas sem acréscimo disponíveis. Use Pix ou outro cartão.');
+            return;
+        }
+
+        result.options.forEach((installment) => {
+            const option = document.createElement('option');
+            option.value = `${installment.issuerId}:${installment.installments}`;
+            option.dataset.issuerId = installment.issuerId;
+            option.dataset.installments = String(installment.installments);
+            option.textContent = `${installment.installments}x de ${formatarReal(installment.installmentAmount)} — total ${formatarReal(installment.totalAmount)}`;
+            select.appendChild(option);
+        });
+        if ([...select.options].some((option) => option.value === previousSelection)) {
+            select.value = previousSelection;
+        }
+        select.disabled = false;
+        feedback.textContent = `Opções consultadas para total de ${formatarReal(result.amount)}.`;
+        atualizarResumoPreco();
+    } catch (error) {
+        if (requestId !== installmentRequestId) return;
+        paymentMethodId = '';
+        resetInstallmentOptions(error.message || 'Falha ao consultar parcelas sem acréscimo.');
+        console.error('Erro ao consultar parcelas:', error);
+    }
+}
+
+let installmentRefreshTimer;
+document.getElementById('cardNumber').addEventListener('input', () => {
+    clearTimeout(installmentRefreshTimer);
+    installmentRefreshTimer = setTimeout(refreshCardInstallments, 250);
 });
 
 // --- Modal de confirmação customizada (retorna Promise<boolean>) ---
@@ -276,8 +352,13 @@ document.getElementById('pagamento').addEventListener('change', function () {
 
     if (formaPagamento === 'cartao') {
         cardFields.style.display = 'block';
+        refreshCardInstallments();
     } else {
+        installmentRequestId += 1;
         cardFields.style.display = 'none';
+        paymentMethodId = '';
+        selectedCardBin = '';
+        resetInstallmentOptions('Informe o cartão para consultar');
     }
 });
 
@@ -295,7 +376,24 @@ document.getElementById('termos').addEventListener('change', function () {
 // 5. SUBMISSÃO DO FORMULÁRIO
 document.querySelector('.checkout-form').addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (submissionInProgress) return;
 
+    submissionInProgress = true;
+    const submitButton = document.querySelector('.btn-submit');
+    submitButton.disabled = true;
+    try {
+        await processCheckout();
+    } catch (error) {
+        console.error('Erro ao finalizar inscrição:', error);
+        alert(error.message || 'Não foi possível iniciar o pagamento.');
+    } finally {
+        submissionInProgress = false;
+        submitButton.disabled = false;
+        submitButton.innerText = 'GERAR PAGAMENTO';
+    }
+});
+
+async function processCheckout() {
     // --- VALIDAÇÃO DE CPF (front-end) ---
     const cpfInput = document.getElementById('cpf');
     const cpfValue = cpfInput.value || '';
@@ -336,21 +434,11 @@ document.querySelector('.checkout-form').addEventListener('submit', async (event
     // --- VALIDAÇÃO DO CUPOM ---
     const cupomDigitado = (dadosBasicos.coupon || '').trim().toUpperCase();
     if (cupomDigitado) {
-        const btnSubmit = document.querySelector('.btn-submit');
-        const originalText = btnSubmit ? btnSubmit.innerText : 'GERAR PAGAMENTO';
-        if (btnSubmit) btnSubmit.innerText = "VALIDANDO CUPOM...";
-
         const couponData = await fetchCouponData(cupomDigitado);
         if (!couponData) {
             alert("❌ Cupom inválido! Verifique-o e tente novamente.");
-            if (btnSubmit) {
-                btnSubmit.innerText = originalText;
-                btnSubmit.disabled = false;
-            }
             return;
         }
-
-        if (btnSubmit) btnSubmit.innerText = originalText;
     }
 
     // Limpa intervalo anterior se existir
@@ -364,10 +452,8 @@ document.querySelector('.checkout-form').addEventListener('submit', async (event
             if (check.ok) {
                 const info = await check.json();
                 if (info.exists && info.status === 'PENDING' && info.paymentId) {
-                    if (info.modality && info.modality !== dadosBasicos.modality) {
-                        const confirmMsg = 'Detectamos que já existe um pagamento pendente em outra modalidade.\nAo continuar será gerado um novo pagamento e o anterior será cancelado.\nDeseja prosseguir?';
-                        if (!(await showConfirmModal(confirmMsg))) return; // usuário cancelou (modal custom)
-                    }
+                    const confirmMsg = 'Existe uma cobrança pendente. Se os dados desta tentativa forem diferentes, a cobrança anterior será cancelada antes de criar outra. Deseja continuar?';
+                    if (!(await showConfirmModal(confirmMsg))) return;
                 }
             }
         }
@@ -378,7 +464,12 @@ document.querySelector('.checkout-form').addEventListener('submit', async (event
 
     // --- LÓGICA DO CARTÃO DE CRÉDITO ---
     if (dadosBasicos.paymentMethod === 'cartao') {
-        if (!paymentMethodId) return alert("Número de cartão inválido ou bandeira não detectada.");
+        clearTimeout(installmentRefreshTimer);
+        await refreshCardInstallments();
+        const installmentOption = document.getElementById('parcelas').selectedOptions[0];
+        if (!paymentMethodId || !selectedCardBin || !installmentOption?.dataset.issuerId) {
+            return alert("Informe um cartão e aguarde a consulta das parcelas sem acréscimo.");
+        }
 
         try {
             const expiracao = document.getElementById('cardExpiration').value;
@@ -406,10 +497,12 @@ document.querySelector('.checkout-form').addEventListener('submit', async (event
 
             // Anexa dados de pagamento ao objeto de envio
             dadosBasicos.token = tokenResponse.id;
-            dadosBasicos.installments = Number(document.getElementById('parcelas').value);
+            dadosBasicos.installments = Number(installmentOption.dataset.installments);
             dadosBasicos.paymentMethodId = paymentMethodId;
+            dadosBasicos.cardBin = selectedCardBin;
+            dadosBasicos.issuerId = installmentOption.dataset.issuerId;
 
-            enviarParaBackend(dadosBasicos);
+            await enviarParaBackend(dadosBasicos);
 
         } catch (error) {
             console.error("Erro no cartão:", error);
@@ -421,14 +514,13 @@ document.querySelector('.checkout-form').addEventListener('submit', async (event
     // --- LÓGICA DO PIX / BOLETO ---
     else {
         dadosBasicos.installments = 1;
-        enviarParaBackend(dadosBasicos);
+        await enviarParaBackend(dadosBasicos);
     }
-});
+}
 
 // FUNÇÃO DE ENVIO PARA O SERVIDOR
 async function enviarParaBackend(payload) {
     try {
-            // Usa a URL base definida no topo
         const response = await fetch(`${API_BASE_URL}/api/enrollment/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -438,33 +530,37 @@ async function enviarParaBackend(payload) {
 
         // 409 -> Já pago
         if (response.status === 409) {
+            if (resultado.status === 'approved') {
+                alert('Este pagamento já foi aprovado. Você será direcionado para o curso.');
+                window.location.href = "/";
+                return;
+            }
             alert(resultado.error || 'Usuário já possui inscrição paga.');
             return;
         }
 
         if (!response.ok) {
-            // Mostra o erro que veio do backend (ex: Saldo insuficiente)
             alert('Erro: ' + (resultado.error || 'Erro desconhecido'));
             return;
         }
 
-        // Se o backend indicar resume (há pagamento pendente), reapresentamos o QR/infos
         if (resultado.resume) {
-            // resultado já contém payment, paymentId e valor
-            mostrarPix(resultado);
+            if (resultado.paymentMethod === 'cartao') {
+                mostrarStatusCartao(resultado);
+            } else {
+                mostrarPix(resultado);
+            }
             return;
         }
 
         if (payload.paymentMethod === 'pix') {
             mostrarPix(resultado);
-
         } else if (payload.paymentMethod === 'cartao') {
-            // Para cartão, o backend retorna um status — se aprovado, confirmamos, senão informamos o status
             if (resultado.status === 'approved') {
                 alert("Pagamento Aprovado com Sucesso! Bem-vindo(a) ao curso.");
                 window.location.href = "/";
             } else {
-                alert('Pagamento em processamento. Status: ' + (resultado.status || 'desconhecido'));
+                mostrarStatusCartao(resultado);
             }
         }
 
@@ -474,20 +570,56 @@ async function enviarParaBackend(payload) {
     }
 }
 
+function mostrarStatusCartao(resultado) {
+    const qrBox = document.querySelector('.qr-placeholder');
+    qrBox.textContent = `Pagamento no cartão ${resultado.status === 'approved' ? 'aprovado' : 'em processamento'}: ${resultado.status || 'aguardando confirmação'}.`;
+    qrBox.style.opacity = '1';
+    qrBox.style.border = '2px solid #39ff14';
+
+    if (resultado.paymentId && resultado.status !== 'approved') {
+        startPaymentPolling(resultado.paymentId);
+    }
+}
+
+function startPaymentPolling(paymentId) {
+    if (intervaloVerificacao) clearInterval(intervaloVerificacao);
+    let checking = false;
+
+    intervaloVerificacao = setInterval(async () => {
+        if (checking) return;
+        checking = true;
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/enrollment/status/${encodeURIComponent(paymentId)}`);
+            const statusResult = await response.json();
+            if (statusResult.status === 'approved') {
+                clearInterval(intervaloVerificacao);
+                intervaloVerificacao = null;
+                alert('Pagamento confirmado! Bem-vindo(a) ao curso.');
+                window.location.href = "/";
+            } else if (['rejected', 'cancelled', 'refunded', 'amount_mismatch', 'not_current_payment'].includes(statusResult.status)) {
+                clearInterval(intervaloVerificacao);
+                intervaloVerificacao = null;
+                document.querySelector('.qr-placeholder').textContent =
+                    statusResult.status === 'amount_mismatch'
+                        ? 'O valor do pagamento não corresponde ao preço informado. Entre em contato com o suporte.'
+                        : 'Esta tentativa de pagamento foi encerrada. Você pode iniciar uma nova tentativa.';
+            }
+        } catch (error) {
+            console.error('Erro ao verificar status do pagamento:', error);
+        } finally {
+            checking = false;
+        }
+    }, 3000);
+}
+
 function mostrarPix(resultado) {
     const { qrCodeBase64, qrCodeCopyPaste } = resultado.payment;
     const { paymentId, valor } = resultado;
     const qrBox = document.querySelector('.qr-placeholder');
-    // Mostrar nota de resume somente se a modalidade anterior for igual à selecionada (ou não informada)
-    const currentModality = document.getElementById('modalidade') ? document.getElementById('modalidade').value : null;
-    // Removida mensagem amarela de aviso sobre pagamento anterior
-    const showResume = resultado.resume && (!resultado.modalidadeAnterior || resultado.modalidadeAnterior === currentModality);
-    const resumeNote = '';
 
     qrBox.innerHTML = `
         <div style="text-align: center; gap: 15px; display: flex; flex-direction: column; align-items: center;">
-            ${resumeNote}
-            <h4 style="color: #fff;">Valor: <strong style="color: #39ff14;">R$ ${valor.toFixed(2)}</strong></h4>
+            <h4 style="color: #fff;">Valor: <strong style="color: #39ff14;">${formatarReal(valor)}</strong></h4>
             <p style="color:#39ff14; font-weight:bold;">Escaneie o QR Code:</p>
             <img src="data:image/png;base64,${qrCodeBase64}" style="width:200px; border-radius:10px; border: 4px solid white;">
             <textarea readonly style="width:100%; margin-top:10px; background: #222; color: #fff; padding: 10px; border-radius: 5px;">${qrCodeCopyPaste}</textarea>
@@ -496,17 +628,7 @@ function mostrarPix(resultado) {
     qrBox.style.opacity = "1";
     qrBox.style.border = "2px solid #39ff14";
 
-    // Inicia verificação (polling)
-    intervaloVerificacao = setInterval(async () => {
-        // Usa a URL base para verificar status
-        const check = await fetch(`${API_BASE_URL}/api/enrollment/status/${paymentId}`);
-        const dadosCheck = await check.json();
-        if (dadosCheck.status === 'approved') {
-            clearInterval(intervaloVerificacao);
-            alert("PAGAMENTO CONFIRMADO! Bem-vindo ao curso! Em breve entraremos em contato para liberar o acesso da plataforma de conteúdo.");
-            window.location.href = "/";
-        }
-    }, 3000);
+    startPaymentPolling(paymentId);
 }
 
 
@@ -548,7 +670,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (cupInput) cupInput.addEventListener('input', updateCouponPreview);
     if (parcelasEl) parcelasEl.addEventListener('change', updateCouponPreview);
-    if (modalidadeEl) modalidadeEl.addEventListener('change', updateCouponPreview);
+    if (modalidadeEl) modalidadeEl.addEventListener('change', () => {
+        updateCouponPreview();
+        if (selectedCardBin) refreshCardInstallments();
+    });
     if (pagamentoEl) pagamentoEl.addEventListener('change', updateCouponPreview);
 
     // chamada inicial caso tenha valor preenchido ao carregar

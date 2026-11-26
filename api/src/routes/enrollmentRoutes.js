@@ -1,5 +1,5 @@
 import express from "express";
-import { createEnrollment, checkPaymentStatus, getExistingEnrollment, verifyLogin, listPaidEnrollments, enrollmentSummary, createEnrollmentByAdmin, updateStudentModality } from "../controllers/enrollmentController.js";
+import { createEnrollment, checkPaymentStatus, getExistingEnrollment, getInstallments, verifyLogin, listPaidEnrollments, enrollmentSummary, createEnrollmentByAdmin, updateStudentModality } from "../controllers/enrollmentController.js";
 import { requireAuth } from '../middleware/authMiddleware.js';
 
 import prisma from "../db.js";
@@ -12,6 +12,7 @@ router.post("/admin/create", requireAuth, createEnrollmentByAdmin);
 router.put("/admin/modality", requireAuth, updateStudentModality);
 
 router.get("/existing", getExistingEnrollment);
+router.get("/installments", getInstallments);
 router.get("/paid", listPaidEnrollments);
 router.get("/summary", enrollmentSummary);
 router.get("/status/:id", checkPaymentStatus)

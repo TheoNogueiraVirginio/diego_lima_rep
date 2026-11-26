@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { COURSE_PRICES, normalizeCouponCode } from '../utils/paymentPricing.js';
 
 const prisma = new PrismaClient();
 
@@ -17,16 +18,23 @@ export const getCoupons = async (req, res) => {
 export const createCoupon = async (req, res) => {
     try {
         const { code, discount, type } = req.body;
-        
-        if (!code || discount === undefined) {
+
+        const normalizedCode = normalizeCouponCode(code);
+        const numericDiscount = Number(discount);
+        const couponType = type === 'FIXED_PRICE' ? 'FIXED_PRICE' : 'PERCENTAGE';
+        const maximumPrice = Math.max(...Object.values(COURSE_PRICES));
+
+        if (!normalizedCode || normalizedCode.length > 40 || !Number.isFinite(numericDiscount)) {
             return res.status(400).json({ error: "Código e desconto são obrigatórios." });
         }
-
-        const upperCode = code.toUpperCase();
-        const couponType = type === 'FIXED_PRICE' ? 'FIXED_PRICE' : 'PERCENTAGE';
+        if (numericDiscount <= 0 ||
+            (couponType === 'PERCENTAGE' && numericDiscount > 100) ||
+            (couponType === 'FIXED_PRICE' && numericDiscount > maximumPrice)) {
+            return res.status(400).json({ error: "Desconto fora dos limites permitidos." });
+        }
 
         const existingCoupon = await prisma.coupon.findUnique({
-            where: { code: upperCode }
+            where: { code: normalizedCode }
         });
 
         if (existingCoupon) {
@@ -35,8 +43,8 @@ export const createCoupon = async (req, res) => {
 
         const newCoupon = await prisma.coupon.create({
             data: {
-                code: upperCode,
-                discount: parseFloat(discount),
+                code: normalizedCode,
+                discount: numericDiscount,
                 type: couponType
             }
         });
@@ -66,10 +74,10 @@ export const deleteCoupon = async (req, res) => {
 export const validateCoupon = async (req, res) => {
     try {
         const { code } = req.params;
-        const upperCode = code.toUpperCase();
+        const normalizedCode = normalizeCouponCode(code);
 
         const coupon = await prisma.coupon.findUnique({
-            where: { code: upperCode }
+            where: { code: normalizedCode }
         });
 
         if (!coupon) {
