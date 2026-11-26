@@ -13,6 +13,10 @@ import {
     isSamePaymentIntent,
     isTerminalPaymentStatus
 } from '../utils/paymentAttempts.js';
+import {
+    PaymentLockUnavailableError,
+    withEnrollmentPaymentLock
+} from '../utils/paymentLocks.js';
 
 async function countVimeoIds() {
   try {
@@ -36,14 +40,14 @@ const client = new MercadoPagoConfig({
     options: { timeout: 5000 }
 });
 
-async function calcularValorCobrado(modality, couponCode) {
+async function calcularValorCobrado(modality, couponCode, database = prisma) {
     const basePrice = getBasePrice(modality);
     if (!couponCode) return basePrice;
 
     const normalizedCode = normalizeCouponCode(couponCode);
     if (!normalizedCode) throw new RangeError('Cupom inválido.');
 
-    const coupon = await prisma.coupon.findUnique({ where: { code: normalizedCode } });
+    const coupon = await database.coupon.findUnique({ where: { code: normalizedCode } });
     if (!coupon) throw new RangeError('Cupom inválido.');
 
     return applyCoupon(basePrice, coupon);
@@ -100,7 +104,7 @@ async function cancelUnexpectedPayment(payment, paymentId, status) {
     throw new Error('O pagamento precisa ser cancelado ou estornado pelo Mercado Pago.');
 }
 
-export const createEnrollment = async (req, res) => {
+async function processEnrollment(req, res, database, postCommitActions) {
     let activePaymentId = null;
     try {
         const {
@@ -118,7 +122,7 @@ export const createEnrollment = async (req, res) => {
             return res.status(400).json({ error: 'Forma de pagamento inválida.' });
         }
 
-        const amount = await calcularValorCobrado(modality, coupon);
+        const amount = await calcularValorCobrado(modality, coupon, database);
         const cleanCpf = String(cpf).replace(/\D/g, '');
         const normalizedEmail = String(email).trim().toLowerCase();
         const normalizedPhone = String(phone).replace(/\D/g, '');
@@ -150,7 +154,7 @@ export const createEnrollment = async (req, res) => {
             }
         }
 
-        const alunoExistente = await prisma.enrollment.findFirst({
+        const alunoExistente = await database.enrollment.findFirst({
             where: { OR: [{ email: normalizedEmail }, { cpf: cleanCpf }] }
         });
         if (alunoExistente && ['PAID', 'ADMIN'].includes(alunoExistente.status)) {
@@ -182,7 +186,7 @@ export const createEnrollment = async (req, res) => {
                                 error: 'O estorno da cobrança anterior ainda está em processamento. Aguarde a confirmação antes de tentar novamente.'
                             });
                         }
-                        await prisma.enrollment.update({
+                        await database.enrollment.update({
                             where: { id: alunoExistente.id },
                             data: { status: 'REJECTED', paymentId: null }
                         });
@@ -195,11 +199,15 @@ export const createEnrollment = async (req, res) => {
                         });
                     }
                 } else {
-                    await prisma.enrollment.update({
+                    await database.enrollment.update({
                         where: { id: alunoExistente.id },
                         data: { status: 'PAID' }
                     });
-                    await sendWelcomeEmail(alunoExistente.email, alunoExistente.name);
+                    postCommitActions.push({
+                        email: alunoExistente.email,
+                        name: alunoExistente.name,
+                        failRequestOnError: true
+                    });
                     return res.status(200).json({ status: 'approved', message: 'Pagamento anterior já aprovado.' });
                 }
             }
@@ -257,8 +265,8 @@ export const createEnrollment = async (req, res) => {
             paymentId: null
         };
         const enrollment = alunoExistente
-            ? await prisma.enrollment.update({ where: { id: alunoExistente.id }, data: enrollmentData })
-            : await prisma.enrollment.create({ data: enrollmentData });
+            ? await database.enrollment.update({ where: { id: alunoExistente.id }, data: enrollmentData })
+            : await database.enrollment.create({ data: enrollmentData });
 
         const paymentData = {
             transaction_amount: amount,
@@ -284,13 +292,13 @@ export const createEnrollment = async (req, res) => {
         const mpResponse = await payment.create({ body: paymentData });
         activePaymentId = String(mpResponse.id);
 
-        await prisma.enrollment.update({
+        await database.enrollment.update({
             where: { id: enrollment.id },
             data: { paymentId: activePaymentId }
         });
 
         if (mpResponse.status === 'rejected') {
-            await prisma.enrollment.update({
+            await database.enrollment.update({
                 where: { id: enrollment.id },
                 data: { status: 'REJECTED' }
             });
@@ -302,7 +310,7 @@ export const createEnrollment = async (req, res) => {
                 let paymentResolved = false;
                 try {
                     paymentResolved = await cancelUnexpectedPayment(payment, activePaymentId, mpResponse.status);
-                    await prisma.enrollment.update({
+                    await database.enrollment.update({
                         where: { id: enrollment.id },
                         data: {
                             status: 'REJECTED',
@@ -329,15 +337,15 @@ export const createEnrollment = async (req, res) => {
         }
 
         if (mpResponse.status === 'approved') {
-            await prisma.enrollment.update({
+            await database.enrollment.update({
                 where: { id: enrollment.id },
                 data: { status: 'PAID' }
             });
-            try {
-                await sendWelcomeEmail(enrollment.email, enrollment.name);
-            } catch (error) {
-                console.error('[createEnrollment] Pagamento aprovado, mas o e-mail não foi enviado:', error.message);
-            }
+            postCommitActions.push({
+                email: enrollment.email,
+                name: enrollment.name,
+                failRequestOnError: false
+            });
         }
 
         return res.status(201).json({
@@ -367,6 +375,60 @@ export const createEnrollment = async (req, res) => {
         const status = error instanceof RangeError ? 400 : 500;
         return res.status(status).json({ error: error.message || 'Erro ao processar pagamento.' });
     }
+}
+
+export const createEnrollment = async (req, res) => {
+    const { email, cpf } = req.body || {};
+    if (!email || !cpf) return processEnrollment(req, res, prisma);
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const cleanCpf = String(cpf).replace(/\D/g, '');
+    const identifiers = [
+        `email:${normalizedEmail || String(email)}`,
+        `cpf:${cleanCpf || String(cpf)}`
+    ];
+    let responseStatus = 200;
+    let responseBody;
+    const postCommitActions = [];
+    const deferredResponse = {
+        status(status) {
+            responseStatus = status;
+            return this;
+        },
+        json(body) {
+            responseBody = body;
+            return this;
+        }
+    };
+
+    try {
+        await withEnrollmentPaymentLock(prisma, identifiers, (transaction) =>
+            processEnrollment(req, deferredResponse, transaction, postCommitActions)
+        );
+    } catch (error) {
+        if (error instanceof PaymentLockUnavailableError) {
+            return res.status(409).json({
+                error: 'Outra tentativa de pagamento está em andamento. Aguarde e tente novamente.'
+            });
+        }
+        console.error('[createEnrollment] Falha ao proteger a tentativa de pagamento:', error.code || error.message);
+        return res.status(503).json({
+            error: 'Não foi possível iniciar a tentativa de pagamento com segurança. Tente novamente.'
+        });
+    }
+
+    for (const action of postCommitActions) {
+        try {
+            await sendWelcomeEmail(action.email, action.name);
+        } catch (error) {
+            console.error('[createEnrollment] Pagamento aprovado, mas o e-mail não foi enviado:', error.message);
+            if (action.failRequestOnError) {
+                return res.status(500).json({ error: error.message || 'Erro ao enviar e-mail de boas-vindas.' });
+            }
+        }
+    }
+
+    return res.status(responseStatus).json(responseBody);
 };
 
 export const checkPaymentStatus = async (req, res) => {
