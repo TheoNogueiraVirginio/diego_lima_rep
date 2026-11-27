@@ -2,20 +2,18 @@
 ALTER TABLE `PdfMaterial`
     ADD COLUMN `displayOrder` INTEGER NOT NULL DEFAULT 0;
 
-SET @grp := '';
-SET @row := 0;
-
 UPDATE `PdfMaterial` pm
 JOIN (
-    SELECT orderedRows.id, orderedRows.displayOrder
-    FROM (
-        SELECT
-            id,
-            @row := IF(@grp = CONCAT(module, '|', subjectOrder, '|', category, '|', IFNULL(modality, 'default')), @row + 1, 1) AS displayOrder,
-            @grp := CONCAT(module, '|', subjectOrder, '|', category, '|', IFNULL(modality, 'default')) AS grp
-        FROM `PdfMaterial`
-        CROSS JOIN (SELECT @grp := '', @row := 0) vars
-        ORDER BY module, subjectOrder, category, modality, createdAt, id
-    ) orderedRows
+    SELECT
+        id,
+        ROW_NUMBER() OVER (
+            PARTITION BY
+                module,
+                subjectOrder,
+                category,
+                COALESCE(modality, _utf8mb4'default' COLLATE utf8mb4_unicode_ci)
+            ORDER BY module, subjectOrder, category, modality, createdAt, id
+        ) AS displayOrder
+    FROM `PdfMaterial`
 ) seq ON seq.id = pm.id
 SET pm.displayOrder = seq.displayOrder;
