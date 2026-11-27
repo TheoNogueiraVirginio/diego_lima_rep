@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { MercadoPagoConfig, Payment, PaymentRefund } from 'mercadopago';
 // Imports fs/path removed
 
@@ -14,6 +14,7 @@ import {
     isSamePaymentIntent,
     isTerminalPaymentStatus
 } from '../utils/paymentAttempts.js';
+import { recoverPaymentAttempt } from '../utils/paymentAttemptRecovery.js';
 import { matchesInstallmentSelection } from '../utils/paymentTerms.js';
 import {
     PaymentLockUnavailableError,
@@ -82,6 +83,19 @@ function cents(amount) {
     return Math.round(Number(amount) * 100);
 }
 
+function hashPaymentIdentifier(type, value) {
+    return createHash('sha256').update(`${type}:${value}`).digest('hex');
+}
+
+function getPaymentAttemptStatus(paymentStatus) {
+    if (paymentStatus === 'approved') return 'APPROVED';
+    if (isPendingPaymentStatus(paymentStatus)) return 'PENDING';
+    if (paymentStatus === 'rejected') return 'REJECTED';
+    if (paymentStatus === 'cancelled') return 'CANCELLED';
+    if (paymentStatus === 'refunded') return 'REFUNDED';
+    return 'UNKNOWN';
+}
+
 async function cancelUnexpectedPayment(payment, paymentId, status) {
     if (isPendingPaymentStatus(status)) {
         await cancelPendingPayment(payment, paymentId);
@@ -106,8 +120,7 @@ async function cancelUnexpectedPayment(payment, paymentId, status) {
     throw new Error('O pagamento precisa ser cancelado ou estornado pelo Mercado Pago.');
 }
 
-async function processEnrollment(req, res, database, postCommitActions) {
-    let activePaymentId = null;
+async function processEnrollment(req, res, database, postCommitActions, paymentOperation) {
     try {
         const {
             name, email, cpf, phone, modality, paymentMethod, installments,
@@ -128,6 +141,8 @@ async function processEnrollment(req, res, database, postCommitActions) {
         const cleanCpf = String(cpf).replace(/\D/g, '');
         const normalizedEmail = String(email).trim().toLowerCase();
         const normalizedPhone = String(phone).replace(/\D/g, '');
+        const emailHash = hashPaymentIdentifier('email', normalizedEmail);
+        const cpfHash = hashPaymentIdentifier('cpf', cleanCpf);
         const payment = new Payment(client);
         let selectedInstallment = null;
 
@@ -192,6 +207,10 @@ async function processEnrollment(req, res, database, postCommitActions) {
                             where: { id: alunoExistente.id },
                             data: { status: 'REJECTED', paymentId: null }
                         });
+                        await database.paymentAttempt.updateMany({
+                            where: { paymentId: alunoExistente.paymentId },
+                            data: { status: 'REFUNDED' }
+                        });
                         alunoExistente.status = 'REJECTED';
                         alunoExistente.paymentId = null;
                     } catch (error) {
@@ -204,6 +223,10 @@ async function processEnrollment(req, res, database, postCommitActions) {
                     await database.enrollment.update({
                         where: { id: alunoExistente.id },
                         data: { status: 'PAID' }
+                    });
+                    await database.paymentAttempt.updateMany({
+                        where: { paymentId: alunoExistente.paymentId },
+                        data: { status: 'APPROVED' }
                     });
                     postCommitActions.push({
                         email: alunoExistente.email,
@@ -243,6 +266,10 @@ async function processEnrollment(req, res, database, postCommitActions) {
 
                 try {
                     await cancelPendingPayment(payment, alunoExistente.paymentId);
+                    await database.paymentAttempt.updateMany({
+                        where: { paymentId: alunoExistente.paymentId },
+                        data: { status: 'CANCELLED' }
+                    });
                 } catch (error) {
                     console.error('[createEnrollment] Cobrança anterior não cancelada:', error.code || error.message);
                     return res.status(409).json({
@@ -253,108 +280,232 @@ async function processEnrollment(req, res, database, postCommitActions) {
                 return res.status(409).json({
                     error: 'A cobrança anterior está em um estado que não permite uma nova tentativa com segurança.'
                 });
+            } else {
+                await database.paymentAttempt.updateMany({
+                    where: { paymentId: alunoExistente.paymentId },
+                    data: { status: getPaymentAttemptStatus(existingPayment.status) }
+                });
             }
         }
 
-        const enrollmentData = {
-            name: String(name).trim(),
-            email: normalizedEmail,
-            cpf: cleanCpf,
-            phone: normalizedPhone,
-            modality,
-            amount,
-            status: 'PENDING',
-            paymentId: null
-        };
-        const enrollment = alunoExistente
-            ? await database.enrollment.update({ where: { id: alunoExistente.id }, data: enrollmentData })
-            : await database.enrollment.create({ data: enrollmentData });
-
-        const paymentData = {
-            transaction_amount: amount,
-            description: `Curso Matemática - ${modality}`,
-            external_reference: enrollment.id,
-            payer: {
-                email: normalizedEmail,
-                first_name: enrollmentData.name.split(/\s+/)[0],
-                identification: { type: 'CPF', number: cleanCpf }
+        const activeAttempts = await database.paymentAttempt.findMany({
+            where: {
+                status: { in: ['PROCESSING', 'UNKNOWN', 'PENDING', 'APPROVED', 'REFUND_PENDING'] },
+                OR: [{ emailHash }, { cpfHash }]
             },
-            metadata: { name: enrollmentData.name, email: normalizedEmail, cpf: cleanCpf, phone: normalizedPhone, modality, alunoId: enrollment.id }
-        };
-
-        if (paymentMethod === 'cartao') {
-            paymentData.token = token;
-            paymentData.installments = selectedInstallment.installments;
-            paymentData.payment_method_id = String(paymentMethodId);
-            paymentData.issuer_id = Number(selectedInstallment.issuerId);
-            paymentData.metadata.installments = selectedInstallment.installments;
-            paymentData.metadata.paymentMethodId = String(paymentMethodId);
-            paymentData.metadata.issuerId = String(selectedInstallment.issuerId);
-        } else {
-            paymentData.payment_method_id = 'pix';
+            orderBy: { createdAt: 'desc' },
+            take: 2
+        });
+        if (activeAttempts.length > 1) {
+            return res.status(409).json({
+                error: 'Há mais de uma tentativa de pagamento não resolvida para este cadastro. Nenhuma nova cobrança foi criada; contate o suporte.'
+            });
         }
 
-        const mpResponse = await payment.create({
-            body: paymentData,
-            requestOptions: { idempotencyKey: randomUUID() }
-        });
-        activePaymentId = String(mpResponse.id);
+        let attempt = activeAttempts[0] || null;
+        let enrollment;
+        let paymentData;
 
-        await database.enrollment.update({
+        if (attempt) {
+            if (alunoExistente && alunoExistente.id !== attempt.enrollmentId) {
+                return res.status(409).json({
+                    error: 'Existe uma tentativa de pagamento não resolvida associada a outro cadastro. Nenhuma nova cobrança foi criada; contate o suporte.'
+                });
+            }
+
+            const attemptEnrollmentData = {
+                modality: attempt.modality,
+                amount: attempt.amount,
+                status: 'PENDING',
+                paymentId: attempt.paymentId
+            };
+            enrollment = alunoExistente
+                ? await database.enrollment.update({
+                    where: { id: alunoExistente.id },
+                    data: attemptEnrollmentData
+                })
+                : await database.enrollment.create({
+                    data: {
+                        id: attempt.enrollmentId,
+                        name: String(name).trim(),
+                        email: normalizedEmail,
+                        cpf: cleanCpf,
+                        phone: normalizedPhone,
+                        ...attemptEnrollmentData
+                    }
+                });
+
+            paymentOperation.value = { attempt, enrollment, recover: true };
+            return;
+        } else {
+            const enrollmentData = {
+                name: String(name).trim(),
+                email: normalizedEmail,
+                cpf: cleanCpf,
+                phone: normalizedPhone,
+                modality,
+                amount,
+                status: 'PENDING',
+                paymentId: null
+            };
+            enrollment = alunoExistente
+                ? await database.enrollment.update({ where: { id: alunoExistente.id }, data: enrollmentData })
+                : await database.enrollment.create({ data: enrollmentData });
+
+            paymentData = {
+                transaction_amount: amount,
+                description: `Curso Matemática - ${modality}`,
+                external_reference: randomUUID(),
+                payer: {
+                    email: normalizedEmail,
+                    first_name: enrollmentData.name.split(/\s+/)[0],
+                    identification: { type: 'CPF', number: cleanCpf }
+                },
+                metadata: { name: enrollmentData.name, email: normalizedEmail, cpf: cleanCpf, phone: normalizedPhone, modality, alunoId: enrollment.id }
+            };
+
+            if (paymentMethod === 'cartao') {
+                paymentData.token = token;
+                paymentData.installments = selectedInstallment.installments;
+                paymentData.payment_method_id = String(paymentMethodId);
+                paymentData.issuer_id = Number(selectedInstallment.issuerId);
+                paymentData.metadata.installments = selectedInstallment.installments;
+                paymentData.metadata.paymentMethodId = String(paymentMethodId);
+                paymentData.metadata.issuerId = String(selectedInstallment.issuerId);
+            } else {
+                paymentData.payment_method_id = 'pix';
+            }
+
+            attempt = await database.paymentAttempt.create({
+                data: {
+                    id: paymentData.external_reference,
+                    enrollmentId: enrollment.id,
+                    emailHash,
+                    cpfHash,
+                    modality,
+                    amount,
+                    paymentMethod,
+                    installments: paymentMethod === 'cartao' ? selectedInstallment.installments : null,
+                    paymentMethodId: paymentMethod === 'cartao' ? String(paymentMethodId) : null,
+                    issuerId: paymentMethod === 'cartao' ? String(selectedInstallment.issuerId) : null,
+                    idempotencyKey: randomUUID(),
+                    externalReference: paymentData.external_reference,
+                    status: 'PROCESSING'
+                }
+            });
+            paymentOperation.value = { attempt, enrollment, paymentData, recover: false };
+            return;
+        }
+        throw new Error('A preparação da tentativa de pagamento não produziu uma operação.');
+    } catch (error) {
+        console.error('[createEnrollment] Erro ao processar pagamento:', error.code || error.message);
+        const status = error instanceof RangeError ? 400 : 500;
+        return res.status(status).json({ error: error.message || 'Erro ao processar pagamento.' });
+    }
+}
+
+async function completePaymentAttempt(operation, postCommitActions) {
+    const { attempt, enrollment, paymentData, recover } = operation;
+    let activePaymentId = null;
+    const payment = new Payment(client);
+
+    try {
+        const mpResponse = recover
+            ? await recoverPaymentAttempt(payment, attempt)
+            : await payment.create({
+                body: paymentData,
+                requestOptions: { idempotencyKey: attempt.idempotencyKey }
+            });
+        if (!mpResponse.id) {
+            throw new Error('Mercado Pago retornou uma cobrança sem identificador.');
+        }
+
+        activePaymentId = String(mpResponse.id);
+        await prisma.paymentAttempt.update({
+            where: { id: attempt.id },
+            data: {
+                paymentId: activePaymentId,
+                status: getPaymentAttemptStatus(mpResponse.status)
+            }
+        });
+        await prisma.enrollment.update({
             where: { id: enrollment.id },
             data: { paymentId: activePaymentId }
         });
 
         if (mpResponse.status === 'rejected') {
-            await database.enrollment.update({
+            await prisma.enrollment.update({
                 where: { id: enrollment.id },
                 data: { status: 'REJECTED' }
             });
-            return res.status(400).json({ error: 'Pagamento rejeitado pelo banco. Verifique os dados ou limite.' });
+            await prisma.paymentAttempt.update({
+                where: { id: attempt.id },
+                data: { status: 'REJECTED' }
+            });
+            return {
+                status: 400,
+                body: { error: 'Pagamento rejeitado pelo banco. Verifique os dados ou limite.' }
+            };
         }
 
-        if (paymentMethod === 'cartao') {
+        if (attempt.paymentMethod === 'cartao') {
             const paymentTermsMatch = matchesInstallmentSelection(mpResponse, {
-                installments: selectedInstallment.installments,
-                paymentMethodId,
-                issuerId: selectedInstallment.issuerId
+                installments: attempt.installments,
+                paymentMethodId: attempt.paymentMethodId,
+                issuerId: attempt.issuerId
             });
-            const paymentAmountMatches = cents(mpResponse.transaction_amount) === cents(amount) &&
-                hasExactPaymentTotal(mpResponse, amount, mpResponse.status === 'approved');
+            const paymentAmountMatches =
+                cents(mpResponse.transaction_amount) === cents(attempt.amount) &&
+                hasExactPaymentTotal(mpResponse, attempt.amount, mpResponse.status === 'approved');
             if (!paymentTermsMatch || !paymentAmountMatches) {
                 let paymentResolved = false;
                 try {
                     paymentResolved = await cancelUnexpectedPayment(payment, activePaymentId, mpResponse.status);
-                    await database.enrollment.update({
-                        where: { id: enrollment.id },
-                        data: {
-                            status: 'REJECTED',
-                            ...(paymentResolved ? { paymentId: null } : {})
-                        }
-                    });
                 } catch (error) {
                     console.error('[createEnrollment] Falha ao reverter cobrança com total divergente:', error.code || error.message);
                 }
 
+                await prisma.enrollment.update({
+                    where: { id: enrollment.id },
+                    data: {
+                        status: 'REJECTED',
+                        ...(paymentResolved ? { paymentId: null } : {})
+                    }
+                });
+                await prisma.paymentAttempt.update({
+                    where: { id: attempt.id },
+                    data: { status: paymentResolved ? 'REFUNDED' : 'REFUND_PENDING' }
+                });
+
                 if (!paymentResolved && mpResponse.status === 'approved') {
-                    return res.status(202).json({
-                        paymentId: activePaymentId,
-                        status: 'refund_pending',
-                        paymentMethod,
-                        valor: amount
-                    });
+                    return {
+                        status: 202,
+                        body: {
+                            paymentId: activePaymentId,
+                            status: 'refund_pending',
+                            paymentMethod: attempt.paymentMethod,
+                            valor: attempt.amount
+                        }
+                    };
                 }
 
-                return res.status(502).json({
-                    error: 'O Mercado Pago retornou parcelas ou um total diferente do solicitado. A cobrança foi interrompida ou enviada para estorno; contate o suporte se ela aparecer na fatura.'
-                });
+                return {
+                    status: 502,
+                    body: {
+                        error: 'O Mercado Pago retornou parcelas ou um total diferente do solicitado. A cobrança foi interrompida ou enviada para estorno; contate o suporte se ela aparecer na fatura.'
+                    }
+                };
             }
         }
 
         if (mpResponse.status === 'approved') {
-            await database.enrollment.update({
+            await prisma.enrollment.update({
                 where: { id: enrollment.id },
                 data: { status: 'PAID' }
+            });
+            await prisma.paymentAttempt.update({
+                where: { id: attempt.id },
+                data: { status: 'APPROVED' }
             });
             postCommitActions.push({
                 email: enrollment.email,
@@ -363,32 +514,52 @@ async function processEnrollment(req, res, database, postCommitActions) {
             });
         }
 
-        return res.status(201).json({
-            success: true,
-            paymentId: activePaymentId,
-            status: mpResponse.status,
-            valor: amount,
-            paymentMethod,
-            payment: {
-                qrCodeBase64: mpResponse.point_of_interaction?.transaction_data?.qr_code_base64,
-                qrCodeCopyPaste: mpResponse.point_of_interaction?.transaction_data?.qr_code
+        return {
+            status: 201,
+            body: {
+                success: true,
+                paymentId: activePaymentId,
+                status: mpResponse.status,
+                valor: attempt.amount,
+                paymentMethod: attempt.paymentMethod,
+                payment: {
+                    qrCodeBase64: mpResponse.point_of_interaction?.transaction_data?.qr_code_base64,
+                    qrCodeCopyPaste: mpResponse.point_of_interaction?.transaction_data?.qr_code
+                }
             }
-        });
+        };
     } catch (error) {
-        console.error('[createEnrollment] Erro ao processar pagamento:', error.code || error.message);
+        console.error('[createEnrollment] Erro ao processar tentativa de pagamento:', error.code || error.message);
+        try {
+            await prisma.paymentAttempt.update({
+                where: { id: attempt.id },
+                data: { status: 'UNKNOWN' }
+            });
+        } catch (attemptError) {
+            console.error('[createEnrollment] Não foi possível atualizar o estado da tentativa:', attemptError.code || attemptError.message);
+        }
+
         if (activePaymentId) {
             try {
-                const payment = new Payment(client);
                 const current = await payment.get({ id: activePaymentId });
                 if (isPendingPaymentStatus(current.status)) {
                     await cancelPendingPayment(payment, activePaymentId);
+                    await prisma.paymentAttempt.update({
+                        where: { id: attempt.id },
+                        data: { status: 'CANCELLED' }
+                    });
                 }
             } catch (cancelError) {
                 console.error('[createEnrollment] Não foi possível encerrar cobrança criada sem confirmação:', cancelError.code || cancelError.message);
             }
         }
-        const status = error instanceof RangeError ? 400 : 500;
-        return res.status(status).json({ error: error.message || 'Erro ao processar pagamento.' });
+
+        return {
+            status: 503,
+            body: {
+                error: 'Não foi possível confirmar o resultado do pagamento. A tentativa foi preservada para reconciliação; não tente pagar novamente nem faça outro pagamento.'
+            }
+        };
     }
 }
 
@@ -405,6 +576,7 @@ export const createEnrollment = async (req, res) => {
     let responseStatus = 200;
     let responseBody;
     const postCommitActions = [];
+    const paymentOperation = { value: null };
     const deferredResponse = {
         status(status) {
             responseStatus = status;
@@ -418,7 +590,7 @@ export const createEnrollment = async (req, res) => {
 
     try {
         await withEnrollmentPaymentLock(prisma, identifiers, (transaction) =>
-            processEnrollment(req, deferredResponse, transaction, postCommitActions)
+            processEnrollment(req, deferredResponse, transaction, postCommitActions, paymentOperation)
         );
     } catch (error) {
         if (error instanceof PaymentLockUnavailableError) {
@@ -430,6 +602,12 @@ export const createEnrollment = async (req, res) => {
         return res.status(503).json({
             error: 'Não foi possível iniciar a tentativa de pagamento com segurança. Tente novamente.'
         });
+    }
+
+    if (paymentOperation.value) {
+        const result = await completePaymentAttempt(paymentOperation.value, postCommitActions);
+        responseStatus = result.status;
+        responseBody = result.body;
     }
 
     for (const action of postCommitActions) {
@@ -456,6 +634,12 @@ export const checkPaymentStatus = async (req, res) => {
 
         const paymentInfo = await new Payment(client).get({ id });
         if (paymentInfo.status !== 'approved') {
+            if (isTerminalPaymentStatus(paymentInfo.status)) {
+                await prisma.paymentAttempt.updateMany({
+                    where: { paymentId: id },
+                    data: { status: getPaymentAttemptStatus(paymentInfo.status) }
+                });
+            }
             return res.json({ status: paymentInfo.status });
         }
 
@@ -484,15 +668,31 @@ export const checkPaymentStatus = async (req, res) => {
                         where: { id: enrollment.id },
                         data: { status: 'REJECTED', paymentId: null }
                     });
+                    await prisma.paymentAttempt.updateMany({
+                        where: { paymentId: id },
+                        data: { status: 'REFUNDED' }
+                    });
                     return res.status(409).json({ status: 'amount_mismatch' });
                 }
+                await prisma.paymentAttempt.updateMany({
+                    where: { paymentId: id },
+                    data: { status: 'REFUND_PENDING' }
+                });
                 return res.status(202).json({ status: 'refund_pending' });
             } catch (error) {
                 console.error('[checkPaymentStatus] Falha ao estornar pagamento divergente:', error.code || error.message);
+                await prisma.paymentAttempt.updateMany({
+                    where: { paymentId: id },
+                    data: { status: 'REFUND_PENDING' }
+                });
                 return res.status(502).json({ status: 'refund_pending', error: 'Não foi possível confirmar o estorno da cobrança divergente.' });
             }
         }
 
+        await prisma.paymentAttempt.updateMany({
+            where: { paymentId: id },
+            data: { status: 'APPROVED' }
+        });
         if (['PAID', 'ADMIN'].includes(enrollment.status)) {
             return res.json({ status: 'approved', message: 'Pagamento já processado.' });
         }

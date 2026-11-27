@@ -43,6 +43,29 @@ model Enrollment {
   comments LessonComment[]
 }
 
+model PaymentAttempt {
+  id                String   @id
+  enrollmentId      String
+  emailHash       String
+  cpfHash         String
+  modality        String
+  amount          Float
+  paymentMethod   String
+  installments    Int?
+  paymentMethodId String?
+  issuerId        String?
+  idempotencyKey  String   @unique
+  externalReference String @unique
+  paymentId       String?  @unique
+  status          String   @default("PROCESSING")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([enrollmentId, status])
+  @@index([emailHash, status])
+  @@index([cpfHash, status])
+}
+
 model LessonComment {
   id        String   @id @default(uuid())
   enrollment Enrollment @relation(fields: [enrollmentId], references: [id])

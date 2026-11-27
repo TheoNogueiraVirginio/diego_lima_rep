@@ -1,0 +1,26 @@
+CREATE TABLE `PaymentAttempt` (
+    `id` VARCHAR(191) NOT NULL,
+    `enrollmentId` VARCHAR(191) NOT NULL,
+    `emailHash` VARCHAR(191) NOT NULL,
+    `cpfHash` VARCHAR(191) NOT NULL,
+    `modality` VARCHAR(191) NOT NULL,
+    `amount` DOUBLE NOT NULL,
+    `paymentMethod` VARCHAR(191) NOT NULL,
+    `installments` INTEGER NULL,
+    `paymentMethodId` VARCHAR(191) NULL,
+    `issuerId` VARCHAR(191) NULL,
+    `idempotencyKey` VARCHAR(191) NOT NULL,
+    `externalReference` VARCHAR(191) NOT NULL,
+    `paymentId` VARCHAR(191) NULL,
+    `status` VARCHAR(191) NOT NULL DEFAULT 'PROCESSING',
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `PaymentAttempt_idempotencyKey_key`(`idempotencyKey`),
+    UNIQUE INDEX `PaymentAttempt_externalReference_key`(`externalReference`),
+    UNIQUE INDEX `PaymentAttempt_paymentId_key`(`paymentId`),
+    INDEX `PaymentAttempt_enrollmentId_status_idx`(`enrollmentId`, `status`),
+    INDEX `PaymentAttempt_emailHash_status_idx`(`emailHash`, `status`),
+    INDEX `PaymentAttempt_cpfHash_status_idx`(`cpfHash`, `status`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
